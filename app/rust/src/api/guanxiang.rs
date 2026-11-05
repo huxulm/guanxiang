@@ -11,10 +11,11 @@ use flutter_rust_bridge::frb;
 use guanxiang_core::events::local_eclipse::{self, LocalSolarKind};
 use guanxiang_core::events::longitude::{self, Aspect};
 use guanxiang_core::events::lunar_eclipse::{self, LunarEclipseKind, ShadowModel};
+use guanxiang_core::events::occultation::{self, Target};
 use guanxiang_core::events::solar_eclipse::{self, SolarEclipseKind};
 use guanxiang_core::events::visibility::{apparent_altitude, VisibilityFilter};
 use guanxiang_core::events::{separation, transit, Span};
-use guanxiang_core::{AniseEphemeris, Body, DateTime, Observer, Time};
+use guanxiang_core::{stars, AniseEphemeris, Body, DateTime, Observer, Time};
 
 use crate::frb_generated::StreamSink;
 
@@ -80,6 +81,7 @@ pub enum EventKind {
     Appulse,
     SolarEclipse,
     LunarEclipse,
+    Occultation,
 }
 
 /// 测站与可见性条件。
@@ -525,6 +527,102 @@ fn search_span(
                     summary: format!("本影食分 {:.3}", e.umbral_magnitude),
                     details,
                 });
+            }
+        }
+        EventKind::Occultation => {
+            const PLANETS: [Body; 7] = [
+                Body::Mercury,
+                Body::Venus,
+                Body::Mars,
+                Body::Jupiter,
+                Body::Saturn,
+                Body::Uranus,
+                Body::Neptune,
+            ];
+            let key = req.body_a.trim();
+            let mut cands = Vec::new();
+            if matches!(key, "planets" | "all") {
+                for p in PLANETS {
+                    cands.extend(occultation::candidates(eph, Target::Planet(p), span)?);
+                }
+            }
+            if matches!(key, "stars" | "all") {
+                cands.extend(occultation::candidates_all_stars(eph, span)?);
+            }
+            if !matches!(key, "planets" | "stars" | "all") {
+                let target = match key.parse::<Body>() {
+                    Ok(b) => Target::Planet(b),
+                    Err(_) => Target::Star(
+                        stars::find(key).ok_or_else(|| anyhow::anyhow!("星表中找不到 {key}"))?,
+                    ),
+                };
+                cands.extend(occultation::candidates(eph, target, span)?);
+            }
+            cands.sort_by(|a, b| a.time.tt_seconds().total_cmp(&b.time.tt_seconds()));
+            let mag = |t: &Target| match t {
+                Target::Star(s) => format!("{:.1} 等", s.vmag),
+                Target::Planet(_) => "行星".to_string(),
+            };
+            for c in cands {
+                let label = c.target.label();
+                match filter {
+                    None => out.push(EventItem {
+                        kind: EventKind::Occultation,
+                        title: format!("月掩{label}（地心候选）"),
+                        utc: utc(&c.time),
+                        tt_jd: c.time.tt_jd(),
+                        summary: format!(
+                            "地心角距 {:.3}°，{}",
+                            c.separation.to_degrees(),
+                            mag(&c.target)
+                        ),
+                        details: vec![
+                            detail("地心最近（UTC）", utc(&c.time)),
+                            detail("地心几何角距", format!("{:.3}°", c.separation.to_degrees())),
+                            detail("说明", "打开“只显示本地可见”可得到某地的掩始、掩终".into()),
+                        ],
+                    }),
+                    Some(f) => {
+                        let Some(o) = occultation::local(eph, &c, &f.observer, None)? else {
+                            continue;
+                        };
+                        if !o.moon_above_horizon() {
+                            continue;
+                        }
+                        let daytime = o.sun_altitude_deg.iter().all(|&h| h > -6.0);
+                        out.push(EventItem {
+                            kind: EventKind::Occultation,
+                            title: format!("月掩{label}"),
+                            utc: utc(&o.disappearance),
+                            tt_jd: o.disappearance.tt_jd(),
+                            summary: format!(
+                                "掩终 {}，{}{}",
+                                &utc(&o.reappearance)[11..],
+                                mag(&o.target),
+                                if daytime { "，白天" } else { "" }
+                            ),
+                            details: vec![
+                                detail("掩始（UTC）", utc(&o.disappearance)),
+                                detail("掩终（UTC）", utc(&o.reappearance)),
+                                detail("最近（UTC）", utc(&o.closest)),
+                                detail(
+                                    "月亮高度（掩始/掩终）",
+                                    format!(
+                                        "{:.0}° / {:.0}°",
+                                        o.moon_altitude_deg[0], o.moon_altitude_deg[1]
+                                    ),
+                                ),
+                                detail(
+                                    "太阳高度（掩始/掩终）",
+                                    format!(
+                                        "{:.0}° / {:.0}°",
+                                        o.sun_altitude_deg[0], o.sun_altitude_deg[1]
+                                    ),
+                                ),
+                            ],
+                        });
+                    }
+                }
             }
         }
     }

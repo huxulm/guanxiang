@@ -13,7 +13,7 @@
 
 use std::f64::consts::TAU;
 
-use sofars::astro::{ab, ld, pvtob};
+use sofars::astro::{ab, ld, ldsun, pvtob};
 use sofars::coords::hd2ae;
 use sofars::erst::era00;
 use sofars::pnp::{c2i06a, pnm06a, sp00};
@@ -24,6 +24,7 @@ use crate::ephemeris::Ephemeris;
 use crate::error::{Error, Result};
 use crate::geometry::Vec3;
 use crate::observer::Observer;
+use crate::stars::Star;
 use crate::time::Time;
 
 /// 光速（km/s）
@@ -158,6 +159,19 @@ pub fn direction_pair_from(
     Ok((state.direction(eph, a)?, state.direction(eph, b)?))
 }
 
+/// 同一时刻、同一观测者看恒星和某个天体的视方向（恒星只返回单位向量）。
+pub fn star_and_body_from(
+    eph: &dyn Ephemeris,
+    star: &Star,
+    body: Body,
+    t: &Time,
+    geo_pos: Vec3,
+    geo_vel: Vec3,
+) -> Result<(Vec3, Direction)> {
+    let state = ObserverState::new(eph, t, geo_pos, geo_vel)?;
+    Ok((state.star(star), state.direction(eph, body)?))
+}
+
 /// 视方向（GCRS 轴，未做岁差章动）。事件搜索在精修阶段反复调用它，
 /// 岁差章动矩阵由调用方按需计算一次后复用。
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -236,6 +250,21 @@ impl ObserverState {
             obs_vel: earth_vel + geo_vel,
             sun_now: eph.position(Body::Sun, ssb, tdb)?,
         })
+    }
+
+    /// 恒星的视方向：自行、视差、太阳引力偏折、光行差。
+    fn star(&self, star: &Star) -> Vec3 {
+        let u = star.barycentric_direction(self.tdb);
+        let p = match star.distance_km() {
+            Some(d) => (u * d - self.obs_pos).unit(),
+            None => u,
+        };
+        let sun_to_obs = self.obs_pos - self.sun_now;
+        let em = sun_to_obs.norm() / AU_KM;
+        let deflected = ldsun(p.into(), sun_to_obs.unit().into(), em);
+        let v = self.obs_vel * (1.0 / C_KM_S);
+        let bm1 = (1.0 - v.dot(v)).sqrt();
+        Vec3::from(ab(&deflected, &v.into(), em, bm1))
     }
 
     fn direction(&self, eph: &dyn Ephemeris, body: Body) -> Result<Direction> {

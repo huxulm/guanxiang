@@ -109,6 +109,7 @@ enum EventKind {
   appulse,
   solarEclipse,
   lunarEclipse,
+  occultation,
 }
 
 /// 测站与可见性条件。

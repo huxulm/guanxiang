@@ -475,6 +475,7 @@ impl SseDecode for crate::api::guanxiang::EventKind {
             3 => crate::api::guanxiang::EventKind::Appulse,
             4 => crate::api::guanxiang::EventKind::SolarEclipse,
             5 => crate::api::guanxiang::EventKind::LunarEclipse,
+            6 => crate::api::guanxiang::EventKind::Occultation,
             _ => unreachable!("Invalid variant for EventKind: {}", inner),
         };
     }
@@ -778,6 +779,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::EventKind {
             Self::Appulse => 3.into_dart(),
             Self::SolarEclipse => 4.into_dart(),
             Self::LunarEclipse => 5.into_dart(),
+            Self::Occultation => 6.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -989,6 +991,7 @@ impl SseEncode for crate::api::guanxiang::EventKind {
                 crate::api::guanxiang::EventKind::Appulse => 3,
                 crate::api::guanxiang::EventKind::SolarEclipse => 4,
                 crate::api::guanxiang::EventKind::LunarEclipse => 5,
+                crate::api::guanxiang::EventKind::Occultation => 6,
                 _ => {
                     unimplemented!("");
                 }

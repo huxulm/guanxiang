@@ -98,6 +98,22 @@ void main() {
     expect(beijing.single.summary, startsWith('本地全食'));
   });
 
+  test('月掩星：2026 年心宿二地心候选 13 次', () async {
+    final updates = await search(
+      engine: engine,
+      request: const SearchRequest(
+        kind: EventKind.occultation,
+        bodyA: '心宿二',
+        bodyB: '',
+        fromYear: 2026,
+        toYear: 2027,
+        maxSeparationDeg: 0,
+      ),
+      token: CancelToken(),
+    ).toList();
+    expect(updates.where((u) => u.kind == UpdateKind.found).length, 13);
+  });
+
   test('取消后提前结束', () async {
     final token = CancelToken();
     var progressCount = 0;

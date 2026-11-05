@@ -15,6 +15,10 @@ pub mod events;
 pub mod geometry;
 pub mod observer;
 pub mod search;
+pub mod stars;
+#[allow(clippy::approx_constant)] // 表中的 6.28、3.14 等是观测数据
+#[rustfmt::skip]
+mod stars_table;
 pub mod time;
 
 pub use astrometry::{Equatorial, Horizontal, Place, TopocentricPlace};

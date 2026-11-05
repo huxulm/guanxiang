@@ -12,7 +12,23 @@ const _kindLabels = {
   EventKind.appulse: '角距极小',
   EventKind.solarEclipse: '日食',
   EventKind.lunarEclipse: '月食',
+  EventKind.occultation: '月掩星',
 };
+
+const _occultationTargets = [
+  Detail(label: 'all', value: '全部（行星和 550 颗亮星）'),
+  Detail(label: 'planets', value: '全部行星'),
+  Detail(label: 'stars', value: '全部亮星'),
+  Detail(label: '角宿一', value: '角宿一'),
+  Detail(label: '心宿二', value: '心宿二'),
+  Detail(label: '轩辕十四', value: '轩辕十四'),
+  Detail(label: '毕宿五', value: '毕宿五'),
+  Detail(label: '昴宿六', value: '昴宿六（昴星团）'),
+  Detail(label: 'venus', value: '金星'),
+  Detail(label: 'mars', value: '火星'),
+  Detail(label: 'jupiter', value: '木星'),
+  Detail(label: 'saturn', value: '土星'),
+];
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key, required this.engine, required this.loadMs});
@@ -35,6 +51,7 @@ class _SearchPageState extends State<SearchPage> {
 
   EventKind _kind = EventKind.transit;
   String _transitPlanet = '';
+  String _occultationTarget = 'all';
   String _bodyA = 'venus';
   String _bodyB = 'sun';
   bool _local = false;
@@ -93,7 +110,9 @@ class _SearchPageState extends State<SearchPage> {
     final isTransit = _kind == EventKind.transit;
     final request = SearchRequest(
       kind: _kind,
-      bodyA: isTransit ? _transitPlanet : _bodyA,
+      bodyA: isTransit
+          ? _transitPlanet
+          : (_kind == EventKind.occultation ? _occultationTarget : _bodyA),
       bodyB: isTransit ? '' : _bodyB,
       fromYear: from,
       toYear: to,
@@ -172,6 +191,13 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _form() {
     final bodies = switch (_kind) {
+      EventKind.occultation => [
+          Expanded(
+            child: _bodyDropdown('被掩目标', _occultationTarget,
+                (v) => setState(() => _occultationTarget = v),
+                options: _occultationTargets),
+          ),
+        ],
       EventKind.solarEclipse || EventKind.lunarEclipse => <Widget>[
           const Expanded(child: Text('日月食按地心计算；打开“只显示本地可见”可得到本地情况')),
         ],

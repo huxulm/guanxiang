@@ -13,6 +13,7 @@ pub mod catalog;
 pub mod local_eclipse;
 pub mod longitude;
 pub mod lunar_eclipse;
+pub mod occultation;
 pub mod separation;
 pub mod solar_eclipse;
 pub mod transit;

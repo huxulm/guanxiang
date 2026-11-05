@@ -27,6 +27,7 @@
 | 手机上的搜索速度 | 未验证。桌面实测见 M1、M2 记录；按经验推算，月球相关的 100 年搜索在手机上可能超过 1 秒 |
 | GitLab CI | gitlab.xao.ac.cn/xulingming/guanxiang，fmt、clippy、android-deps、test 全部通过。runner 无外网，de440s 由本项目 Generic Package Registry 提供 |
 | M4 日月食 | 全球与本地情况、1900–2100 星表、CLI `eclipse`、App 支持已完成；与 NASA 21 世纪星表逐条一致 |
+| M5 月掩星 | 月掩行星和 550 颗亮星、本地掩始掩终、CLI `occultation`、App 支持已完成；92 次事件与 Skyfield 相差 ≤ 0.003 秒 |
 | Flutter 应用（M3） | `app/` 已创建并接入 flutter_rust_bridge 2.13；搜索、进度、取消、详情页可用。**Android 模拟器**（Android 15，16 KB 页）上集成测试全部通过；**Windows 桌面**待开启开发者模式；**Linux 桌面**待准备 Linux 工具链；**Android 真机**未测 |
 
 ## 3. 关键技术决策
@@ -65,7 +66,8 @@ guanxiang-core
   ├─ astrometry               视位置、站心位置、地平坐标、大气折射
   ├─ observer                 测站（WGS84）
   ├─ search                   通用极小值与求根（Brent）
-  ├─ events                   合冲、角距极小、凌日、日月食（全球与本地）、可见性、星表格式；掩星（M5）
+  ├─ stars                    月掩星用的精简星表（Hipparcos，550 颗）
+  ├─ events                   合冲、角距极小、凌日、日月食（全球与本地）、月掩星、可见性、星表格式
   └─ transit（M6）             SGP4、地面中心线、窄带判定
 
 guanxiang-cli                 调试、验证、生成预计算星表
@@ -215,11 +217,19 @@ guanxiang/
 
 ### M5 月掩星（1.5 周）
 
-- [ ] 月掩行星（站心计算）
-- [ ] 精简星表和自行修正
-- [ ] 本地掩始、掩终时刻
+- [x] 月掩行星（站心计算），也支持月掩恒星
+- [x] 精简星表和自行修正：Hipparcos V < 6.0、黄纬 |β| < 6.6° 共 550 颗（`stars` 模块），自行线性外推，含视差
+- [x] 本地掩始、掩终时刻，及月亮、太阳高度
+- [x] 全星表批量候选搜索（月球位置每步只算一次）；CLI `guanxiang occultation`；App 支持
 
-**验收：** 随机抽取至少 20 个已知事件，时刻与权威预报或 Skyfield 的差 ≤ 5 秒。
+**验收：** 随机抽取至少 20 个已知事件，时刻与权威预报或 Skyfield 的差 ≤ 5 秒。——**通过**：2024–2030 年 3 个测站、4 颗亮星和 4 颗行星共 92 次掩星，掩始、掩终与 Skyfield 的差 ≤ 0.003 秒；用本库 ΔT 模型时每组次数与 Skyfield 相同。
+
+**M5 记录：**
+
+- 掩始、掩终定义为月面边缘（k = 0.2725076）经过目标中心，站心视位置。行星圆面的外切、内切和掠掩（月面地形）还没做。
+- 星表来源：CDS（VizieR、cdsarc）从本机访问超时，改用 NASA HEASARC 上的 Hipparcos 主星表（内容与 CDS I/239 相同）。生成脚本 `tools/stars/gen_occultation_stars.py`。
+- 对照数据用 Skyfield 独立求解（`tools/skyfield/gen_occultations.py`），恒星参数从本库星表读取，每个事件记录 Skyfield 的 ΔT。毕宿五 2023 年后一轮掩星结束，2024–2030 年 0 次，符合实际。
+- 桌面上搜索北京 2026 年全部行星和 550 颗亮星的月掩星：109 次，0.9 秒。
 
 ### M6 卫星凌月（3 周）
 
@@ -256,6 +266,7 @@ guanxiang/
 | 视位置（IAU 2006/2000A） | Skyfield（同一份 de440s） |
 | 坐标和时间尺度 | SOFA 官方测试值，`../SuperNOVAS` 可作为另一份参考 |
 | 事件完整性 | NASA 日月食和凌日星表 |
+| 月掩星 | Skyfield（同一星表参数，独立求解） |
 | 卫星凌月 | transit-finder、实际观测 |
 
 - 对照数据固定保存在测试夹具中，CI 不依赖外部网络。de440s 存放在本项目的 Generic Package Registry（`ephemeris/de440/de440s.bsp`），CI 用 job token 下载并校验 SHA-256；CI 中星历测试不允许被跳过。
@@ -295,4 +306,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M5 月掩星。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
+下一步：M6 卫星凌月。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。

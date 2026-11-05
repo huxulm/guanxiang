@@ -1,4 +1,5 @@
 mod eclipse;
+mod occultation;
 mod search;
 
 use std::path::PathBuf;
@@ -62,6 +63,8 @@ enum Command {
     Search(search::SearchArgs),
     /// 日月食（全球情况、本地情况、生成预计算星表）
     Eclipse(eclipse::EclipseArgs),
+    /// 月掩星（行星、亮星）
+    Occultation(occultation::OccultationArgs),
 }
 
 fn main() -> ExitCode {
@@ -80,6 +83,7 @@ fn run(cli: Cli) -> guanxiang_core::Result<()> {
     match cli.command {
         Command::Search(args) => search::run(&eph, &args)?,
         Command::Eclipse(args) => eclipse::run(&eph, &args)?,
+        Command::Occultation(args) => occultation::run(&eph, &args)?,
         Command::Info => {
             println!("星历：{}", cli.ephem.display());
             for b in Body::ALL {
