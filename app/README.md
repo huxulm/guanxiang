@@ -30,6 +30,17 @@ flutter test                              # 主机上的单元测试（CelesTrak
 
 debug 包请用 `flutter run` 启动；直接在设备上点开 debug 包会停在启动画面。
 
+## Android 发布
+
+```sh
+flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64
+```
+
+- 签名配置在 `android/key.properties`（不进 Git），指向仓库外的上传密钥 `~/.android/guanxiang-upload.jks`（别名 `upload`，RSA 4096，有效期 10000 天）。**密钥文件和 key.properties 里的密码务必另行备份**，丢失后无法再发布同一应用的更新。
+- 没有 key.properties 时 release 包退回调试签名，只能自己测试。
+- 版本号在 `pubspec.yaml` 的 `version`；分 ABI 打包时 versionCode 自动加 1000 × ABI 序号。
+- 校验：`apksigner verify --print-certs <apk>`、`zipalign -c -P 16 4 <apk>`（16 KB 页对齐）。
+
 ## 卫星
 
 - 根数从 CelesTrak 下载（`lib/src/celestrak.dart`），缓存在应用支持目录的 `omm/` 下。同一颗卫星 2 小时内只请求一次；任何非 200 响应后本次运行不再请求，并暂停 2 小时。

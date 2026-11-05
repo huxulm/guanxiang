@@ -271,7 +271,8 @@ guanxiang/
 
 - [x] 确定星历裁剪范围和安装包大小：内置 de440s 的 1899-12 至 2101-02 部分（22 MB），arm64 release 包 49.0 → 39.2 MB；真机性能待测
 - [x] 中英文界面、错误提示（离线时：根数用缓存并说明原因，地图底图空白、数据照常显示）
-- [ ] Windows 和 Linux 安装包，Android 发布版
+- [x] Android 发布版：上传密钥签名（密钥在仓库外，配置在不进 Git 的 `android/key.properties`），版本 0.1.0；arm64 包 39.7 MB，16 KB 对齐
+- [ ] Windows 和 Linux 安装包（需先开启 Windows 开发者模式、安装 Linux 桌面工具链）
 - [x] 第三方许可声明，包括 SOFA 致谢（“关于与许可”页）
 - [x] 确认 CelesTrak 数据使用方式（已符合其使用政策）；用户量较大时增加缓存服务 —— 以后再说
 - [x] 确认 OpenStreetMap 瓦片使用政策，并按政策设置

@@ -1,8 +1,18 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
+
+// 发布签名：android/key.properties（不进 Git，见 app/README.md）。没有这个文件时 release 包
+// 退回调试签名，只能自己测试，不能发布。
+val keyProperties = Properties().apply {
+    val f = rootProject.file("key.properties")
+    if (f.exists()) f.inputStream().use { load(it) }
+}
+val hasReleaseKey = keyProperties.getProperty("storeFile") != null
 
 android {
     namespace = "cn.ac.xao.guanxiang"
@@ -16,7 +26,6 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "cn.ac.xao.guanxiang"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
@@ -30,11 +39,25 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasReleaseKey) {
+            create("release") {
+                storeFile = file(keyProperties.getProperty("storeFile"))
+                storePassword = keyProperties.getProperty("storePassword")
+                keyAlias = keyProperties.getProperty("keyAlias")
+                keyPassword = keyProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (hasReleaseKey) {
+                signingConfigs.getByName("release")
+            } else {
+                logger.warn("没有 android/key.properties，release 包使用调试签名（不能发布）")
+                signingConfigs.getByName("debug")
+            }
         }
     }
 }
