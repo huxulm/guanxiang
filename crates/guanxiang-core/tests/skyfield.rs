@@ -98,3 +98,120 @@ fn topocentric_matches_skyfield() {
         table.max("距离km")
     );
 }
+
+/// 合、冲时刻与 Skyfield 对比（M2 验收：≤ 5 秒），并检查数量一一对应。
+#[test]
+fn longitude_events_match_skyfield() {
+    use guanxiang_core::events::Span;
+    use guanxiang_core::events::longitude::{self, Aspect};
+    use std::collections::BTreeMap;
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("skyfield", "longitude_events.csv");
+
+    // (kind, a, b) → Skyfield 时刻（TT 儒略日）
+    let mut groups: BTreeMap<(String, String, String), Vec<f64>> = BTreeMap::new();
+    for r in &rows {
+        groups
+            .entry((r[0].clone(), r[1].clone(), r[2].clone()))
+            .or_default()
+            .push(num(&r[3]));
+    }
+
+    let mut table = MaxTable::new(&["时刻差 s"]);
+    for ((kind, a, b), expected) in &groups {
+        let (a_body, b_body): (Body, Body) = (a.parse().unwrap(), b.parse().unwrap());
+        let aspect = if kind == "conjunction" {
+            Aspect::Conjunction
+        } else {
+            Aspect::Opposition
+        };
+        let (from, to) = if a == "moon" {
+            (2_460_310.5, 2_461_771.5)
+        } else {
+            (2_451_544.5, 2_488_069.5)
+        };
+        let span = Span::new(Time::from_tt_jd(from), Time::from_tt_jd(to)).unwrap();
+        let step = longitude::default_step_days(a_body, b_body);
+        let found = longitude::search(&eph, a_body, b_body, aspect, span, step).unwrap();
+        let group = format!("{kind} {a}-{b}");
+        assert_eq!(found.len(), expected.len(), "{group}：数量不同");
+        for (ev, jd) in found.iter().zip(expected) {
+            let dt = (ev.time.tt_jd() - jd) * 86_400.0;
+            table.add(&group, &[dt]);
+        }
+    }
+    table.print("合、冲时刻，对比 Skyfield");
+    assert!(
+        table.max("时刻差 s") <= 5.0,
+        "时刻差 {:.3} s",
+        table.max("时刻差 s")
+    );
+}
+
+/// 凌甚时刻和最小角距与 Skyfield 对比。
+#[test]
+fn transits_match_skyfield() {
+    use guanxiang_core::events::{Span, transit};
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("skyfield", "transits.csv");
+    let span = Span::new(Time::from_tt_jd(2_451_910.5), Time::from_tt_jd(2_488_434.5)).unwrap(); // 2001–2100
+    let mut found = transit::search(&eph, Body::Mercury, span).unwrap();
+    found.extend(transit::search(&eph, Body::Venus, span).unwrap());
+    assert_eq!(found.len(), rows.len());
+
+    let mut table = MaxTable::new(&["凌甚差 s", "角距差″"]);
+    for r in &rows {
+        let jd = num(&r[1]);
+        let t = found
+            .iter()
+            .min_by(|x, y| {
+                (x.greatest.tt_jd() - jd)
+                    .abs()
+                    .total_cmp(&(y.greatest.tt_jd() - jd).abs())
+            })
+            .unwrap();
+        table.add(
+            &r[0],
+            &[
+                (t.greatest.tt_jd() - jd) * 86_400.0,
+                t.min_separation.to_degrees() * ARCSEC_PER_DEG - num(&r[2]),
+            ],
+        );
+    }
+    table.print("凌甚，对比 Skyfield");
+    assert!(table.max("凌甚差 s") <= 5.0);
+    assert!(table.max("角距差″") <= 0.01);
+}
+
+/// 角距极小与 Skyfield 对比：数量一致，时刻差 ≤ 5 秒（实际为毫秒级），角距差 ≤ 0.01″。
+#[test]
+fn separation_minima_match_skyfield() {
+    use guanxiang_core::events::{Span, separation};
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("skyfield", "separation_minima.csv");
+    let span = Span::new(Time::from_tt_jd(2_460_310.5), Time::from_tt_jd(2_461_406.5)).unwrap(); // 2024–2026
+
+    let mut table = MaxTable::new(&["时刻差 s", "角距差″"]);
+    for name in ["venus", "saturn"] {
+        let b: Body = name.parse().unwrap();
+        let expected: Vec<&Vec<String>> = rows.iter().filter(|r| r[1] == name).collect();
+        let step = separation::default_step_days(Body::Moon, b);
+        let found = separation::search(&eph, Body::Moon, b, span, step, 5f64.to_radians()).unwrap();
+        assert_eq!(found.len(), expected.len(), "moon-{name} 数量");
+        for (m, r) in found.iter().zip(&expected) {
+            table.add(
+                &format!("moon-{name}"),
+                &[
+                    (m.time.tt_jd() - num(&r[2])) * 86_400.0,
+                    (m.separation.to_degrees() - num(&r[3])) * ARCSEC_PER_DEG,
+                ],
+            );
+        }
+    }
+    table.print("角距极小，对比 Skyfield");
+    assert!(table.max("时刻差 s") <= 5.0);
+    assert!(table.max("角距差″") <= 0.01);
+}

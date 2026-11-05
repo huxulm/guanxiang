@@ -134,72 +134,144 @@ pub fn topocentric(
     })
 }
 
+/// 视方向（GCRS 轴，未做岁差章动）。事件搜索在精修阶段反复调用它，
+/// 岁差章动矩阵由调用方按需计算一次后复用。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Direction {
+    /// 视方向单位向量（含偏折和光行差）
+    pub apparent: Vec3,
+    /// 天体测量方向单位向量（只改正光行时，ICRF）
+    pub astrometric: Vec3,
+    /// 光行时修正后的距离（km）
+    pub distance_km: f64,
+    /// 光行时（秒）
+    pub light_time_s: f64,
+}
+
+/// 地心视方向。
+pub fn geocentric_direction(eph: &dyn Ephemeris, body: Body, t: &Time) -> Result<Direction> {
+    direction(eph, body, t, Vec3::ZERO, Vec3::ZERO)
+}
+
+/// 同一时刻两个天体的地心视方向（共用地球和太阳的状态，比分别调用少查几次星历）。
+pub fn geocentric_direction_pair(
+    eph: &dyn Ephemeris,
+    a: Body,
+    b: Body,
+    t: &Time,
+) -> Result<(Direction, Direction)> {
+    let state = ObserverState::new(eph, t, Vec3::ZERO, Vec3::ZERO)?;
+    Ok((state.direction(eph, a)?, state.direction(eph, b)?))
+}
+
 /// `geo_pos`、`geo_vel` 为观测者相对地心的 GCRS 位置（km）和速度（km/s）。
 fn place(eph: &dyn Ephemeris, body: Body, t: &Time, geo_pos: Vec3, geo_vel: Vec3) -> Result<Place> {
-    if matches!(body, Body::Earth | Body::SolarSystemBarycenter) {
-        return Err(Error::Unsupported("不能从地球上观测这个目标"));
-    }
-    let ssb = Body::SolarSystemBarycenter;
-    let tdb = t.tdb();
-
-    let (earth_pos, earth_vel) = eph.state(Body::Earth, ssb, tdb)?;
-    let obs_pos = earth_pos + geo_pos;
-    let obs_vel = earth_vel + geo_vel;
-
-    // 光行时迭代
-    let mut tau = 0.0;
-    let mut target = eph.position(body, ssb, tdb)?;
-    for _ in 0..10 {
-        let new_tau = (target - obs_pos).norm() / C_KM_S;
-        let done = (new_tau - tau).abs() < 1e-9;
-        tau = new_tau;
-        target = eph.position(body, ssb, tdb.add_seconds(-tau))?;
-        if done {
-            break;
-        }
-    }
-    let p = target - obs_pos;
-    let distance_km = p.norm();
-    let p_unit = p.unit();
-
-    // 太阳引力偏折
-    let sun_now = eph.position(Body::Sun, ssb, tdb)?;
-    let sun_to_obs = obs_pos - sun_now;
-    let em = sun_to_obs.norm() / AU_KM;
-    let deflected: [f64; 3] = if body == Body::Sun {
-        p_unit.into()
-    } else {
-        let sun_then = eph.position(Body::Sun, ssb, tdb.add_seconds(-tau))?;
-        let q = (target - sun_then).unit();
-        let dlim = 1e-6 / em.max(1.0).powi(2);
-        ld(
-            1.0,
-            p_unit.into(),
-            q.into(),
-            sun_to_obs.unit().into(),
-            em,
-            dlim,
-        )
-    };
-
-    // 光行差
-    let v = obs_vel * (1.0 / C_KM_S);
-    let bm1 = (1.0 - v.dot(v)).sqrt();
-    let aberrated = ab(&deflected, &v.into(), em, bm1);
+    let d = direction(eph, body, t, geo_pos, geo_vel)?;
 
     // 岁差章动（含框架偏差）
     let (tta, ttb) = t.tt_jd_parts();
     let rbpn = pnm06a(tta, ttb);
     let mut of_date = [0.0; 3];
-    rxp(&rbpn, &aberrated, &mut of_date);
+    rxp(&rbpn, &d.apparent.into(), &mut of_date);
 
     Ok(Place {
-        astrometric: Equatorial::from_vector(p_unit.into()),
+        astrometric: Equatorial::from_vector(d.astrometric.into()),
         apparent: Equatorial::from_vector(of_date),
-        apparent_gcrs: Vec3::from(aberrated),
-        distance_km,
-        light_time_s: tau,
+        apparent_gcrs: d.apparent,
+        distance_km: d.distance_km,
+        light_time_s: d.light_time_s,
     })
+}
+
+fn direction(
+    eph: &dyn Ephemeris,
+    body: Body,
+    t: &Time,
+    geo_pos: Vec3,
+    geo_vel: Vec3,
+) -> Result<Direction> {
+    ObserverState::new(eph, t, geo_pos, geo_vel)?.direction(eph, body)
+}
+
+/// 观测时刻的观测者和太阳状态（BCRS）。
+struct ObserverState {
+    tdb: crate::time::Tdb,
+    obs_pos: Vec3,
+    obs_vel: Vec3,
+    sun_now: Vec3,
+}
+
+impl ObserverState {
+    fn new(eph: &dyn Ephemeris, t: &Time, geo_pos: Vec3, geo_vel: Vec3) -> Result<Self> {
+        let ssb = Body::SolarSystemBarycenter;
+        let tdb = t.tdb();
+        let (earth_pos, earth_vel) = eph.state(Body::Earth, ssb, tdb)?;
+        Ok(Self {
+            tdb,
+            obs_pos: earth_pos + geo_pos,
+            obs_vel: earth_vel + geo_vel,
+            sun_now: eph.position(Body::Sun, ssb, tdb)?,
+        })
+    }
+
+    fn direction(&self, eph: &dyn Ephemeris, body: Body) -> Result<Direction> {
+        if matches!(body, Body::Earth | Body::SolarSystemBarycenter) {
+            return Err(Error::Unsupported("不能从地球上观测这个目标"));
+        }
+        let ssb = Body::SolarSystemBarycenter;
+        let (tdb, obs_pos, obs_vel) = (self.tdb, self.obs_pos, self.obs_vel);
+
+        // 光行时迭代（太阳的当前位置已知，可省一次查询）
+        let mut tau = 0.0;
+        let mut target = if body == Body::Sun {
+            self.sun_now
+        } else {
+            eph.position(body, ssb, tdb)?
+        };
+        for _ in 0..10 {
+            let new_tau = (target - obs_pos).norm() / C_KM_S;
+            let done = (new_tau - tau).abs() < 1e-9;
+            tau = new_tau;
+            target = eph.position(body, ssb, tdb.add_seconds(-tau))?;
+            if done {
+                break;
+            }
+        }
+        let p = target - obs_pos;
+        let distance_km = p.norm();
+        let p_unit = p.unit();
+
+        // 太阳引力偏折
+        let sun_to_obs = obs_pos - self.sun_now;
+        let em = sun_to_obs.norm() / AU_KM;
+        let deflected: [f64; 3] = if body == Body::Sun {
+            p_unit.into()
+        } else {
+            let sun_then = eph.position(Body::Sun, ssb, tdb.add_seconds(-tau))?;
+            let q = (target - sun_then).unit();
+            let dlim = 1e-6 / em.max(1.0).powi(2);
+            ld(
+                1.0,
+                p_unit.into(),
+                q.into(),
+                sun_to_obs.unit().into(),
+                em,
+                dlim,
+            )
+        };
+
+        // 光行差
+        let v = obs_vel * (1.0 / C_KM_S);
+        let bm1 = (1.0 - v.dot(v)).sqrt();
+        let aberrated = ab(&deflected, &v.into(), em, bm1);
+
+        Ok(Direction {
+            apparent: Vec3::from(aberrated),
+            astrometric: p_unit,
+            distance_km,
+            light_time_s: tau,
+        })
+    }
 }
 
 /// 大气折射（弧度），Sæmundsson 公式（Meeus《天文算法》16.4）。

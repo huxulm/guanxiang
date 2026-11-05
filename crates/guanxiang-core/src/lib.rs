@@ -11,6 +11,7 @@ pub mod delta_t;
 mod delta_t_table;
 pub mod ephemeris;
 pub mod error;
+pub mod events;
 pub mod geometry;
 pub mod observer;
 pub mod search;

@@ -1,3 +1,5 @@
+mod search;
+
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -55,6 +57,8 @@ enum Command {
         #[arg(long, default_value_t = 10.0)]
         temperature: f64,
     },
+    /// 搜索合、冲、角距极小、凌日
+    Search(search::SearchArgs),
 }
 
 fn main() -> ExitCode {
@@ -71,6 +75,7 @@ fn main() -> ExitCode {
 fn run(cli: Cli) -> guanxiang_core::Result<()> {
     let eph = AniseEphemeris::from_path(&cli.ephem)?;
     match cli.command {
+        Command::Search(args) => search::run(&eph, &args)?,
         Command::Info => {
             println!("星历：{}", cli.ephem.display());
             for b in Body::ALL {

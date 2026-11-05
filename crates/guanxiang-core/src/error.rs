@@ -26,6 +26,9 @@ pub enum Error {
     #[error("无法计算：{0}")]
     Unsupported(&'static str),
 
+    #[error("星表格式错误：{0}")]
+    Catalog(String),
+
     #[error("搜索区间无效：{0}")]
     InvalidBracket(&'static str),
 }
