@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import 'rust/api/guanxiang.dart';
 
 class EventDetailPage extends StatelessWidget {
@@ -33,7 +34,8 @@ class EventDetailPage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            '时刻为地心计算，UTC。TT 儒略日 ${event.ttJd.toStringAsFixed(6)}。',
+            AppLocalizations.of(context)
+                .detailFooter(event.ttJd.toStringAsFixed(6)),
             style: theme.textTheme.bodySmall,
           ),
         ],

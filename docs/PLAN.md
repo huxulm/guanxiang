@@ -270,7 +270,7 @@ guanxiang/
 ### M7 发布（2 周）
 
 - [x] 确定星历裁剪范围和安装包大小：内置 de440s 的 1899-12 至 2101-02 部分（22 MB），arm64 release 包 49.0 → 39.2 MB；真机性能待测
-- [ ] 中英文界面、错误提示、离线状态
+- [x] 中英文界面、错误提示（离线时：根数用缓存并说明原因，地图底图空白、数据照常显示）
 - [ ] Windows 和 Linux 安装包，Android 发布版
 - [x] 第三方许可声明，包括 SOFA 致谢（“关于与许可”页）
 - [x] 确认 CelesTrak 数据使用方式（已符合其使用政策）；用户量较大时增加缓存服务 —— 以后再说
@@ -286,6 +286,7 @@ guanxiang/
 - 许可声明：Flutter 自动收集 Dart 包和引擎的许可证；Rust 依赖由 `tools/licenses/gen_rust_notices.py` 从 `cargo metadata` 收集（Android、Windows、Linux 的运行时依赖，117 个 crate，相同文本合并），写成 `app/assets/licenses/rust.txt`，在应用里注册到 `LicenseRegistry`。anise 没有附带许可证文件，使用 hifitime 的 MPL-2.0 文本，并写明两个 MPL 组件的源码地址。另加“算法与数据来源”一条：DE440、SOFA（声明不是 SOFA 官方软件）、USNO/IERS ΔT、Hipparcos、CelesTrak、SGP4、OpenStreetMap。依赖变化后要重新运行脚本。
 - CelesTrak 使用政策（celestrak.org/usage-policy.php）：每份数据每次更新只下载一次（GP 数据约 2 小时更新），收到任何非 200 响应立即停止请求，否则 IP 会被封。现有实现符合。用户共用一个出口 IP（NAT）时可能一起被限，用户量大时考虑自建缓存。
 - 错误提示：Rust 的 `anyhow` 错误到 Dart 是 `AnyhowException`，`describeError` 只保留第一段（去掉原因链和调用栈）；网络错误、超时单独说明。搜索前按星历覆盖范围检查年份（1900–2100），超出时直接提示，不再进入 Rust。
+- 中英文界面：Flutter `gen-l10n`（`lib/l10n/app_zh.arb` 为模板，`app_en.arb` 为英文），跟随系统语言，既不是中文也不是英文时用英文。事件标题、详情等由 Rust 桥接层生成，`SearchRequest.lang`、`satellite_transits(lang)`、`body_names(lang)`、`sun_safety_notice(lang)` 按语言输出；有中文名的 18 颗恒星在桥接层另有英文名（单元测试保证一一对应）。core 内部的错误信息目前只有中文。CelesTrak 刷新结果、年份校验改为返回状态，由界面按语言生成文字（后台任务没有界面上下文）。单元测试检查中英文 ARB 的键一致。
 - 恒星中文名更正：“氐宿一”原误标在 HIP 76333（γ Lib）上，改为 HIP 72622（α² Lib）；“毕宿四”原误标在 HIP 20889（ε Tau）上，改为 HIP 20205（γ Tau）；“毕宿六”（HIP 20894，θ² Tau）未能核实，暂去掉名字，显示为 HIP 编号。其余 16 个名字与西名一致。以后增加星名时应对照权威的中西星名对照表。
 - OSM 瓦片政策（operations.osmfoundation.org/policies/tiles）：用本应用自己的 User-Agent（与 CelesTrak 请求相同）；每块瓦片至少缓存 7 天（flutter_map 内置缓存，上限 200 MB）；地图右下角显示来源；不做离线或批量下载。瓦片地址集中在 `sat_transit_page.dart` 的 `tileUrlTemplate`，用量大时换自建或商业瓦片。
 
@@ -339,4 +340,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M7 剩余部分（中英文界面、错误提示、离线状态、年份范围校验，Android 发布签名）。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
+下一步：M7 剩余部分（Android 发布签名与版本号；Windows、Linux 安装包需先开启开发者模式和安装 Linux 工具链）。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。

@@ -5,10 +5,19 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import '../l10n/app_localizations.dart';
 import 'errors.dart';
 
-/// 默认关注的卫星：NORAD 编号 → 中文名。
-const defaultSatellites = {25544: '国际空间站', 48274: '天宫空间站'};
+/// 默认关注的卫星：NORAD 编号 → 内部名称（界面上按语言显示，见 [satelliteDisplayName]）。
+const defaultSatellites = {25544: 'ISS', 48274: 'Tiangong'};
+
+/// 关注列表中卫星的显示名：默认卫星按语言显示，其他用保存的名称。
+String satelliteDisplayName(AppLocalizations l, int id, String stored) =>
+    switch (id) {
+      25544 => l.issName,
+      48274 => l.cssName,
+      _ => stored,
+    };
 
 /// CelesTrak 根数约每 2 小时更新一次。同一颗卫星 2 小时内只请求一次。
 const minFetchInterval = Duration(hours: 2);
@@ -51,21 +60,69 @@ class CachedOmm {
   final String? epoch;
 }
 
-/// 一次刷新的结果，供界面显示。
+/// 刷新结果的种类。文字由界面按语言生成（[RefreshResult.describe]），
+/// 后台任务里没有界面上下文也能用。
+enum RefreshStatus {
+  /// 之前出错，暂停请求
+  blocked,
+
+  /// 2 小时内下载过
+  recent,
+
+  /// 网络不通
+  network,
+
+  /// CelesTrak 返回非 200
+  http,
+
+  /// 返回内容不是这颗卫星的根数
+  invalid,
+
+  /// 拿到了新历元的根数
+  updated,
+
+  /// 根数没有变化
+  unchanged,
+}
+
+/// 一次刷新的结果。
 class RefreshResult {
   RefreshResult(
     this.noradId,
-    this.message, {
-    this.updated = false,
-    this.error = false,
+    this.status, {
+    this.minutes = 0,
+    this.httpStatus = 0,
+    this.epoch = '',
+    this.detail,
   });
 
   final int noradId;
-  final String message;
+  final RefreshStatus status;
+  final int minutes;
+  final int httpStatus;
+  final String epoch;
 
-  /// 拿到了新历元的根数
-  final bool updated;
-  final bool error;
+  /// network：异常；invalid：返回内容的开头
+  final Object? detail;
+
+  bool get updated => status == RefreshStatus.updated;
+  bool get error => switch (status) {
+    RefreshStatus.blocked ||
+    RefreshStatus.network ||
+    RefreshStatus.http ||
+    RefreshStatus.invalid => true,
+    _ => false,
+  };
+
+  String describe(AppLocalizations l) => switch (status) {
+    RefreshStatus.blocked => l.refreshBlocked,
+    RefreshStatus.recent => l.refreshRecent(minutes),
+    RefreshStatus.network => l.refreshNetwork(describeError(detail!, l)),
+    RefreshStatus.http => l.refreshHttp(httpStatus),
+    RefreshStatus.invalid => l.refreshInvalid(noradId, '$detail'),
+    RefreshStatus.updated => l.refreshUpdated(epoch),
+    RefreshStatus.unchanged => l.refreshUnchanged(epoch),
+  };
 }
 
 /// 从 OMM JSON 取出编号和历元，不调用 Rust（后台任务里也能用）。
@@ -172,7 +229,7 @@ class OmmStore {
     final blockedUntil = DateTime.tryParse('${meta['blockedUntil']}');
     if (_blockedThisSession ||
         (blockedUntil != null && now.isBefore(blockedUntil))) {
-      return RefreshResult(noradId, '之前的请求出错，暂停下载，使用缓存的根数', error: true);
+      return RefreshResult(noradId, RefreshStatus.blocked);
     }
     final sats =
         (meta['sats'] as Map?)?.cast<String, dynamic>() ?? <String, dynamic>{};
@@ -180,8 +237,11 @@ class OmmStore {
       '${(sats['$noradId'] as Map?)?['fetchedAt']}',
     );
     if (last != null && now.difference(last) < minFetchInterval) {
-      final mins = now.difference(last).inMinutes;
-      return RefreshResult(noradId, '$mins 分钟前已下载，CelesTrak 每 2 小时才更新，使用缓存');
+      return RefreshResult(
+        noradId,
+        RefreshStatus.recent,
+        minutes: now.difference(last).inMinutes,
+      );
     }
 
     http.Response resp;
@@ -191,7 +251,7 @@ class OmmStore {
           .timeout(const Duration(seconds: 20));
     } on Exception catch (e) {
       // 网络不通不算 CelesTrak 出错，不暂停
-      return RefreshResult(noradId, '${describeError(e)}，使用缓存的根数', error: true);
+      return RefreshResult(noradId, RefreshStatus.network, detail: e);
     }
     if (resp.statusCode != 200) {
       _blockedThisSession = true;
@@ -199,8 +259,8 @@ class OmmStore {
       await _writeMeta(meta);
       return RefreshResult(
         noradId,
-        'CelesTrak 返回 ${resp.statusCode}，暂停下载 2 小时',
-        error: true,
+        RefreshStatus.http,
+        httpStatus: resp.statusCode,
       );
     }
     final body = utf8.decode(resp.bodyBytes);
@@ -211,7 +271,7 @@ class OmmStore {
     if (summary == null || summary.noradId != noradId) {
       await _writeMeta(meta);
       final hint = body.length > 80 ? '${body.substring(0, 80)}…' : body;
-      return RefreshResult(noradId, '没有拿到编号 $noradId 的根数：$hint', error: true);
+      return RefreshResult(noradId, RefreshStatus.invalid, detail: hint);
     }
     final current = await _readOptional('$noradId.json');
     final currentEpoch = current == null ? null : ommSummary(current)?.epoch;
@@ -227,8 +287,8 @@ class OmmStore {
     await _writeMeta(meta);
     return RefreshResult(
       noradId,
-      updated ? '已更新，根数历元 ${summary.epoch}' : '根数没有变化（历元 ${summary.epoch}）',
-      updated: updated,
+      updated ? RefreshStatus.updated : RefreshStatus.unchanged,
+      epoch: summary.epoch,
     );
   }
 

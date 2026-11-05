@@ -230,9 +230,10 @@ fn wire__crate__api__guanxiang__body_names_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_lang = <crate::api::guanxiang::Lang>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
-                let output_ok = Ok::<_, ()>(crate::api::guanxiang::body_names())?;
+                let output_ok = Ok::<_, ()>(crate::api::guanxiang::body_names(api_lang))?;
                 std::result::Result::Ok(output_ok)
             })())
         },
@@ -337,6 +338,7 @@ fn wire__crate__api__guanxiang__satellite_transits_impl(
             let api_start_utc = <String>::sse_decode(&mut deserializer);
             let api_days = <f64>::sse_decode(&mut deserializer);
             let api_max_separation_deg = <f64>::sse_decode(&mut deserializer);
+            let api_lang = <crate::api::guanxiang::Lang>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
@@ -367,6 +369,7 @@ fn wire__crate__api__guanxiang__satellite_transits_impl(
                             api_start_utc,
                             api_days,
                             api_max_separation_deg,
+                            api_lang,
                         )?;
                         std::result::Result::Ok(output_ok)
                     })(),
@@ -470,9 +473,10 @@ fn wire__crate__api__guanxiang__sun_safety_notice_impl(
             };
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_lang = <crate::api::guanxiang::Lang>::sse_decode(&mut deserializer);
             deserializer.end();
             transform_result_sse::<_, ()>((move || {
-                let output_ok = Ok::<_, ()>(crate::api::guanxiang::sun_safety_notice())?;
+                let output_ok = Ok::<_, ()>(crate::api::guanxiang::sun_safety_notice(api_lang))?;
                 std::result::Result::Ok(output_ok)
             })())
         },
@@ -636,6 +640,18 @@ impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         deserializer.cursor.read_i32::<NativeEndian>().unwrap()
+    }
+}
+
+impl SseDecode for crate::api::guanxiang::Lang {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::guanxiang::Lang::Zh,
+            1 => crate::api::guanxiang::Lang::En,
+            _ => unreachable!("Invalid variant for Lang: {}", inner),
+        };
     }
 }
 
@@ -848,6 +864,7 @@ impl SseDecode for crate::api::guanxiang::SearchRequest {
         let mut var_maxSeparationDeg = <f64>::sse_decode(deserializer);
         let mut var_observer =
             <Option<crate::api::guanxiang::ObserverInput>>::sse_decode(deserializer);
+        let mut var_lang = <crate::api::guanxiang::Lang>::sse_decode(deserializer);
         return crate::api::guanxiang::SearchRequest {
             kind: var_kind,
             body_a: var_bodyA,
@@ -856,6 +873,7 @@ impl SseDecode for crate::api::guanxiang::SearchRequest {
             to_year: var_toYear,
             max_separation_deg: var_maxSeparationDeg,
             observer: var_observer,
+            lang: var_lang,
         };
     }
 }
@@ -1086,6 +1104,24 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::GeoPoint>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::Lang {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Zh => 0.into_dart(),
+            Self::En => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::guanxiang::Lang {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::Lang>
+    for crate::api::guanxiang::Lang
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::Lang {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::ObserverInput {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1179,6 +1215,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::SearchRequest {
             self.to_year.into_into_dart().into_dart(),
             self.max_separation_deg.into_into_dart().into_dart(),
             self.observer.into_into_dart().into_dart(),
+            self.lang.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1372,6 +1409,22 @@ impl SseEncode for i32 {
     }
 }
 
+impl SseEncode for crate::api::guanxiang::Lang {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::guanxiang::Lang::Zh => 0,
+                crate::api::guanxiang::Lang::En => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for Vec<crate::api::guanxiang::Detail> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1526,6 +1579,7 @@ impl SseEncode for crate::api::guanxiang::SearchRequest {
         <i32>::sse_encode(self.to_year, serializer);
         <f64>::sse_encode(self.max_separation_deg, serializer);
         <Option<crate::api::guanxiang::ObserverInput>>::sse_encode(self.observer, serializer);
+        <crate::api::guanxiang::Lang>::sse_encode(self.lang, serializer);
     }
 }
 

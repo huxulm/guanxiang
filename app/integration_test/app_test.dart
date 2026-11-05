@@ -35,6 +35,7 @@ void main() {
         fromYear: 2004,
         toYear: 2013,
         maxSeparationDeg: 0,
+        lang: Lang.zh,
       ),
       token: CancelToken(),
     ).toList();
@@ -63,6 +64,7 @@ void main() {
         fromYear: 2000,
         toYear: 2100,
         maxSeparationDeg: 0,
+        lang: Lang.zh,
       ),
       token: CancelToken(),
     ).toList();
@@ -89,6 +91,7 @@ void main() {
           toYear: to,
           maxSeparationDeg: 0,
           observer: at,
+          lang: Lang.zh,
         ),
         token: CancelToken(),
       ).toList();
@@ -125,6 +128,7 @@ void main() {
         fromYear: 2026,
         toYear: 2027,
         maxSeparationDeg: 0,
+        lang: Lang.zh,
       ),
       token: CancelToken(),
     ).toList();
@@ -144,6 +148,7 @@ void main() {
         fromYear: 2000,
         toYear: 2100,
         maxSeparationDeg: 0,
+        lang: Lang.zh,
       ),
       token: token,
     )) {
@@ -173,6 +178,7 @@ void main() {
       startUtc: '',
       days: 7,
       maxSeparationDeg: 10,
+      lang: Lang.zh,
     );
     final sun = found.where((e) => e.body == 'sun').toList();
     const expected = [
@@ -198,5 +204,29 @@ void main() {
     expect(packages, contains('观象：算法与数据来源'));
     expect(packages.any((p) => p.startsWith('anise ')), isTrue);
     expect(packages.any((p) => p.startsWith('sofars ')), isTrue);
+  });
+
+  test('英文输出：金星凌日标题、天体名、安全提示', () async {
+    final updates = await search(
+      engine: engine,
+      request: const SearchRequest(
+        kind: EventKind.transit,
+        bodyA: 'venus',
+        bodyB: '',
+        fromYear: 2012,
+        toYear: 2013,
+        maxSeparationDeg: 0,
+        lang: Lang.en,
+      ),
+      token: CancelToken(),
+    ).toList();
+    final item = updates.firstWhere((u) => u.kind == UpdateKind.found).item!;
+    expect(item.title, 'Transit of Venus');
+    expect(item.details.map((d) => d.label), contains('Greatest transit'));
+    expect(
+      bodyNames(lang: Lang.en).map((d) => d.value),
+      containsAll(['Moon', 'Jupiter']),
+    );
+    expect(sunSafetyNotice(lang: Lang.en), contains('solar filter'));
   });
 }

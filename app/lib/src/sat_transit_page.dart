@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../l10n/app_localizations.dart';
 import 'celestrak.dart' show appUserAgent;
 import 'rust/api/guanxiang.dart';
 
@@ -39,6 +40,7 @@ class SatTransitPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
     final observer = LatLng(observerLat, observerLon);
     final line = [
       for (final p in item.centerline)
@@ -98,8 +100,8 @@ class SatTransitPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                const RichAttributionWidget(
-                  attributions: [TextSourceAttribution('© OpenStreetMap 贡献者')],
+                RichAttributionWidget(
+                  attributions: [TextSourceAttribution(l.osmAttribution)],
                 ),
               ],
             ),
@@ -114,9 +116,11 @@ class SatTransitPage extends StatelessWidget {
                 Text(item.summary, style: theme.textTheme.bodyLarge),
                 const SizedBox(height: 4),
                 Text(
-                  '红线（未凌时为橙线）是中心线：最近时刻前后各 10 秒的地面轨迹，'
-                  '站在线上看到卫星正好穿过${item.body == 'sun' ? '日' : '月'}心。'
-                  '可见带半宽约 ${item.bandHalfWidthKm.toStringAsFixed(2)} km。',
+                  (item.body == 'sun'
+                      ? l.centerlineHintSun
+                      : l.centerlineHintMoon)(
+                    item.bandHalfWidthKm.toStringAsFixed(2),
+                  ),
                   style: theme.textTheme.bodySmall,
                 ),
                 if (item.warning != null) ...[

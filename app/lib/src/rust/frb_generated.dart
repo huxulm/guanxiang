@@ -89,7 +89,7 @@ abstract class RustLibApi extends BaseApi {
 
   Future<Engine> crateApiGuanxiangEngineFromBytes({required List<int> bytes});
 
-  List<Detail> crateApiGuanxiangBodyNames();
+  List<Detail> crateApiGuanxiangBodyNames({required Lang lang});
 
   Future<void> crateApiGuanxiangInitApp();
 
@@ -105,6 +105,7 @@ abstract class RustLibApi extends BaseApi {
     required String startUtc,
     required double days,
     required double maxSeparationDeg,
+    required Lang lang,
   });
 
   Stream<SearchUpdate> crateApiGuanxiangSearch({
@@ -113,7 +114,7 @@ abstract class RustLibApi extends BaseApi {
     required CancelToken token,
   });
 
-  String crateApiGuanxiangSunSafetyNotice();
+  String crateApiGuanxiangSunSafetyNotice({required Lang lang});
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_CancelToken;
@@ -246,11 +247,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "Engine_from_bytes", argNames: ["bytes"]);
 
   @override
-  List<Detail> crateApiGuanxiangBodyNames() {
+  List<Detail> crateApiGuanxiangBodyNames({required Lang lang}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_lang(lang, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
@@ -258,14 +260,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiGuanxiangBodyNamesConstMeta,
-        argValues: [],
+        argValues: [lang],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiGuanxiangBodyNamesConstMeta =>
-      const TaskConstMeta(debugName: "body_names", argNames: []);
+      const TaskConstMeta(debugName: "body_names", argNames: ["lang"]);
 
   @override
   Future<void> crateApiGuanxiangInitApp() {
@@ -328,6 +330,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String startUtc,
     required double days,
     required double maxSeparationDeg,
+    required Lang lang,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -345,6 +348,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(startUtc, serializer);
           sse_encode_f_64(days, serializer);
           sse_encode_f_64(maxSeparationDeg, serializer);
+          sse_encode_lang(lang, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -367,6 +371,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           startUtc,
           days,
           maxSeparationDeg,
+          lang,
         ],
         apiImpl: this,
       ),
@@ -386,6 +391,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "startUtc",
           "days",
           "maxSeparationDeg",
+          "lang",
         ],
       );
 
@@ -437,11 +443,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
-  String crateApiGuanxiangSunSafetyNotice() {
+  String crateApiGuanxiangSunSafetyNotice({required Lang lang}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_lang(lang, serializer);
           return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
@@ -449,14 +456,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: null,
         ),
         constMeta: kCrateApiGuanxiangSunSafetyNoticeConstMeta,
-        argValues: [],
+        argValues: [lang],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiGuanxiangSunSafetyNoticeConstMeta =>
-      const TaskConstMeta(debugName: "sun_safety_notice", argNames: []);
+      const TaskConstMeta(debugName: "sun_safety_notice", argNames: ["lang"]);
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_CancelToken => wire
@@ -637,6 +644,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Lang dco_decode_lang(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return Lang.values[raw as int];
+  }
+
+  @protected
   List<Detail> dco_decode_list_detail(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_detail).toList();
@@ -762,8 +775,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SearchRequest dco_decode_search_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 7)
-      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
     return SearchRequest(
       kind: dco_decode_event_kind(arr[0]),
       bodyA: dco_decode_String(arr[1]),
@@ -772,6 +785,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       toYear: dco_decode_i_32(arr[4]),
       maxSeparationDeg: dco_decode_f_64(arr[5]),
       observer: dco_decode_opt_box_autoadd_observer_input(arr[6]),
+      lang: dco_decode_lang(arr[7]),
     );
   }
 
@@ -1013,6 +1027,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Lang sse_decode_lang(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return Lang.values[inner];
+  }
+
+  @protected
   List<Detail> sse_decode_list_detail(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1216,6 +1237,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_toYear = sse_decode_i_32(deserializer);
     var var_maxSeparationDeg = sse_decode_f_64(deserializer);
     var var_observer = sse_decode_opt_box_autoadd_observer_input(deserializer);
+    var var_lang = sse_decode_lang(deserializer);
     return SearchRequest(
       kind: var_kind,
       bodyA: var_bodyA,
@@ -1224,6 +1246,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       toYear: var_toYear,
       maxSeparationDeg: var_maxSeparationDeg,
       observer: var_observer,
+      lang: var_lang,
     );
   }
 
@@ -1475,6 +1498,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_lang(Lang self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_list_detail(List<Detail> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -1651,6 +1680,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.toYear, serializer);
     sse_encode_f_64(self.maxSeparationDeg, serializer);
     sse_encode_opt_box_autoadd_observer_input(self.observer, serializer);
+    sse_encode_lang(self.lang, serializer);
   }
 
   @protected
@@ -1742,7 +1772,7 @@ class EngineImpl extends RustOpaque implements Engine {
         RustLib.instance.api.rust_arc_decrement_strong_count_EnginePtr,
   );
 
-  /// 星历覆盖的年份范围（取月球的覆盖范围）。
+  /// 可搜索的年份范围 `[起始, 结束)`（取月球的覆盖范围，去掉首尾不完整的年份）。
   Int32List coverageYears() =>
       RustLib.instance.api.crateApiGuanxiangEngineCoverageYears(that: this);
 }

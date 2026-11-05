@@ -7,11 +7,12 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `detail`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `progress`, `sat_item`, `search_span`, `send`, `utc_ms`, `utc`, `year_start`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
-/// 支持的天体，供界面列出：(英文名, 中文名)。
-List<Detail> bodyNames() => RustLib.instance.api.crateApiGuanxiangBodyNames();
+/// 支持的天体，供界面列出：label = 英文键名（传回 Rust 用），value = 显示名。
+List<Detail> bodyNames({required Lang lang}) =>
+    RustLib.instance.api.crateApiGuanxiangBodyNames(lang: lang);
 
 /// 执行搜索，结果和进度通过 `sink` 回传。
 Stream<SearchUpdate> search({
@@ -28,9 +29,9 @@ Stream<SearchUpdate> search({
 List<SatelliteInfo> parseOmm({required String json}) =>
     RustLib.instance.api.crateApiGuanxiangParseOmm(json: json);
 
-/// 观测安全提示，供界面显示。
-String sunSafetyNotice() =>
-    RustLib.instance.api.crateApiGuanxiangSunSafetyNotice();
+/// 观测太阳的安全提示，所有涉及太阳的结果都附带，卫星页也显示。
+String sunSafetyNotice({required Lang lang}) =>
+    RustLib.instance.api.crateApiGuanxiangSunSafetyNotice(lang: lang);
 
 /// 搜索卫星凌日、凌月。
 ///
@@ -46,6 +47,7 @@ Future<List<SatTransitItem>> satelliteTransits({
   required String startUtc,
   required double days,
   required double maxSeparationDeg,
+  required Lang lang,
 }) => RustLib.instance.api.crateApiGuanxiangSatelliteTransits(
   engine: engine,
   ommJson: ommJson,
@@ -56,6 +58,7 @@ Future<List<SatTransitItem>> satelliteTransits({
   startUtc: startUtc,
   days: days,
   maxSeparationDeg: maxSeparationDeg,
+  lang: lang,
 );
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CancelToken>>
@@ -68,7 +71,7 @@ abstract class CancelToken implements RustOpaqueInterface {
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Engine>>
 abstract class Engine implements RustOpaqueInterface {
-  /// 星历覆盖的年份范围（取月球的覆盖范围）。
+  /// 可搜索的年份范围 `[起始, 结束)`（取月球的覆盖范围，去掉首尾不完整的年份）。
   Int32List coverageYears();
 
   /// 从内存加载 SPK 星历（Flutter asset 读出的字节）。
@@ -163,6 +166,9 @@ class GeoPoint {
           latitudeDeg == other.latitudeDeg &&
           longitudeDeg == other.longitudeDeg;
 }
+
+/// 显示语言。
+enum Lang { zh, en }
 
 /// 测站与可见性条件。
 class ObserverInput {
@@ -345,6 +351,7 @@ class SearchRequest {
   /// 角距极小的上限（度）
   final double maxSeparationDeg;
   final ObserverInput? observer;
+  final Lang lang;
 
   const SearchRequest({
     required this.kind,
@@ -354,6 +361,7 @@ class SearchRequest {
     required this.toYear,
     required this.maxSeparationDeg,
     this.observer,
+    required this.lang,
   });
 
   @override
@@ -364,7 +372,8 @@ class SearchRequest {
       fromYear.hashCode ^
       toYear.hashCode ^
       maxSeparationDeg.hashCode ^
-      observer.hashCode;
+      observer.hashCode ^
+      lang.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -377,7 +386,8 @@ class SearchRequest {
           fromYear == other.fromYear &&
           toYear == other.toYear &&
           maxSeparationDeg == other.maxSeparationDeg &&
-          observer == other.observer;
+          observer == other.observer &&
+          lang == other.lang;
 }
 
 /// 搜索过程中的一条回传。用普通结构体而不是带数据的枚举，Dart 端不需要 freezed。

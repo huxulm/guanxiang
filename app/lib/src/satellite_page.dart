@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 
+import '../l10n/app_localizations.dart';
 import 'celestrak.dart';
 import 'errors.dart';
+import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'sat_transit_page.dart';
 
@@ -32,7 +34,9 @@ class _SatellitePageState extends State<SatellitePage> {
   final List<SatTransitItem> _results = [];
   bool _busy = false;
   (double, double) _searchedAt = (0, 0);
-  String _status = '';
+
+  /// 状态文字，在 build 时按当前语言生成
+  String Function(AppLocalizations) _status = (_) => '';
 
   @override
   void initState() {
@@ -62,7 +66,7 @@ class _SatellitePageState extends State<SatellitePage> {
       _watch = await store.watchList();
       await _reloadCache();
     } catch (e) {
-      _setStatus('打开根数缓存失败：${describeError(e)}');
+      _setStatus((l) => l.cacheOpenFailed(describeError(e, l)));
     }
   }
 
@@ -73,28 +77,34 @@ class _SatellitePageState extends State<SatellitePage> {
     if (mounted) setState(() {});
   }
 
-  void _setStatus(String s) {
+  void _setStatus(String Function(AppLocalizations) s) {
     if (mounted) setState(() => _status = s);
   }
+
+  String _name(AppLocalizations l, int id) =>
+      satelliteDisplayName(l, id, _watch[id] ?? 'NORAD $id');
 
   Future<void> _refresh() async {
     final store = _store;
     if (store == null || _busy) return;
     setState(() => _busy = true);
-    final lines = <String>[];
+    final results = <RefreshResult>[];
     for (final id in _watch.keys) {
-      final r = await store.refresh(id);
-      lines.add('${_watch[id]}：${r.message}');
+      results.add(await store.refresh(id));
     }
     await _reloadCache();
     setState(() => _busy = false);
-    _setStatus(lines.join('\n'));
+    _setStatus(
+      (l) => results
+          .map((r) => '${_name(l, r.noradId)}：${r.describe(l)}')
+          .join('\n'),
+    );
   }
 
   Future<void> _addSatellite() async {
     final id = int.tryParse(_addCtrl.text.trim());
     if (id == null || id <= 0) {
-      _snack('请输入 NORAD 编号');
+      _snack(AppLocalizations.of(context).enterNorad);
       return;
     }
     _watch[id] = 'NORAD $id';
@@ -111,6 +121,8 @@ class _SatellitePageState extends State<SatellitePage> {
   }
 
   Future<void> _search() async {
+    final l = AppLocalizations.of(context);
+    final lang = rustLang(context);
     final lat = double.tryParse(_latCtrl.text.trim());
     final lon = double.tryParse(_lonCtrl.text.trim());
     final h = double.tryParse(_heightCtrl.text.trim());
@@ -121,23 +133,23 @@ class _SatellitePageState extends State<SatellitePage> {
         h == null ||
         days == null ||
         maxSep == null) {
-      _snack('输入无效');
+      _snack(l.invalidInput);
       return;
     }
     final withData = _cache.values.where((c) => c.json != null).toList();
     if (withData.isEmpty) {
-      _snack('还没有根数，请先刷新');
+      _snack(l.noElementsYet);
       return;
     }
     _searchedAt = (lat, lon);
     setState(() {
       _busy = true;
       _results.clear();
-      _status = '计算中…';
+      _status = (l) => l.computing;
     });
     final watch = Stopwatch()..start();
     final now = DateTime.now().toUtc().toIso8601String();
-    final errors = <String>[];
+    final errors = <String Function(AppLocalizations)>[];
     for (final c in withData) {
       try {
         final found = await satelliteTransits(
@@ -150,19 +162,22 @@ class _SatellitePageState extends State<SatellitePage> {
           startUtc: now,
           days: days,
           maxSeparationDeg: maxSep,
+          lang: lang,
         );
         _results.addAll(found);
       } catch (e) {
-        errors.add('${_watch[c.noradId]}：${describeError(e)}');
+        errors.add((l) => '${_name(l, c.noradId)}：${describeError(e, l)}');
       }
     }
     _results.sort((a, b) => a.ttJd.compareTo(b.ttJd));
     setState(() {
       _busy = false;
-      _status = [
-        '共 ${_results.length} 次接近（${_results.where((e) => e.isTransit).length} 次凌日凌月），'
-            '用时 ${watch.elapsedMilliseconds} ms',
-        ...errors,
+      final count = _results.length;
+      final transits = _results.where((e) => e.isTransit).length;
+      final ms = watch.elapsedMilliseconds;
+      _status = (l) => [
+        l.satSummary(count, transits, ms),
+        for (final e in errors) e(l),
       ].join('\n');
     });
   }
@@ -189,20 +204,26 @@ class _SatellitePageState extends State<SatellitePage> {
     );
   }
 
-  String _cacheLine(int id) {
+  String _cacheLine(AppLocalizations l, int id) {
     final c = _cache[id];
-    if (c == null || c.json == null) return '无根数';
+    if (c == null || c.json == null) return l.noElements;
     final age = c.fetchedAt == null
         ? ''
-        : '，${DateTime.now().toUtc().difference(c.fetchedAt!).inMinutes} 分钟前下载';
-    return '历元 ${c.epoch ?? '?'} UTC$age${c.previousJson != null ? '，有旧根数可比较' : ''}';
+        : l.downloadedAgo(
+            DateTime.now().toUtc().difference(c.fetchedAt!).inMinutes,
+          );
+    return l.cacheEpoch(c.epoch ?? '?') +
+        age +
+        (c.previousJson != null ? l.hasPrevious : '');
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    final status = _status(l);
     return Scaffold(
-      appBar: AppBar(title: const Text('卫星凌日、凌月')),
+      appBar: AppBar(title: Text(l.satTitle)),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -212,7 +233,7 @@ class _SatellitePageState extends State<SatellitePage> {
               child: Padding(
                 padding: const EdgeInsets.all(12),
                 child: Text(
-                  sunSafetyNotice(),
+                  sunSafetyNotice(lang: rustLang(context)),
                   style: TextStyle(color: theme.colorScheme.onErrorContainer),
                 ),
               ),
@@ -223,8 +244,8 @@ class _SatellitePageState extends State<SatellitePage> {
                 dense: true,
                 contentPadding: EdgeInsets.zero,
                 leading: const Icon(Icons.satellite_alt),
-                title: Text('${_watch[id]}（$id）'),
-                subtitle: Text(_cacheLine(id)),
+                title: Text('${_name(l, id)} ($id)'),
+                subtitle: Text(_cacheLine(l, id)),
                 trailing: defaultSatellites.containsKey(id)
                     ? null
                     : IconButton(
@@ -234,17 +255,17 @@ class _SatellitePageState extends State<SatellitePage> {
               ),
             Row(
               children: [
-                _numberField(_addCtrl, 'NORAD 编号', width: 120),
+                _numberField(_addCtrl, l.noradNumber, width: 120),
                 IconButton(
                   icon: const Icon(Icons.add),
-                  tooltip: '添加卫星',
+                  tooltip: l.addSatellite,
                   onPressed: _busy ? null : _addSatellite,
                 ),
                 const Spacer(),
                 OutlinedButton.icon(
                   onPressed: _busy ? null : _refresh,
                   icon: const Icon(Icons.refresh),
-                  label: const Text('刷新根数'),
+                  label: Text(l.refreshElements),
                 ),
               ],
             ),
@@ -253,11 +274,11 @@ class _SatellitePageState extends State<SatellitePage> {
               spacing: 12,
               runSpacing: 8,
               children: [
-                _numberField(_latCtrl, '纬度°'),
-                _numberField(_lonCtrl, '经度°（东正）'),
-                _numberField(_heightCtrl, '高度 m'),
-                _numberField(_daysCtrl, '天数', width: 64),
-                _numberField(_maxSepCtrl, '角距上限°', width: 80),
+                _numberField(_latCtrl, l.latitude),
+                _numberField(_lonCtrl, l.longitude, width: 120),
+                _numberField(_heightCtrl, l.height),
+                _numberField(_daysCtrl, l.days, width: 64),
+                _numberField(_maxSepCtrl, l.maxSeparation, width: 80),
               ],
             ),
             const SizedBox(height: 12),
@@ -266,7 +287,7 @@ class _SatellitePageState extends State<SatellitePage> {
                 FilledButton.icon(
                   onPressed: _busy ? null : _search,
                   icon: const Icon(Icons.search),
-                  label: const Text('从现在起搜索'),
+                  label: Text(l.searchFromNow),
                 ),
                 const SizedBox(width: 12),
                 if (_busy)
@@ -276,12 +297,12 @@ class _SatellitePageState extends State<SatellitePage> {
                   ),
               ],
             ),
-            if (_status.isNotEmpty) ...[
+            if (status.isNotEmpty) ...[
               const SizedBox(height: 8),
-              Text(_status, style: theme.textTheme.bodySmall),
+              Text(status, style: theme.textTheme.bodySmall),
             ],
             const Divider(),
-            if (_results.isEmpty && !_busy) const Center(child: Text('暂无结果')),
+            if (_results.isEmpty && !_busy) Center(child: Text(l.noResults)),
             for (final e in _results)
               ListTile(
                 contentPadding: EdgeInsets.zero,

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../l10n/app_localizations.dart';
+
 import 'errors.dart';
 import 'rust/api/guanxiang.dart';
 import 'search_page.dart';
@@ -15,7 +17,10 @@ class GuanxiangApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '观象',
+      onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
+      // 跟随系统语言；既不是中文也不是英文时用英文（列表第一项）
+      supportedLocales: const [Locale('en'), Locale('zh')],
+      localizationsDelegates: AppLocalizations.localizationsDelegates,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1F3A68)),
         useMaterial3: true,
@@ -41,7 +46,7 @@ class LoadingPage extends StatefulWidget {
 }
 
 class _LoadingPageState extends State<LoadingPage> {
-  String? _error;
+  Object? _error;
 
   @override
   void initState() {
@@ -62,27 +67,28 @@ class _LoadingPageState extends State<LoadingPage> {
         ),
       );
     } catch (e) {
-      setState(() => _error = describeError(e));
+      setState(() => _error = e);
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
     return Scaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
           child: _error == null
-              ? const Column(
+              ? Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    CircularProgressIndicator(),
-                    SizedBox(height: 16),
-                    Text('正在加载星历…'),
+                    const CircularProgressIndicator(),
+                    const SizedBox(height: 16),
+                    Text(l.loadingEphemeris),
                   ],
                 )
               : Text(
-                  '星历加载失败：$_error',
+                  l.ephemerisLoadFailed(describeError(_error!, l)),
                   style: TextStyle(color: Theme.of(context).colorScheme.error),
                 ),
         ),
