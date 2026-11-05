@@ -4,8 +4,11 @@ stages:
 
 default:
   image: rust:1.97
-  # 共享 runner 42（Kubernetes）在拉取代码时会报 `could not lock config file //.gitconfig`，
-  # 与项目无关；自动重试通常会换到其他 runner。
+  # 共享 runner 42（Kubernetes，标签只有 linux）在拉取代码时总是报
+  # `could not lock config file //.gitconfig`，与项目无关。用 h3c 标签限定到 runner 46（docker）
+  # 或 47（shell）；runner 42 修好后可去掉。
+  tags:
+    - h3c
   retry:
     max: 2
     when:
