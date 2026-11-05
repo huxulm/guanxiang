@@ -1,0 +1,18 @@
+[package]
+name = "guanxiang-cli"
+description = "观象命令行：调试、验证、生成预计算星表"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[[bin]]
+name = "guanxiang"
+path = "src/main.rs"
+
+[dependencies]
+guanxiang-core.workspace = true
+clap.workspace = true
+
+[lints]
+workspace = true

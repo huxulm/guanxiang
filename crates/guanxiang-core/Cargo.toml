@@ -1,0 +1,17 @@
+[package]
+name = "guanxiang-core"
+description = "观象核心库：星历、坐标与天文事件搜索"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+
+[dependencies]
+anise.workspace = true
+sofars.workspace = true
+sgp4.workspace = true
+bytes = "1"
+thiserror.workspace = true
+
+[lints]
+workspace = true

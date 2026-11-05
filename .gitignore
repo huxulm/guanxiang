@@ -1,0 +1,6 @@
+/target
+/data/*
+!/data/README.md
+*.so
+*.dll
+*.pdb

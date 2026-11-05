@@ -1,0 +1,58 @@
+stages:
+  - check
+  - test
+
+default:
+  image: rust:1.97
+  cache:
+    key: cargo-$CI_JOB_NAME
+    paths:
+      - .cargo-home/registry/index/
+      - .cargo-home/registry/cache/
+      - target/
+
+variables:
+  CARGO_HOME: $CI_PROJECT_DIR/.cargo-home
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+
+fmt:
+  stage: check
+  cache: []
+  script:
+    - rustup component add rustfmt
+    - cargo fmt --all -- --check
+
+clippy:
+  stage: check
+  script:
+    - rustup component add clippy
+    - cargo clippy --workspace --all-targets --locked -- -D warnings
+
+# M0 验收：Android 依赖树里不能有 OpenSSL / TLS / C 构建依赖，且能通过类型检查。
+# 完整链接（.so）需要 NDK，在本地或后续的 Android 镜像里做。
+android-deps:
+  stage: check
+  script:
+    - rustup target add aarch64-linux-android
+    - cargo tree -e normal,build --target aarch64-linux-android --locked --prefix none > tree.txt
+    - |
+      if grep -Ei '^(openssl|openssl-sys|native-tls|ring|rustls|ureq|reqwest|cc|cmake|bindgen) ' tree.txt; then
+        echo "发现原生依赖或 TLS 依赖"; exit 1
+      fi
+    - cargo check --workspace --target aarch64-linux-android --locked
+
+test:
+  stage: test
+  cache:
+    - key: cargo-test
+      paths:
+        - .cargo-home/registry/index/
+        - .cargo-home/registry/cache/
+        - target/
+    - key: ephemeris-de440s
+      paths:
+        - data/de440s.bsp
+  script:
+    - test -f data/de440s.bsp || curl -fL --retry 3 -o data/de440s.bsp https://naif.jpl.nasa.gov/pub/naif/generic_kernels/spk/planets/de440s.bsp
+    - cargo test --workspace --locked
