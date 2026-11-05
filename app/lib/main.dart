@@ -5,6 +5,7 @@ import 'package:workmanager/workmanager.dart';
 
 import 'src/app.dart';
 import 'src/celestrak.dart';
+import 'src/licenses.dart';
 import 'src/rust/frb_generated.dart';
 
 /// 后台刷新任务名（Android WorkManager）。
@@ -29,6 +30,7 @@ void backgroundDispatcher() {
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await RustLib.init();
+  registerLicenses();
   if (Platform.isAndroid) {
     // 每 6 小时刷新一次（OmmStore 内部仍遵守 2 小时的频率限制），只在联网时运行
     await Workmanager().initialize(backgroundDispatcher);

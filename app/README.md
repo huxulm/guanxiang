@@ -5,8 +5,9 @@
 ## 准备
 
 ```sh
-# 星历随应用打包，但不进 Git
-cp ../data/de440s.bsp assets/
+# 星历随应用打包，但不进 Git：de440s 裁剪到 1900–2100 年（22 MB），
+# 范围内的位置与原文件逐位一致，SHA-256 应为 1b7ff150cbc00d364f584ad65dad651129fde4ab2e7aa23f9551dc9b9674afaa
+cargo run --release -p guanxiang-core --example trim_spk -- ../data/de440s.bsp assets/de440s_1900_2100.bsp 1899-12-01 2101-02-01
 
 # 修改 rust/src/api/ 后重新生成绑定
 flutter_rust_bridge_codegen generate

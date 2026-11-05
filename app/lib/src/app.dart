@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'rust/api/guanxiang.dart';
 import 'search_page.dart';
 
-/// 星历文件随应用打包（M7 再换成裁剪版）。三端都从 asset 读成字节交给 Rust，
-/// Android 上不需要先释放到磁盘。
-const ephemerisAsset = 'assets/de440s.bsp';
+/// 随应用打包的星历：de440s 裁剪到 1899-12 至 2101-02（22 MB，原 33 MB）。三端都从 asset
+/// 读成字节交给 Rust，Android 上不需要先释放到磁盘。
+const ephemerisAsset = 'assets/de440s_1900_2100.bsp';
 
 class GuanxiangApp extends StatelessWidget {
   const GuanxiangApp({super.key});

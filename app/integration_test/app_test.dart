@@ -1,10 +1,13 @@
 // 在设备或模拟器上运行：flutter test integration_test -d <设备>
 //
-// 验证三件事：星历能从 asset 加载、Rust 搜索能在设备上跑通（2004–2013 年金星凌日恰好 2 次）、
-// 取消能让搜索提前结束。
+// 验证：星历能从 asset 加载、各类搜索能在设备上跑通且结果正确、取消能让搜索提前结束、
+// 许可声明打进了安装包。性能数据请用 profile 模式：
+// flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart -d <设备>
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:guanxiang/src/app.dart';
+import 'package:guanxiang/src/licenses.dart';
 import 'package:guanxiang/src/rust/api/guanxiang.dart';
 import 'package:guanxiang/src/rust/frb_generated.dart';
 import 'package:integration_test/integration_test.dart';
@@ -186,5 +189,14 @@ void main() {
     }
     expect(sun.first.centerline.length, greaterThan(20));
     expect(sun.first.details.any((d) => d.label == '安全提示'), isTrue);
+  });
+
+  test('许可声明已打包（含 Rust 依赖和致谢）', () async {
+    registerLicenses();
+    final entries = await LicenseRegistry.licenses.toList();
+    final packages = entries.expand((e) => e.packages).toSet();
+    expect(packages, contains('观象：算法与数据来源'));
+    expect(packages.any((p) => p.startsWith('anise ')), isTrue);
+    expect(packages.any((p) => p.startsWith('sofars ')), isTrue);
   });
 }

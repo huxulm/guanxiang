@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'event_detail_page.dart';
+import 'licenses.dart';
 import 'satellite_page.dart';
 import 'rust/api/guanxiang.dart';
 
@@ -343,6 +344,11 @@ class _SearchPageState extends State<SearchPage> {
                 builder: (_) => SatellitePage(engine: widget.engine),
               ),
             ),
+          ),
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: '关于与许可',
+            onPressed: () => showAbout(context),
           ),
         ],
       ),

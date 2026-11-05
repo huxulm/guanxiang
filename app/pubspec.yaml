@@ -67,9 +67,11 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # 星历：从仓库根目录的 data/de440s.bsp 复制过来（不进 Git），见 docs/PLAN.md M3 记录
+  # 星历：de440s 裁剪到 1900–2100 年（不进 Git），生成方法见 app/README.md
   assets:
-    - assets/de440s.bsp
+    - assets/de440s_1900_2100.bsp
+    # Rust 依赖的许可证，由 tools/licenses/gen_rust_notices.py 生成（进 Git）
+    - assets/licenses/rust.txt
 
   # To add assets to your application, add an assets section, like this:
   # assets:

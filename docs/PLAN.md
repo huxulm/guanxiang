@@ -269,12 +269,23 @@ guanxiang/
 
 ### M7 发布（2 周）
 
-- [ ] 性能优化，确定星历裁剪范围和安装包大小
+- [x] 确定星历裁剪范围和安装包大小：内置 de440s 的 1899-12 至 2101-02 部分（22 MB），arm64 release 包 49.0 → 39.2 MB；真机性能待测
 - [ ] 中英文界面、错误提示、离线状态
 - [ ] Windows 和 Linux 安装包，Android 发布版
-- [ ] 第三方许可声明，包括 SOFA 致谢
-- [ ] 确认 CelesTrak 数据使用方式，用户量较大时增加缓存服务
-- [ ] 确认 OpenStreetMap 瓦片使用政策（应用内使用需标注来源、设置 User-Agent，用量大时换自建或商业瓦片）
+- [x] 第三方许可声明，包括 SOFA 致谢（“关于与许可”页）
+- [x] 确认 CelesTrak 数据使用方式（已符合其使用政策）；用户量较大时增加缓存服务 —— 以后再说
+- [x] 确认 OpenStreetMap 瓦片使用政策，并按政策设置
+
+**M7 记录：**
+
+- 星历裁剪：`crates/guanxiang-core/examples/trim_spk.rs` 用 anise 的 `truncate` + `set_nth_data` 删掉范围外的整条切比雪夫记录，不重算系数。anise 写出时不更新 DAF 文件记录的 FREE 指针，SPICE、jplephem 读不了，工具里按删除的双精度个数修正。校验：随机 20 万个时刻、全部天体，anise 读出的位置与原文件逐位一致；jplephem 能读，差 < 3 cm（段起点变化导致的浮点舍入）。core 全部测试改用裁剪版星历也都通过。结果可复现（SHA-256 `1b7ff150…afaa`），CI 每次重新生成并校验。
+- 冥王星（段 9，0.4 MB）也用不到，但为了让裁剪版只是 de440s 的时间子集，保留。
+- 安装包构成（arm64 release，裁剪前）：星历 31.1 MB（双精度系数几乎不能压缩）、Flutter 引擎 11.8 MB、Dart AOT 6.1 MB、Rust 库 1.6 MB。
+- 性能（模拟器 profile 包，x86_64，不能代表手机）：星历加载 105 ms（debug 包 8 s，主要是 debug 模式的 asset 复制），9 年金星凌日 10 ms，100 年月木合 671 ms。
+- `flutter test integration_test` 不支持 `--profile`，性能数据用 `flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart`。
+- 许可声明：Flutter 自动收集 Dart 包和引擎的许可证；Rust 依赖由 `tools/licenses/gen_rust_notices.py` 从 `cargo metadata` 收集（Android、Windows、Linux 的运行时依赖，117 个 crate，相同文本合并），写成 `app/assets/licenses/rust.txt`，在应用里注册到 `LicenseRegistry`。anise 没有附带许可证文件，使用 hifitime 的 MPL-2.0 文本，并写明两个 MPL 组件的源码地址。另加“算法与数据来源”一条：DE440、SOFA（声明不是 SOFA 官方软件）、USNO/IERS ΔT、Hipparcos、CelesTrak、SGP4、OpenStreetMap。依赖变化后要重新运行脚本。
+- CelesTrak 使用政策（celestrak.org/usage-policy.php）：每份数据每次更新只下载一次（GP 数据约 2 小时更新），收到任何非 200 响应立即停止请求，否则 IP 会被封。现有实现符合。用户共用一个出口 IP（NAT）时可能一起被限，用户量大时考虑自建缓存。
+- OSM 瓦片政策（operations.osmfoundation.org/policies/tiles）：用本应用自己的 User-Agent（与 CelesTrak 请求相同）；每块瓦片至少缓存 7 天（flutter_map 内置缓存，上限 200 MB）；地图右下角显示来源；不做离线或批量下载。瓦片地址集中在 `sat_transit_page.dart` 的 `tileUrlTemplate`，用量大时换自建或商业瓦片。
 
 **验收：** 三个平台的安装包都在干净环境中完成安装和完整流程测试。
 
@@ -313,7 +324,7 @@ guanxiang/
 |---|---|---|
 | 项目许可证 | 公开仓库前 | 未定 |
 | 产品覆盖年代 | M4 前 | 1900–2100（de440s 覆盖 1849–2150；ΔT 表 1800 起，1900 年前的结果未与星表核对） |
-| 星历打包方式 | M3 → M7 | M3 暂时内置完整 de440s（32 MB）；M7 改为内置裁剪版，完整版按需下载 |
+| 星历打包方式 | M3 → M7 | **已决定**：内置 de440s 裁剪到 1900–2100 年的版本（22 MB）；产品只开放这个范围，暂不提供完整版下载 |
 | 预计算星表格式 | M2 | **已决定**：自定义定长二进制格式（D14） |
 | 默认卫星列表 | M6 | 空间站、天宫，后续评估哈勃 |
 | 是否上架 Google Play | M7 前 | 未定 |
@@ -326,4 +337,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M7 发布准备（性能、星历裁剪、中英文界面、离线状态、安装包、许可声明）。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
+下一步：M7 剩余部分（中英文界面、错误提示、离线状态、年份范围校验，Android 发布签名）。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。

@@ -82,3 +82,6 @@ test:
       cargo test --workspace --locked -- --nocapture 2>&1 | tee test.log
     # 星历测试在找不到文件时会跳过；CI 中不允许跳过
     - '! grep -q "跳过：找不到" test.log'
+    # App 打包的裁剪星历（1900–2100）必须能从 de440s 复现，且范围内位置逐位一致（工具内校验）
+    - cargo run -q --locked -p guanxiang-core --example trim_spk -- data/de440s.bsp data/de440s_1900_2100.bsp 1899-12-01 2101-02-01
+    - echo "1b7ff150cbc00d364f584ad65dad651129fde4ab2e7aa23f9551dc9b9674afaa  data/de440s_1900_2100.bsp" | sha256sum -c

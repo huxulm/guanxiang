@@ -2,7 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
+import 'celestrak.dart' show appUserAgent;
 import 'rust/api/guanxiang.dart';
+
+/// 地图瓦片地址。OSM 瓦片政策建议不要把地址写死在多处，需要时在这里换成自建或商业瓦片。
+const tileUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
+
+/// 按 OSM 瓦片政策：使用本应用自己的 User-Agent；每块瓦片至少缓存 7 天（缓存上限 200 MB）。
+final _tileProvider = NetworkTileProvider(
+  headers: {'User-Agent': appUserAgent},
+  cachingProvider: BuiltInMapCachingProvider.getOrCreateInstance(
+    overrideFreshAge: const Duration(days: 7),
+    maxCacheSize: 200000000,
+  ),
+);
 
 /// 一次卫星接近的详情：地面中心线地图 + 数据。
 ///
@@ -58,8 +71,8 @@ class SatTransitPage extends StatelessWidget {
               ),
               children: [
                 TileLayer(
-                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                  userAgentPackageName: 'cn.ac.xao.guanxiang',
+                  urlTemplate: tileUrlTemplate,
+                  tileProvider: _tileProvider,
                 ),
                 PolylineLayer(
                   polylines: [

@@ -14,7 +14,8 @@ const minFetchInterval = Duration(hours: 2);
 /// 请求失败（非 200）后暂停请求的时长。CelesTrak 会封禁反复出错的客户端。
 const errorBackoff = Duration(hours: 2);
 
-const _userAgent =
+/// 本应用发出的 HTTP 请求统一使用的 User-Agent（CelesTrak、地图瓦片）。
+const appUserAgent =
     'guanxiang/0.1 (+https://gitlab.xao.ac.cn/xulingming/guanxiang)';
 
 Uri celestrakUrl(int noradId) => Uri.https(
@@ -184,7 +185,7 @@ class OmmStore {
     http.Response resp;
     try {
       resp = await _client
-          .get(celestrakUrl(noradId), headers: {'User-Agent': _userAgent})
+          .get(celestrakUrl(noradId), headers: {'User-Agent': appUserAgent})
           .timeout(const Duration(seconds: 20));
     } on Exception catch (e) {
       // 网络不通不算 CelesTrak 出错，不暂停
