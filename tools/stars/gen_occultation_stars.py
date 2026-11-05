@@ -31,15 +31,14 @@ NAMES = {
     17573: "昴宿四",  # Maia
     17608: "昴宿五",  # Merope
     17847: "昴宿七",  # Atlas
-    20889: "毕宿四",  # Ain (ε Tau)
-    20894: "毕宿六",  # θ² Tau
+    20205: "毕宿四",  # γ Tau（曾误标在 HIP 20889 ε Tau 上）
     25428: "五车五",  # Elnath (β Tau)
     42911: "鬼宿四",  # Asellus Australis (δ Cnc)
     61941: "东上相",  # Porrima (γ Vir)
     78401: "房宿三",  # Dschubba (δ Sco)
     78820: "房宿四",  # Acrab (β¹ Sco)
     92855: "斗宿四",  # Nunki (σ Sgr)
-    76333: "氐宿一",  # Zubenelgenubi (α² Lib)
+    72622: "氐宿一",  # Zubenelgenubi (α² Lib)；曾误写为 HIP 76333（γ Lib）
 }
 
 

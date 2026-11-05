@@ -5,6 +5,8 @@ import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
+import 'errors.dart';
+
 /// 默认关注的卫星：NORAD 编号 → 中文名。
 const defaultSatellites = {25544: '国际空间站', 48274: '天宫空间站'};
 
@@ -189,7 +191,7 @@ class OmmStore {
           .timeout(const Duration(seconds: 20));
     } on Exception catch (e) {
       // 网络不通不算 CelesTrak 出错，不暂停
-      return RefreshResult(noradId, '网络不可用（$e），使用缓存的根数', error: true);
+      return RefreshResult(noradId, '${describeError(e)}，使用缓存的根数', error: true);
     }
     if (resp.statusCode != 200) {
       _blockedThisSession = true;

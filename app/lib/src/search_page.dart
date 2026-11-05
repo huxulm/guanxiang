@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import 'errors.dart';
 import 'event_detail_page.dart';
 import 'licenses.dart';
 import 'satellite_page.dart';
@@ -63,13 +64,16 @@ class _SearchPageState extends State<SearchPage> {
   CancelToken? _token;
   double _progress = 0;
   String _status = '';
+  late final YearRange _years;
 
   @override
   void initState() {
     super.initState();
-    final year = DateTime.now().year;
+    final c = widget.engine.coverageYears();
+    _years = YearRange(c[0], c[1]);
+    final year = DateTime.now().year.clamp(_years.from, _years.toExclusive - 1);
     _fromCtrl.text = '$year';
-    _toCtrl.text = '${year + 30}';
+    _toCtrl.text = '${(year + 30).clamp(year + 1, _years.toExclusive)}';
     _status = '星历加载 ${widget.loadMs} ms';
   }
 
@@ -95,8 +99,9 @@ class _SearchPageState extends State<SearchPage> {
   void _start() {
     final from = int.tryParse(_fromCtrl.text.trim());
     final to = int.tryParse(_toCtrl.text.trim());
-    if (from == null || to == null || to <= from) {
-      _snack('年份范围无效');
+    final yearError = _years.check(from, to);
+    if (yearError != null || from == null || to == null) {
+      _snack(yearError ?? '请输入起止年份');
       return;
     }
     ObserverInput? observer;
@@ -151,7 +156,7 @@ class _SearchPageState extends State<SearchPage> {
         });
       },
       onError: (Object e) {
-        _snack('搜索失败：$e');
+        _snack('搜索失败：${describeError(e)}');
         setState(() => _status = '搜索失败');
         _finish();
       },

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import 'errors.dart';
 import 'rust/api/guanxiang.dart';
 import 'search_page.dart';
 
@@ -61,7 +62,7 @@ class _LoadingPageState extends State<LoadingPage> {
         ),
       );
     } catch (e) {
-      setState(() => _error = '$e');
+      setState(() => _error = describeError(e));
     }
   }
 

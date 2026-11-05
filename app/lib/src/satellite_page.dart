@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'celestrak.dart';
+import 'errors.dart';
 import 'rust/api/guanxiang.dart';
 import 'sat_transit_page.dart';
 
@@ -61,7 +62,7 @@ class _SatellitePageState extends State<SatellitePage> {
       _watch = await store.watchList();
       await _reloadCache();
     } catch (e) {
-      _setStatus('打开根数缓存失败：$e');
+      _setStatus('打开根数缓存失败：${describeError(e)}');
     }
   }
 
@@ -152,7 +153,7 @@ class _SatellitePageState extends State<SatellitePage> {
         );
         _results.addAll(found);
       } catch (e) {
-        errors.add('${_watch[c.noradId]}：$e');
+        errors.add('${_watch[c.noradId]}：${describeError(e)}');
       }
     }
     _results.sort((a, b) => a.ttJd.compareTo(b.ttJd));

@@ -285,6 +285,8 @@ guanxiang/
 - `flutter test integration_test` 不支持 `--profile`，性能数据用 `flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart`。
 - 许可声明：Flutter 自动收集 Dart 包和引擎的许可证；Rust 依赖由 `tools/licenses/gen_rust_notices.py` 从 `cargo metadata` 收集（Android、Windows、Linux 的运行时依赖，117 个 crate，相同文本合并），写成 `app/assets/licenses/rust.txt`，在应用里注册到 `LicenseRegistry`。anise 没有附带许可证文件，使用 hifitime 的 MPL-2.0 文本，并写明两个 MPL 组件的源码地址。另加“算法与数据来源”一条：DE440、SOFA（声明不是 SOFA 官方软件）、USNO/IERS ΔT、Hipparcos、CelesTrak、SGP4、OpenStreetMap。依赖变化后要重新运行脚本。
 - CelesTrak 使用政策（celestrak.org/usage-policy.php）：每份数据每次更新只下载一次（GP 数据约 2 小时更新），收到任何非 200 响应立即停止请求，否则 IP 会被封。现有实现符合。用户共用一个出口 IP（NAT）时可能一起被限，用户量大时考虑自建缓存。
+- 错误提示：Rust 的 `anyhow` 错误到 Dart 是 `AnyhowException`，`describeError` 只保留第一段（去掉原因链和调用栈）；网络错误、超时单独说明。搜索前按星历覆盖范围检查年份（1900–2100），超出时直接提示，不再进入 Rust。
+- 恒星中文名更正：“氐宿一”原误标在 HIP 76333（γ Lib）上，改为 HIP 72622（α² Lib）；“毕宿四”原误标在 HIP 20889（ε Tau）上，改为 HIP 20205（γ Tau）；“毕宿六”（HIP 20894，θ² Tau）未能核实，暂去掉名字，显示为 HIP 编号。其余 16 个名字与西名一致。以后增加星名时应对照权威的中西星名对照表。
 - OSM 瓦片政策（operations.osmfoundation.org/policies/tiles）：用本应用自己的 User-Agent（与 CelesTrak 请求相同）；每块瓦片至少缓存 7 天（flutter_map 内置缓存，上限 200 MB）；地图右下角显示来源；不做离线或批量下载。瓦片地址集中在 `sat_transit_page.dart` 的 `tileUrlTemplate`，用量大时换自建或商业瓦片。
 
 **验收：** 三个平台的安装包都在干净环境中完成安装和完整流程测试。
