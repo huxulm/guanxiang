@@ -17,13 +17,14 @@
 | 项目 | 状态 |
 |---|---|
 | Rust 工作区骨架 | 已完成：core + CLI，fmt / clippy（`-D warnings`）/ test 全部通过 |
-| 第三方依赖 | 已接入 anise 1.0.0-beta（关闭默认 feature）、sofars 0.6.2、sgp4 2.4.0；sofars、sgp4 尚未实际调用 |
+| M1 星历与坐标 | 时间尺度、ΔT、视位置、站心与地平坐标、CLI `position` 已完成并通过对照验证；**真机测试未做** |
+| 第三方依赖 | 已接入 anise 1.0.0-beta（关闭默认 feature）、sofars 0.6.2、sgp4 2.4.0；sgp4 尚未实际调用 |
 | 星历读取 | de440s 可读，J2000 TDB 地月距离 402 448.640 km，与参考值一致 |
 | Windows（x86_64-pc-windows-msvc） | 编译、测试通过 |
 | Linux（x86_64-unknown-linux-gnu） | 在 WSL Ubuntu 24.04 原生编译、测试通过 |
 | Android（aarch64-linux-android） | NDK 30 + cargo-ndk 交叉编译通过；`.so` 只依赖 libc / libdl，LOAD 段 16 KB 对齐；**尚未在真机运行** |
-| 手机上的搜索速度 | 未验证，文档中的性能数字都是目标值 |
-| GitLab CI | 已写好 `.gitlab-ci.yml`，尚未推送到 GitLab 实际运行 |
+| 手机上的搜索速度 | 未验证。桌面实测见 M1 记录，按经验推算手机达不到 M1 的 100 万次/秒目标 |
+| GitLab CI | gitlab.xao.ac.cn/xulingming/guanxiang，fmt、clippy、android-deps、test 全部通过。runner 无外网，de440s 由本项目 Generic Package Registry 提供 |
 | Flutter 应用 | 未创建，在 M3 开始 |
 
 ## 3. 关键技术决策
@@ -40,6 +41,9 @@
 | D8 | 长期搜索和卫星凌月分成两个模块 | 两者的数据来源、搜索范围和结果稳定性都不同 |
 | D9 | core 的公开 API 只用自己的类型（`Body`、`Tdb`、`Vec3`），不暴露 anise / hifitime / nalgebra 类型 | 以后换成自写 SPK 读取器时上层不受影响 |
 | D10 | 星历查询用 anise 的 `ICRS`（NAIF 1）轴，不用 `J2000`（anise 1.0 中为 22，带约 23 mas 框架偏差） | DE440 本身就是 ICRF，避免多出一次旋转 |
+| D11 | 视位置用 IAU 2006 岁差 + IAU 2000A 章动（SOFA `pnm06a`），站心用 CIO 方法（ERA + `c2i06a`），忽略极移 | 现行 IAU 标准；极移对事件时刻的影响可以忽略 |
+| D12 | ΔT：1800–2026 查 USNO/IERS 表；表后用 Hermite 曲线过渡到 Espenak–Meeus 2050–2150 公式；可通过 `Time::with_delta_t` 注入实测值 | 历史段用实测值；未来段与 NASA 日月食星表的外推一致，便于 M4 对照 |
+| D13 | 星历和光行时以 Horizons 为对照，视位置以 Skyfield 为对照 | Horizons 的视位置基于 IAU76/80，与 IAU 2006/2000A 有约 0.05″ 的春分点差，2027 年后还会漂移 |
 
 ## 4. 架构
 
@@ -52,9 +56,11 @@ Flutter app（app/）
 guanxiang-core
   ├─ body / time / geometry   基础类型
   ├─ ephemeris                星历接口，已接入 anise
+  ├─ delta_t                  ΔT 模型（表 + 外推）
+  ├─ astrometry               视位置、站心位置、地平坐标、大气折射
+  ├─ observer                 测站（WGS84）
   ├─ search                   通用极小值与求根（Brent）
   ├─ events（M2 起）           合冲、凌日、日月食、掩星
-  ├─ observer（M1 起）         站心位置、地平高度、可见性
   └─ transit（M6）             SGP4、地面中心线、窄带判定
 
 guanxiang-cli                 调试、验证、生成预计算星表
@@ -82,7 +88,7 @@ guanxiang/
 ### M0 工程基线（0.5 周）
 
 - [x] 工作区、core、CLI 骨架
-- [ ] 建立 Git 仓库和 GitLab CI（fmt、clippy、test）——本地仓库和 CI 配置已建，尚未推送到 GitLab 运行
+- [x] 建立 Git 仓库和 GitLab CI（fmt、clippy、test）
 - [x] 加入 anise、sofars、sgp4 依赖，用 `cargo tree` 检查原生依赖和 TLS
 - [x] 编译到 `x86_64-pc-windows-msvc`、`x86_64-unknown-linux-gnu`、`aarch64-linux-android`
 
@@ -95,21 +101,32 @@ guanxiang/
 - anise 的默认 feature `metaload` 会引入 ureq，`analysis` 会引入 rayon、csv 等，已全部关闭。关闭后 Android 依赖树里没有 TLS，也没有 `cc` / `-sys` 构建依赖。
 - anise 目前最新版是 1.0.0-beta（预发布）。正式版发布后要重新核对 API。
 - M0 只用 `cargo rustc --crate-type cdylib` 临时生成过 `.so`。因为没有导出符号，它比最终桥接库小得多，不能用来估算安装包大小。
+- GitLab 共享 runner 42（Kubernetes）偶发在拉取代码时报 `could not lock config file //.gitconfig`，重试即可，与项目无关。
 - Android 构建命令：`cargo ndk -t arm64-v8a -P 24 build -p guanxiang-cli --release`（需设置 `ANDROID_NDK_HOME`）。
 
 ### M1 星历与坐标（2 周）
 
 - [x] 用 anise 实现 `Ephemeris`，读取 de440s（几何位置和速度，M0 已提前完成）
-- [ ] 时间转换：UTC、TT、TDB、UT1，并实现 ΔT 模块
-- [ ] 计算视位置：光行时、光行差、岁差章动
-- [ ] 计算站心位置、地平坐标和月球视差
-- [ ] CLI：`guanxiang position <body> <utc> [--at lat,lon,h]`
-- [ ] 在 Android 真机上测试星历加载和单次查询耗时
+- [x] 时间转换：UTC、TT、TDB、UT1，并实现 ΔT 模块
+- [x] 计算视位置：光行时、太阳引力偏折、光行差、岁差章动
+- [x] 计算站心位置、地平坐标和月球视差（另有大气折射）
+- [x] CLI：`guanxiang position <body> <utc> [--at lat,lon,h]`
+- [ ] 在 Android 真机上测试星历加载和单次查询耗时——没有设备，未做；测试程序已备好（`examples/bench_ephemeris.rs`）
 
 **验收：**
 
 - 与 JPL Horizons 对比 2000–2100 年的 100 个以上采样点，地心视位置差 ≤ 0.1″。
-- 真机上每秒至少完成 100 万次日、月、地位置查询（目标值，实测后调整）。
+  ——**按 D13 调整后通过**：135 个样本，地心视位置与 Skyfield 的最大差 0.0001″；天体测量位置与 Horizons 的最大差 0.008″（月球），行星在 µas 级；站心视位置和地平坐标与 Skyfield 的差 ≤ 0.0004″。
+- 真机上每秒至少完成 100 万次日、月、地位置查询（目标值，实测后调整）。——**未验证**，桌面实测为 70–100 万次/秒（见下）。
+
+**M1 记录：**
+
+- Horizons 的视位置与 IAU 2006/2000A 的差异：在 Horizons 的 EOP 实测期内（至 2026 年）只差赤经零点约 +0.05″，赤纬差 < 0.001″；EOP 预报截止（2027-01）后差异随时间增大，2100 年约 0.16″（赤经）和 0.09″（赤纬），与 IAU76 岁差速率误差相符。因此视位置改以 Skyfield 为对照（D13），Horizons 测试保留，检查 EOP 期内天极一致。
+- 本库忽略极移。与 Horizons 的地平坐标对比，方位角差约 0.3″·sec(纬度)，特罗姆瑟（69.6°N）约 1.2″，对事件时刻没有影响。M6 卫星凌月接入 IERS 数据时可一并加入极移。
+- ΔT 表由 `tools/deltat/gen_table.py` 从 USNO 的 `historic_deltat.data` 和 `deltat.data` 生成，最后一个值为 2026-10-01。**需要定期更新**（建议每次发布前）。表后为外推，界面需提示“不确定”。
+- 1962 年以前 Horizons 的 ΔT 与 USNO 历史表差 0.1–0.4 秒，本库采用 USNO 表（与 IERS C04 在 1962 年衔接一致）。
+- 桌面（Windows，release）实测：星历加载 38 ms；anise 单次位置查询约 1.1 µs（70–100 万次/秒）；月球完整地心视位置约 1.4 万次/秒，主要耗时在 IAU 2000A 章动。手机按经验慢 2–4 倍，达不到 100 万次/秒。对 M2 的影响和对策：粗搜用几何位置，只在精修时算完整视位置；必要时自写 SPK Type 2 读取器（预计比 anise 的通用查询快 10 倍以上）；同一时刻的多个天体共享岁差章动矩阵。
+- 对照数据的生成脚本：`tools/horizons/fetch_fixtures.py`、`tools/skyfield/gen_fixtures.py`，数据进 Git，CI 不联网。
 
 ### M2 合冲与凌日（1.5 周）
 
@@ -192,11 +209,12 @@ guanxiang/
 | 对象 | 对照来源 |
 |---|---|
 | 天体位置 | JPL Horizons、Skyfield |
+| 视位置（IAU 2006/2000A） | Skyfield（同一份 de440s） |
 | 坐标和时间尺度 | SOFA 官方测试值，`../SuperNOVAS` 可作为另一份参考 |
 | 事件完整性 | NASA 日月食和凌日星表 |
 | 卫星凌月 | transit-finder、实际观测 |
 
-- 对照数据固定保存在测试夹具中，CI 不依赖外部网络。（例外：de440s 星历本身在 CI 中下载一次后缓存。）
+- 对照数据固定保存在测试夹具中，CI 不依赖外部网络。de440s 存放在本项目的 Generic Package Registry（`ephemeris/de440/de440s.bsp`），CI 用 job token 下载并校验 SHA-256；CI 中星历测试不允许被跳过。
 - 与 NASA 星表比较时要注意它用的是 VSOP87 + ELP 和自己的 ΔT，秒级差异不一定是错误。
 - 每个事件类型至少有一份“数量不漏”和一份“时刻精度”测试。
 
@@ -207,7 +225,8 @@ guanxiang/
 | anise 在 Android 上带来编译或依赖问题 | 阻塞 M0 | 已解决：关闭默认 feature 后可交叉编译 |
 | anise 仍是 1.0.0-beta，API 可能变 | 升级时要改代码 | anise 只在 `ephemeris.rs` 中使用（D9），影响范围小 |
 | 手机性能或内存不足 | 影响体验 | 预计算、裁剪星历、粗搜阶段用低精度模型 |
-| ΔT 的不确定性 | 远年代结果不准 | 界面标明精度随年代下降，只开放有依据的范围 |
+| ΔT 的不确定性 | 远年代和未来结果不准 | 界面标明精度随年代下降，只开放有依据的范围；ΔT 表每次发布前更新 |
+| anise 查询速度不够 | M2 的搜索速度不达标 | 粗搜用几何位置；必要时自写 SPK Type 2 读取器 |
 | 月面地形影响日食接触时刻 | 秒级误差 | 第一版不做地形修正，后续再评估 |
 | 卫星变轨或根数过期 | 预报失效 | 显示龄期、临近再次刷新、比较新旧结果 |
 | CelesTrak 限流或政策变化 | 卫星功能中断 | 严格缓存，只请求少量目标，必要时自建缓存 |
@@ -226,10 +245,10 @@ guanxiang/
 
 ## 9. 第一批任务
 
-1. [ ] 在本目录建立 Git 仓库，并接入 GitLab CI。——本地仓库和 `.gitlab-ci.yml` 已建，待推送到 GitLab。
+1. [x] 在本目录建立 Git 仓库，并接入 GitLab CI。
 2. [x] 把 anise、sofars、sgp4 加入工作区，确认最新版本。
 3. [x] 运行 `cargo tree -e normal --target aarch64-linux-android`，检查原生依赖。
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M1 的时间尺度与 ΔT（sofars），然后是视位置，并用 Horizons 夹具验证。
+下一步：M2 合冲与凌日。先做粗搜加精修的通用流程，并测一次 100 年搜索的耗时，再决定是否自写 SPK 读取器。

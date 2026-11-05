@@ -4,6 +4,8 @@ use std::str::FromStr;
 use crate::error::Error;
 
 /// 第一版支持的天体。行星用系统质心（DE440s 只含质心，水星、金星的质心即行星本身）。
+///
+/// `SolarSystemBarycenter` 只作为计算中心使用，不在 [`Body::ALL`] 中。
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum Body {
     Sun,
@@ -16,6 +18,7 @@ pub enum Body {
     Saturn,
     Uranus,
     Neptune,
+    SolarSystemBarycenter,
 }
 
 impl Body {
@@ -45,6 +48,7 @@ impl Body {
             Body::Saturn => 6,
             Body::Uranus => 7,
             Body::Neptune => 8,
+            Body::SolarSystemBarycenter => 0,
         }
     }
 
@@ -60,6 +64,7 @@ impl Body {
             Body::Saturn => "saturn",
             Body::Uranus => "uranus",
             Body::Neptune => "neptune",
+            Body::SolarSystemBarycenter => "ssb",
         }
     }
 
@@ -75,6 +80,7 @@ impl Body {
             Body::Saturn => "土星",
             Body::Uranus => "天王星",
             Body::Neptune => "海王星",
+            Body::SolarSystemBarycenter => "太阳系质心",
         }
     }
 }

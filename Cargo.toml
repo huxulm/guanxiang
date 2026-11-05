@@ -28,3 +28,7 @@ all = { level = "warn", priority = -1 }
 [profile.release]
 lto = "thin"
 codegen-units = 1
+
+# 依赖库在开发和测试时也开优化（anise 在 debug 下很慢），本项目代码保持 debug
+[profile.dev.package."*"]
+opt-level = 2

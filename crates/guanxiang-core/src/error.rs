@@ -17,6 +17,15 @@ pub enum Error {
     #[error("未知天体：{0}")]
     UnknownBody(String),
 
+    #[error("时间无效：{0}")]
+    InvalidTime(String),
+
+    #[error("观测者位置无效：{0}")]
+    InvalidObserver(String),
+
+    #[error("无法计算：{0}")]
+    Unsupported(&'static str),
+
     #[error("搜索区间无效：{0}")]
     InvalidBracket(&'static str),
 }
