@@ -494,11 +494,23 @@ abstract class AppLocalizations {
   /// **'天数'**
   String get days;
 
-  /// No description provided for @searchFromNow.
+  /// No description provided for @startTime.
   ///
   /// In zh, this message translates to:
-  /// **'从现在起搜索'**
-  String get searchFromNow;
+  /// **'起始时间（本地）'**
+  String get startTime;
+
+  /// No description provided for @startNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'现在'**
+  String get startNow;
+
+  /// No description provided for @resetToNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'改回现在'**
+  String get resetToNow;
 
   /// No description provided for @osmAttribution.
   ///

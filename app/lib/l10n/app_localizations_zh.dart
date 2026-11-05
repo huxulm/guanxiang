@@ -230,7 +230,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get days => '天数';
 
   @override
-  String get searchFromNow => '从现在起搜索';
+  String get startTime => '起始时间（本地）';
+
+  @override
+  String get startNow => '现在';
+
+  @override
+  String get resetToNow => '改回现在';
 
   @override
   String get osmAttribution => '© OpenStreetMap 贡献者';

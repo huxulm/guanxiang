@@ -4,10 +4,21 @@
   "searchTitle": "观象 · 天文事件搜索",
   "loadingEphemeris": "正在加载星历…",
   "ephemerisLoadFailed": "星历加载失败：{error}",
-  "@ephemerisLoadFailed": {"placeholders": {"error": {"type": "String"}}},
+  "@ephemerisLoadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "ephemerisLoaded": "星历加载 {ms} ms",
-  "@ephemerisLoaded": {"placeholders": {"ms": {"type": "int"}}},
-
+  "@ephemerisLoaded": {
+    "placeholders": {
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
   "kindTransit": "凌日",
   "kindConjunction": "合",
   "kindOpposition": "冲",
@@ -15,7 +26,6 @@
   "kindSolarEclipse": "日食",
   "kindLunarEclipse": "月食",
   "kindOccultation": "月掩星",
-
   "occAll": "全部（行星和 550 颗亮星）",
   "occPlanets": "全部行星",
   "occStars": "全部亮星",
@@ -24,7 +34,6 @@
   "starRegulus": "轩辕十四",
   "starAldebaran": "毕宿五",
   "starAlcyone": "昴宿六（昴星团）",
-
   "occultedTarget": "被掩目标",
   "eclipseHint": "日月食按地心计算；打开“只显示本地可见”可得到本地情况",
   "planet": "行星",
@@ -46,71 +55,206 @@
   "noResults": "暂无结果",
   "searching": "搜索中…",
   "searchFinished": "共 {count} 个事件，用时 {ms} ms",
-  "@searchFinished": {"placeholders": {"count": {"type": "int"}, "ms": {"type": "int"}}},
+  "@searchFinished": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
   "searchCancelled": "已取消，共 {count} 个事件，用时 {ms} ms",
-  "@searchCancelled": {"placeholders": {"count": {"type": "int"}, "ms": {"type": "int"}}},
+  "@searchCancelled": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
   "searchFailed": "搜索失败：{error}",
-  "@searchFailed": {"placeholders": {"error": {"type": "String"}}},
+  "@searchFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "searchFailedShort": "搜索失败",
   "invalidObserver": "测站坐标无效",
   "detailFooter": "时刻为 UTC。TT 儒略日 {jd}。",
-  "@detailFooter": {"placeholders": {"jd": {"type": "String"}}},
-
+  "@detailFooter": {
+    "placeholders": {
+      "jd": {
+        "type": "String"
+      }
+    }
+  },
   "enterYears": "请输入起止年份",
   "endAfterStart": "结束年份必须晚于起始年份",
   "yearsOutOfRange": "内置星历只覆盖 {from}–{to} 年，请在这个范围内搜索",
-  "@yearsOutOfRange": {"placeholders": {"from": {"type": "int"}, "to": {"type": "int"}}},
-
+  "@yearsOutOfRange": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
   "satTitle": "卫星凌日、凌月",
   "issName": "国际空间站",
   "cssName": "天宫空间站",
   "cacheOpenFailed": "打开根数缓存失败：{error}",
-  "@cacheOpenFailed": {"placeholders": {"error": {"type": "String"}}},
+  "@cacheOpenFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "enterNorad": "请输入 NORAD 编号",
   "invalidInput": "输入无效",
   "noElementsYet": "还没有根数，请先刷新",
   "computing": "计算中…",
   "satSummary": "共 {count} 次接近（{transits} 次凌日凌月），用时 {ms} ms",
-  "@satSummary": {"placeholders": {"count": {"type": "int"}, "transits": {"type": "int"}, "ms": {"type": "int"}}},
+  "@satSummary": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "transits": {
+        "type": "int"
+      },
+      "ms": {
+        "type": "int"
+      }
+    }
+  },
   "noElements": "无根数",
   "cacheEpoch": "历元 {epoch} UTC",
-  "@cacheEpoch": {"placeholders": {"epoch": {"type": "String"}}},
+  "@cacheEpoch": {
+    "placeholders": {
+      "epoch": {
+        "type": "String"
+      }
+    }
+  },
   "downloadedAgo": "，{minutes} 分钟前下载",
-  "@downloadedAgo": {"placeholders": {"minutes": {"type": "int"}}},
+  "@downloadedAgo": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "hasPrevious": "，有旧根数可比较",
   "noradNumber": "NORAD 编号",
   "addSatellite": "添加卫星",
   "refreshElements": "刷新根数",
   "days": "天数",
-  "searchFromNow": "从现在起搜索",
+  "startTime": "起始时间（本地）",
+  "startNow": "现在",
+  "resetToNow": "改回现在",
   "osmAttribution": "© OpenStreetMap 贡献者",
   "centerlineHintSun": "红线（未凌时为橙线）是中心线：最近时刻前后各 10 秒的地面轨迹，站在线上看到卫星正好穿过日心。可见带半宽约 {width} km。",
-  "@centerlineHintSun": {"placeholders": {"width": {"type": "String"}}},
+  "@centerlineHintSun": {
+    "placeholders": {
+      "width": {
+        "type": "String"
+      }
+    }
+  },
   "centerlineHintMoon": "红线（未凌时为橙线）是中心线：最近时刻前后各 10 秒的地面轨迹，站在线上看到卫星正好穿过月心。可见带半宽约 {width} km。",
-  "@centerlineHintMoon": {"placeholders": {"width": {"type": "String"}}},
-
+  "@centerlineHintMoon": {
+    "placeholders": {
+      "width": {
+        "type": "String"
+      }
+    }
+  },
   "refreshBlocked": "之前的请求出错，暂停下载，使用缓存的根数",
   "refreshRecent": "{minutes} 分钟前已下载，CelesTrak 每 2 小时才更新，使用缓存",
-  "@refreshRecent": {"placeholders": {"minutes": {"type": "int"}}},
+  "@refreshRecent": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
   "refreshNetwork": "{error}，使用缓存的根数",
-  "@refreshNetwork": {"placeholders": {"error": {"type": "String"}}},
+  "@refreshNetwork": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
   "refreshHttp": "CelesTrak 返回 {status}，暂停下载 2 小时",
-  "@refreshHttp": {"placeholders": {"status": {"type": "int"}}},
+  "@refreshHttp": {
+    "placeholders": {
+      "status": {
+        "type": "int"
+      }
+    }
+  },
   "refreshInvalid": "没有拿到编号 {id} 的根数：{hint}",
-  "@refreshInvalid": {"placeholders": {"id": {"type": "int"}, "hint": {"type": "String"}}},
+  "@refreshInvalid": {
+    "placeholders": {
+      "id": {
+        "type": "int"
+      },
+      "hint": {
+        "type": "String"
+      }
+    }
+  },
   "refreshUpdated": "已更新，根数历元 {epoch}",
-  "@refreshUpdated": {"placeholders": {"epoch": {"type": "String"}}},
+  "@refreshUpdated": {
+    "placeholders": {
+      "epoch": {
+        "type": "String"
+      }
+    }
+  },
   "refreshUnchanged": "根数没有变化（历元 {epoch}）",
-  "@refreshUnchanged": {"placeholders": {"epoch": {"type": "String"}}},
-
+  "@refreshUnchanged": {
+    "placeholders": {
+      "epoch": {
+        "type": "String"
+      }
+    }
+  },
   "errInternal": "内部错误：{message}",
-  "@errInternal": {"placeholders": {"message": {"type": "String"}}},
+  "@errInternal": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "errNetwork": "网络不可用，请检查网络连接",
   "errTimeout": "请求超时，请稍后再试",
   "errHttp": "网络请求失败：{message}",
-  "@errHttp": {"placeholders": {"message": {"type": "String"}}},
+  "@errHttp": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "errFormat": "数据格式错误：{message}",
-  "@errFormat": {"placeholders": {"message": {"type": "String"}}},
-
+  "@errFormat": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
   "legalese": "天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。"
 }

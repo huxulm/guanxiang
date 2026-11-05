@@ -44,5 +44,6 @@ flutter build apk --release --split-per-abi --target-platform android-arm64,andr
 ## 卫星
 
 - 根数从 CelesTrak 下载（`lib/src/celestrak.dart`），缓存在应用支持目录的 `omm/` 下。同一颗卫星 2 小时内只请求一次；任何非 200 响应后本次运行不再请求，并暂停 2 小时。
+- 搜索起始时间默认是现在，可以在卫星页选择其他日期时间（本地时间，传给 Rust 前转成 UTC）。离根数历元越远越不准，龄期超过 3 天的结果会提醒。
 - Android 上用 WorkManager 每 6 小时在后台刷新一次（仅联网时），同样遵守上面的限制。
 - 地图底图是 OpenStreetMap 瓦片，需要联网；离线时底图空白，数据照常显示。

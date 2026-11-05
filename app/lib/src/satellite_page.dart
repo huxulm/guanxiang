@@ -35,6 +35,9 @@ class _SatellitePageState extends State<SatellitePage> {
   bool _busy = false;
   (double, double) _searchedAt = (0, 0);
 
+  /// 搜索起始时间（本地时间）；null 表示从现在开始
+  DateTime? _start;
+
   /// 状态文字，在 build 时按当前语言生成
   String Function(AppLocalizations) _status = (_) => '';
 
@@ -148,7 +151,7 @@ class _SatellitePageState extends State<SatellitePage> {
       _status = (l) => l.computing;
     });
     final watch = Stopwatch()..start();
-    final now = DateTime.now().toUtc().toIso8601String();
+    final startUtc = (_start ?? DateTime.now()).toUtc().toIso8601String();
     final errors = <String Function(AppLocalizations)>[];
     for (final c in withData) {
       try {
@@ -159,7 +162,7 @@ class _SatellitePageState extends State<SatellitePage> {
           latitudeDeg: lat,
           longitudeDeg: lon,
           heightM: h,
-          startUtc: now,
+          startUtc: startUtc,
           days: days,
           maxSeparationDeg: maxSep,
           lang: lang,
@@ -180,6 +183,41 @@ class _SatellitePageState extends State<SatellitePage> {
         for (final e in errors) e(l),
       ].join('\n');
     });
+  }
+
+  /// 选择起始日期和时间（本地时间）。
+  Future<void> _pickStart() async {
+    final now = DateTime.now();
+    final initial = _start ?? now;
+    final date = await showDatePicker(
+      context: context,
+      initialDate: initial,
+      // 根数只在历元前后约两周内可靠，这里只限制在合理范围内，龄期过大时结果里会提醒
+      firstDate: now.subtract(const Duration(days: 60)),
+      lastDate: now.add(const Duration(days: 60)),
+    );
+    if (date == null || !mounted) return;
+    final time = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.fromDateTime(initial),
+    );
+    if (time == null) return;
+    setState(() {
+      _start = DateTime(
+        date.year,
+        date.month,
+        date.day,
+        time.hour,
+        time.minute,
+      );
+    });
+  }
+
+  String _startLabel(AppLocalizations l) {
+    final s = _start;
+    if (s == null) return l.startNow;
+    String two(int v) => v.toString().padLeft(2, '0');
+    return '${s.year}-${two(s.month)}-${two(s.day)} ${two(s.hour)}:${two(s.minute)}';
   }
 
   void _snack(String msg) =>
@@ -281,13 +319,33 @@ class _SatellitePageState extends State<SatellitePage> {
                 _numberField(_maxSepCtrl, l.maxSeparation, width: 80),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Text(l.startTime),
+                const SizedBox(width: 8),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _pickStart,
+                  icon: const Icon(Icons.event),
+                  label: Text(_startLabel(l)),
+                ),
+                if (_start != null)
+                  IconButton(
+                    icon: const Icon(Icons.restart_alt),
+                    tooltip: l.resetToNow,
+                    onPressed: _busy
+                        ? null
+                        : () => setState(() => _start = null),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
             Row(
               children: [
                 FilledButton.icon(
                   onPressed: _busy ? null : _search,
                   icon: const Icon(Icons.search),
-                  label: Text(l.searchFromNow),
+                  label: Text(l.search),
                 ),
                 const SizedBox(width: 12),
                 if (_busy)

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/widgets.dart';
@@ -20,7 +21,10 @@ void main() {
 
   test('网络错误按语言', () {
     expect(describeError(const SocketException('x'), zh), contains('网络不可用'));
-    expect(describeError(const SocketException('x'), en), 'No network connection');
+    expect(
+      describeError(const SocketException('x'), en),
+      'No network connection',
+    );
     expect(describeError(TimeoutException('x'), zh), contains('超时'));
     expect(describeError(TimeoutException('x'), en), contains('timed out'));
   });
@@ -39,9 +43,10 @@ void main() {
   test('中英文 ARB 的键一致', () {
     final zhArb = File('lib/l10n/app_zh.arb').readAsStringSync();
     final enArb = File('lib/l10n/app_en.arb').readAsStringSync();
-    final key = RegExp(r'^\s*"([a-zA-Z]\w*)":', multiLine: true);
-    Set<String> keys(String s) =>
-        key.allMatches(s).map((m) => m.group(1)!).toSet();
+    // 只比较顶层的消息键（去掉 @ 开头的元数据）
+    Set<String> keys(String s) => (jsonDecode(s) as Map<String, dynamic>).keys
+        .where((k) => !k.startsWith('@'))
+        .toSet();
     expect(keys(enArb), keys(zhArb));
   });
 }

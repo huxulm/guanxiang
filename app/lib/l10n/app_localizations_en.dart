@@ -232,7 +232,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get days => 'Days';
 
   @override
-  String get searchFromNow => 'Search from now';
+  String get startTime => 'Start (local time)';
+
+  @override
+  String get startNow => 'Now';
+
+  @override
+  String get resetToNow => 'Back to now';
 
   @override
   String get osmAttribution => '© OpenStreetMap contributors';
