@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 387219929;
+  int get rustContentHash => -1647486291;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -93,11 +93,27 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiGuanxiangInitApp();
 
+  List<SatelliteInfo> crateApiGuanxiangParseOmm({required String json});
+
+  Future<List<SatTransitItem>> crateApiGuanxiangSatelliteTransits({
+    required Engine engine,
+    required String ommJson,
+    String? previousOmmJson,
+    required double latitudeDeg,
+    required double longitudeDeg,
+    required double heightM,
+    required String startUtc,
+    required double days,
+    required double maxSeparationDeg,
+  });
+
   Stream<SearchUpdate> crateApiGuanxiangSearch({
     required Engine engine,
     required SearchRequest request,
     required CancelToken token,
   });
+
+  String crateApiGuanxiangSunSafetyNotice();
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_CancelToken;
@@ -279,6 +295,101 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
+  List<SatelliteInfo> crateApiGuanxiangParseOmm({required String json}) {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(json, serializer);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_satellite_info,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangParseOmmConstMeta,
+        argValues: [json],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangParseOmmConstMeta =>
+      const TaskConstMeta(debugName: "parse_omm", argNames: ["json"]);
+
+  @override
+  Future<List<SatTransitItem>> crateApiGuanxiangSatelliteTransits({
+    required Engine engine,
+    required String ommJson,
+    String? previousOmmJson,
+    required double latitudeDeg,
+    required double longitudeDeg,
+    required double heightM,
+    required String startUtc,
+    required double days,
+    required double maxSeparationDeg,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEngine(
+            engine,
+            serializer,
+          );
+          sse_encode_String(ommJson, serializer);
+          sse_encode_opt_String(previousOmmJson, serializer);
+          sse_encode_f_64(latitudeDeg, serializer);
+          sse_encode_f_64(longitudeDeg, serializer);
+          sse_encode_f_64(heightM, serializer);
+          sse_encode_String(startUtc, serializer);
+          sse_encode_f_64(days, serializer);
+          sse_encode_f_64(maxSeparationDeg, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_sat_transit_item,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangSatelliteTransitsConstMeta,
+        argValues: [
+          engine,
+          ommJson,
+          previousOmmJson,
+          latitudeDeg,
+          longitudeDeg,
+          heightM,
+          startUtc,
+          days,
+          maxSeparationDeg,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangSatelliteTransitsConstMeta =>
+      const TaskConstMeta(
+        debugName: "satellite_transits",
+        argNames: [
+          "engine",
+          "ommJson",
+          "previousOmmJson",
+          "latitudeDeg",
+          "longitudeDeg",
+          "heightM",
+          "startUtc",
+          "days",
+          "maxSeparationDeg",
+        ],
+      );
+
+  @override
   Stream<SearchUpdate> crateApiGuanxiangSearch({
     required Engine engine,
     required SearchRequest request,
@@ -303,7 +414,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 7,
+              funcId: 9,
               port: port_,
             );
           },
@@ -324,6 +435,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     debugName: "search",
     argNames: ["engine", "request", "token", "sink"],
   );
+
+  @override
+  String crateApiGuanxiangSunSafetyNotice() {
+    return handler.executeSync(
+      SyncTask(
+        callFfi: () {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiGuanxiangSunSafetyNoticeConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangSunSafetyNoticeConstMeta =>
+      const TaskConstMeta(debugName: "sun_safety_notice", argNames: []);
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_CancelToken => wire
@@ -428,6 +561,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_box_autoadd_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
   ObserverInput dco_decode_box_autoadd_observer_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_observer_input(raw);
@@ -480,6 +619,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GeoPoint dco_decode_geo_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return GeoPoint(
+      latitudeDeg: dco_decode_f_64(arr[0]),
+      longitudeDeg: dco_decode_f_64(arr[1]),
+    );
+  }
+
+  @protected
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -489,6 +640,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<Detail> dco_decode_list_detail(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_detail).toList();
+  }
+
+  @protected
+  List<GeoPoint> dco_decode_list_geo_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_geo_point).toList();
   }
 
   @protected
@@ -510,6 +667,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SatTransitItem> dco_decode_list_sat_transit_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_sat_transit_item).toList();
+  }
+
+  @protected
+  List<SatelliteInfo> dco_decode_list_satellite_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_satellite_info).toList();
+  }
+
+  @protected
   ObserverInput dco_decode_observer_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -525,15 +694,68 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  String? dco_decode_opt_String(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
   EventItem? dco_decode_opt_box_autoadd_event_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_event_item(raw);
   }
 
   @protected
+  double? dco_decode_opt_box_autoadd_f_64(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_f_64(raw);
+  }
+
+  @protected
   ObserverInput? dco_decode_opt_box_autoadd_observer_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_observer_input(raw);
+  }
+
+  @protected
+  SatTransitItem dco_decode_sat_transit_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 17)
+      throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
+    return SatTransitItem(
+      noradId: dco_decode_u_32(arr[0]),
+      satellite: dco_decode_String(arr[1]),
+      body: dco_decode_String(arr[2]),
+      isTransit: dco_decode_bool(arr[3]),
+      title: dco_decode_String(arr[4]),
+      utc: dco_decode_String(arr[5]),
+      ttJd: dco_decode_f_64(arr[6]),
+      summary: dco_decode_String(arr[7]),
+      details: dco_decode_list_detail(arr[8]),
+      distanceToCenterlineKm: dco_decode_f_64(arr[9]),
+      bandHalfWidthKm: dco_decode_f_64(arr[10]),
+      elementsAgeDays: dco_decode_f_64(arr[11]),
+      centerline: dco_decode_list_geo_point(arr[12]),
+      centerlineNearest: dco_decode_geo_point(arr[13]),
+      previousShiftS: dco_decode_opt_box_autoadd_f_64(arr[14]),
+      previousShiftKm: dco_decode_opt_box_autoadd_f_64(arr[15]),
+      warning: dco_decode_opt_String(arr[16]),
+    );
+  }
+
+  @protected
+  SatelliteInfo dco_decode_satellite_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SatelliteInfo(
+      noradId: dco_decode_u_32(arr[0]),
+      name: dco_decode_String(arr[1]),
+      epochUtc: dco_decode_String(arr[2]),
+      epochTtJd: dco_decode_f_64(arr[3]),
+    );
   }
 
   @protected
@@ -712,6 +934,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double sse_decode_box_autoadd_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_f_64(deserializer));
+  }
+
+  @protected
   ObserverInput sse_decode_box_autoadd_observer_input(
     SseDeserializer deserializer,
   ) {
@@ -768,6 +996,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GeoPoint sse_decode_geo_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_latitudeDeg = sse_decode_f_64(deserializer);
+    var var_longitudeDeg = sse_decode_f_64(deserializer);
+    return GeoPoint(
+      latitudeDeg: var_latitudeDeg,
+      longitudeDeg: var_longitudeDeg,
+    );
+  }
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
@@ -781,6 +1020,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <Detail>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_detail(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<GeoPoint> sse_decode_list_geo_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <GeoPoint>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_geo_point(deserializer));
     }
     return ans_;
   }
@@ -807,6 +1058,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SatTransitItem> sse_decode_list_sat_transit_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SatTransitItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_sat_transit_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<SatelliteInfo> sse_decode_list_satellite_info(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SatelliteInfo>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_satellite_info(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   ObserverInput sse_decode_observer_input(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_latitudeDeg = sse_decode_f_64(deserializer);
@@ -824,6 +1103,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_String(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   EventItem? sse_decode_opt_box_autoadd_event_item(
     SseDeserializer deserializer,
   ) {
@@ -831,6 +1121,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_event_item(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_f_64(deserializer));
     } else {
       return null;
     }
@@ -847,6 +1148,62 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     } else {
       return null;
     }
+  }
+
+  @protected
+  SatTransitItem sse_decode_sat_transit_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_noradId = sse_decode_u_32(deserializer);
+    var var_satellite = sse_decode_String(deserializer);
+    var var_body = sse_decode_String(deserializer);
+    var var_isTransit = sse_decode_bool(deserializer);
+    var var_title = sse_decode_String(deserializer);
+    var var_utc = sse_decode_String(deserializer);
+    var var_ttJd = sse_decode_f_64(deserializer);
+    var var_summary = sse_decode_String(deserializer);
+    var var_details = sse_decode_list_detail(deserializer);
+    var var_distanceToCenterlineKm = sse_decode_f_64(deserializer);
+    var var_bandHalfWidthKm = sse_decode_f_64(deserializer);
+    var var_elementsAgeDays = sse_decode_f_64(deserializer);
+    var var_centerline = sse_decode_list_geo_point(deserializer);
+    var var_centerlineNearest = sse_decode_geo_point(deserializer);
+    var var_previousShiftS = sse_decode_opt_box_autoadd_f_64(deserializer);
+    var var_previousShiftKm = sse_decode_opt_box_autoadd_f_64(deserializer);
+    var var_warning = sse_decode_opt_String(deserializer);
+    return SatTransitItem(
+      noradId: var_noradId,
+      satellite: var_satellite,
+      body: var_body,
+      isTransit: var_isTransit,
+      title: var_title,
+      utc: var_utc,
+      ttJd: var_ttJd,
+      summary: var_summary,
+      details: var_details,
+      distanceToCenterlineKm: var_distanceToCenterlineKm,
+      bandHalfWidthKm: var_bandHalfWidthKm,
+      elementsAgeDays: var_elementsAgeDays,
+      centerline: var_centerline,
+      centerlineNearest: var_centerlineNearest,
+      previousShiftS: var_previousShiftS,
+      previousShiftKm: var_previousShiftKm,
+      warning: var_warning,
+    );
+  }
+
+  @protected
+  SatelliteInfo sse_decode_satellite_info(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_noradId = sse_decode_u_32(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_epochUtc = sse_decode_String(deserializer);
+    var var_epochTtJd = sse_decode_f_64(deserializer);
+    return SatelliteInfo(
+      noradId: var_noradId,
+      name: var_name,
+      epochUtc: var_epochUtc,
+      epochTtJd: var_epochTtJd,
+    );
   }
 
   @protected
@@ -1051,6 +1408,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_observer_input(
     ObserverInput self,
     SseSerializer serializer,
@@ -1099,6 +1462,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_geo_point(GeoPoint self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.latitudeDeg, serializer);
+    sse_encode_f_64(self.longitudeDeg, serializer);
+  }
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     serializer.buffer.putInt32(self);
@@ -1110,6 +1480,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_detail(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_geo_point(
+    List<GeoPoint> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_geo_point(item, serializer);
     }
   }
 
@@ -1146,6 +1528,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_sat_transit_item(
+    List<SatTransitItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_sat_transit_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_satellite_info(
+    List<SatelliteInfo> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_satellite_info(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_observer_input(ObserverInput self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_64(self.latitudeDeg, serializer);
@@ -1153,6 +1559,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_f_64(self.heightM, serializer);
     sse_encode_f_64(self.minAltitudeDeg, serializer);
     sse_encode_f_64(self.maxSunAltitudeDeg, serializer);
+  }
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_String(self, serializer);
+    }
   }
 
   @protected
@@ -1169,6 +1585,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_f_64(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_observer_input(
     ObserverInput? self,
     SseSerializer serializer,
@@ -1179,6 +1605,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (self != null) {
       sse_encode_box_autoadd_observer_input(self, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_sat_transit_item(
+    SatTransitItem self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.noradId, serializer);
+    sse_encode_String(self.satellite, serializer);
+    sse_encode_String(self.body, serializer);
+    sse_encode_bool(self.isTransit, serializer);
+    sse_encode_String(self.title, serializer);
+    sse_encode_String(self.utc, serializer);
+    sse_encode_f_64(self.ttJd, serializer);
+    sse_encode_String(self.summary, serializer);
+    sse_encode_list_detail(self.details, serializer);
+    sse_encode_f_64(self.distanceToCenterlineKm, serializer);
+    sse_encode_f_64(self.bandHalfWidthKm, serializer);
+    sse_encode_f_64(self.elementsAgeDays, serializer);
+    sse_encode_list_geo_point(self.centerline, serializer);
+    sse_encode_geo_point(self.centerlineNearest, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.previousShiftS, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.previousShiftKm, serializer);
+    sse_encode_opt_String(self.warning, serializer);
+  }
+
+  @protected
+  void sse_encode_satellite_info(SatelliteInfo self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_u_32(self.noradId, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.epochUtc, serializer);
+    sse_encode_f_64(self.epochTtJd, serializer);
   }
 
   @protected

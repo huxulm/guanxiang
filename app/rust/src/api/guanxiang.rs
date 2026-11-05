@@ -12,9 +12,11 @@ use guanxiang_core::events::local_eclipse::{self, LocalSolarKind};
 use guanxiang_core::events::longitude::{self, Aspect};
 use guanxiang_core::events::lunar_eclipse::{self, LunarEclipseKind, ShadowModel};
 use guanxiang_core::events::occultation::{self, Target};
+use guanxiang_core::events::sat_transit::{self, SatTransit};
 use guanxiang_core::events::solar_eclipse::{self, SolarEclipseKind};
 use guanxiang_core::events::visibility::{apparent_altitude, VisibilityFilter};
 use guanxiang_core::events::{separation, transit, Span};
+use guanxiang_core::satellite::Satellite;
 use guanxiang_core::{stars, AniseEphemeris, Body, DateTime, Observer, Time};
 
 use crate::frb_generated::StreamSink;
@@ -627,4 +629,302 @@ fn search_span(
         }
     }
     Ok(out)
+}
+
+// ---------------------------------------------------------------------------
+// 卫星（M6）。按 D5，网络请求在 Dart 端，这里只接收 OMM JSON 字符串。
+
+/// 一组根数的摘要。
+#[derive(Debug, Clone)]
+pub struct SatelliteInfo {
+    pub norad_id: u32,
+    pub name: String,
+    /// 根数历元（UTC）
+    pub epoch_utc: String,
+    pub epoch_tt_jd: f64,
+}
+
+/// 解析 CelesTrak `FORMAT=JSON` 的 OMM。
+#[frb(sync)]
+pub fn parse_omm(json: String) -> anyhow::Result<Vec<SatelliteInfo>> {
+    Ok(Satellite::from_omm_json(&json)?
+        .iter()
+        .map(|s| SatelliteInfo {
+            norad_id: s.norad_id,
+            name: s.name.clone(),
+            epoch_utc: utc(&s.epoch),
+            epoch_tt_jd: s.epoch.tt_jd(),
+        })
+        .collect())
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct GeoPoint {
+    pub latitude_deg: f64,
+    pub longitude_deg: f64,
+}
+
+/// 一次卫星接近，含地图显示需要的中心线。
+#[derive(Debug, Clone)]
+pub struct SatTransitItem {
+    pub norad_id: u32,
+    pub satellite: String,
+    /// "sun" 或 "moon"
+    pub body: String,
+    /// 是否穿过日面（月面）
+    pub is_transit: bool,
+    pub title: String,
+    pub utc: String,
+    pub tt_jd: f64,
+    pub summary: String,
+    pub details: Vec<Detail>,
+    pub distance_to_centerline_km: f64,
+    pub band_half_width_km: f64,
+    pub elements_age_days: f64,
+    pub centerline: Vec<GeoPoint>,
+    pub centerline_nearest: GeoPoint,
+    /// 与旧根数预报相比的时刻变化（秒）；没有旧根数或旧根数里找不到对应事件为 None
+    pub previous_shift_s: Option<f64>,
+    /// 与旧根数预报相比的中心线横向移动（km）
+    pub previous_shift_km: Option<f64>,
+    /// 新旧预报差别大，或根数太旧，需要提醒
+    pub warning: Option<String>,
+}
+
+/// 观测太阳的安全提示，所有涉及太阳的结果都附带。
+pub const SUN_SAFETY: &str = "观测太阳必须使用合格的太阳滤光膜（ISO 12312-2）。切勿用肉眼、普通墨镜，或未加滤光的望远镜、相机直视太阳。";
+
+/// 时刻变化超过此值（秒）时提醒。
+const WARN_SHIFT_S: f64 = 1.0;
+/// 中心线移动超过此值（km）时提醒。
+const WARN_SHIFT_KM: f64 = 1.0;
+/// 根数龄期超过此值（天）时提醒。
+const WARN_AGE_DAYS: f64 = 3.0;
+
+/// 观测安全提示，供界面显示。
+#[frb(sync)]
+pub fn sun_safety_notice() -> String {
+    SUN_SAFETY.to_string()
+}
+
+/// 搜索卫星凌日、凌月。
+///
+/// `start_utc` 形如 "2026-11-06T12:00:00"，空字符串表示从根数历元开始。
+/// `previous_omm_json` 为上一份根数（可为空），用于比较新旧预报。
+#[allow(clippy::too_many_arguments)]
+pub fn satellite_transits(
+    engine: &Engine,
+    omm_json: String,
+    previous_omm_json: Option<String>,
+    latitude_deg: f64,
+    longitude_deg: f64,
+    height_m: f64,
+    start_utc: String,
+    days: f64,
+    max_separation_deg: f64,
+) -> anyhow::Result<Vec<SatTransitItem>> {
+    anyhow::ensure!(days > 0.0 && days <= 14.0, "搜索天数应在 0–14 天之间");
+    let obs = Observer::from_degrees(latitude_deg, longitude_deg, height_m)?;
+    let sats = Satellite::from_omm_json(&omm_json)?;
+    let previous = match previous_omm_json.as_deref() {
+        Some(s) if !s.trim().is_empty() => Satellite::from_omm_json(s).unwrap_or_default(),
+        _ => Vec::new(),
+    };
+    let bodies = [Body::Sun, Body::Moon];
+    let max = max_separation_deg.to_radians();
+    let mut out = Vec::new();
+    for sat in &sats {
+        let start = if start_utc.trim().is_empty() {
+            sat.epoch
+        } else {
+            Time::from_utc(&start_utc.trim().parse::<DateTime>()?)?
+        };
+        let span = Span::new(start, start.add_seconds(days * 86_400.0))?;
+        let found = sat_transit::search(&engine.eph, sat, &bodies, span, &obs, max, None)?;
+        // 同一历元的根数不用比较
+        let old = match previous.iter().find(|p| p.norad_id == sat.norad_id) {
+            Some(p) if (p.epoch.tt_seconds() - sat.epoch.tt_seconds()).abs() > 1.0 => Some(
+                sat_transit::search(&engine.eph, p, &bodies, span, &obs, max, None)?,
+            ),
+            _ => None,
+        };
+        for e in found {
+            out.push(sat_item(&e, old.as_deref()));
+        }
+    }
+    out.sort_by(|a, b| a.tt_jd.total_cmp(&b.tt_jd));
+    Ok(out)
+}
+
+fn geo(p: (f64, f64)) -> GeoPoint {
+    GeoPoint {
+        latitude_deg: p.0,
+        longitude_deg: p.1,
+    }
+}
+
+/// 点到折线的近似距离（km）：在点附近按等距圆柱投影成平面计算。
+fn distance_to_polyline_km(p: (f64, f64), line: &[(f64, f64)]) -> Option<f64> {
+    const R: f64 = 6371.0;
+    let k = p.0.to_radians().cos();
+    let xy = |q: (f64, f64)| {
+        let dlon = (q.1 - p.1 + 540.0).rem_euclid(360.0) - 180.0;
+        (dlon.to_radians() * k * R, (q.0 - p.0).to_radians() * R)
+    };
+    line.windows(2)
+        .map(|w| {
+            let (a, b) = (xy(w[0]), xy(w[1]));
+            let (dx, dy) = (b.0 - a.0, b.1 - a.1);
+            let len2 = dx * dx + dy * dy;
+            let t = if len2 > 0.0 {
+                (-(a.0 * dx + a.1 * dy) / len2).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            (a.0 + t * dx).hypot(a.1 + t * dy)
+        })
+        .min_by(f64::total_cmp)
+}
+
+fn sat_item(e: &SatTransit, old: Option<&[SatTransit]>) -> SatTransitItem {
+    let is_transit = e.is_transit();
+    let (body_zh, body_en) = match e.body {
+        Body::Sun => ("日", "sun"),
+        _ => ("月", "moon"),
+    };
+    let what = if is_transit {
+        format!("凌{body_zh}")
+    } else {
+        format!("近{body_zh}（未凌）")
+    };
+    let arcmin = |r: f64| r.to_degrees() * 60.0;
+
+    // 旧根数里 120 秒内的同一天体事件视为同一事件
+    let matched = old.and_then(|v| {
+        v.iter()
+            .filter(|o| o.body == e.body)
+            .map(|o| (o, (o.closest.tt_seconds() - e.closest.tt_seconds()).abs()))
+            .filter(|(_, dt)| *dt < 120.0)
+            .min_by(|a, b| a.1.total_cmp(&b.1))
+            .map(|(o, _)| o)
+    });
+    let previous_shift_s = matched.map(|o| e.closest.tt_seconds() - o.closest.tt_seconds());
+    let previous_shift_km =
+        matched.and_then(|o| distance_to_polyline_km(o.centerline_nearest, &e.centerline));
+
+    let mut warnings = Vec::new();
+    if e.elements_age_days.abs() > WARN_AGE_DAYS {
+        warnings.push(format!(
+            "根数龄期 {:.1} 天，预报误差可能达到数秒、数公里，请在观测前刷新根数。",
+            e.elements_age_days.abs()
+        ));
+    }
+    if old.is_some() && matched.is_none() {
+        warnings.push("旧根数预报中没有这次事件，属于新出现的预报。".to_string());
+    }
+    if let Some(dt) = previous_shift_s.filter(|d| d.abs() > WARN_SHIFT_S) {
+        warnings.push(format!("与上一份根数相比，时刻变化 {dt:+.1} 秒。"));
+    }
+    if let Some(km) = previous_shift_km.filter(|d| *d > WARN_SHIFT_KM) {
+        warnings.push(format!("与上一份根数相比，中心线移动 {km:.1} km。"));
+    }
+
+    let mut details = vec![
+        detail("最近时刻（UTC）", utc_ms(&e.closest)),
+        detail(
+            "最小角距",
+            format!(
+                "{:.2}′（{}视半径 {:.2}′）",
+                arcmin(e.min_separation),
+                if e.body == Body::Sun {
+                    "太阳"
+                } else {
+                    "月球"
+                },
+                arcmin(e.body_semidiameter)
+            ),
+        ),
+    ];
+    if let Some(d) = e.duration_s {
+        details.push(detail("穿越历时", format!("{d:.2} 秒")));
+    }
+    details.extend([
+        detail("卫星距离", format!("{:.0} km", e.range_km)),
+        detail(
+            "高度 / 方位",
+            format!("{:.1}° / {:.1}°", e.altitude_deg, e.azimuth_deg),
+        ),
+        detail(
+            "离中心线",
+            format!(
+                "{:.2} km（可见带半宽约 {:.2} km）",
+                e.distance_to_centerline_km, e.band_half_width_km
+            ),
+        ),
+        detail(
+            "中心线最近点",
+            format!(
+                "{:.4}°, {:.4}°",
+                e.centerline_nearest.0, e.centerline_nearest.1
+            ),
+        ),
+        detail("根数龄期", format!("{:.1} 天", e.elements_age_days)),
+    ]);
+    if let Some(dt) = previous_shift_s {
+        details.push(detail("与旧根数相比（时刻）", format!("{dt:+.2} 秒")));
+    }
+    if let Some(km) = previous_shift_km {
+        details.push(detail("与旧根数相比（中心线）", format!("{km:.2} km")));
+    }
+    if e.body == Body::Sun {
+        details.push(detail("安全提示", SUN_SAFETY.to_string()));
+    }
+
+    SatTransitItem {
+        norad_id: e.norad_id,
+        satellite: e.satellite.clone(),
+        body: body_en.to_string(),
+        is_transit,
+        title: format!("{} {what}", e.satellite),
+        utc: utc(&e.closest),
+        tt_jd: e.closest.tt_jd(),
+        summary: format!(
+            "角距 {:.2}′，离中心线 {:.1} km",
+            arcmin(e.min_separation),
+            e.distance_to_centerline_km
+        ),
+        details,
+        distance_to_centerline_km: e.distance_to_centerline_km,
+        band_half_width_km: e.band_half_width_km,
+        elements_age_days: e.elements_age_days,
+        centerline: e.centerline.iter().copied().map(geo).collect(),
+        centerline_nearest: geo(e.centerline_nearest),
+        previous_shift_s,
+        previous_shift_km,
+        warning: (!warnings.is_empty()).then(|| warnings.join("\n")),
+    }
+}
+
+/// 精确到毫秒的 UTC。
+fn utc_ms(t: &Time) -> String {
+    t.to_utc()
+        .map(|d| d.to_string()[..23].replace('T', " "))
+        .unwrap_or_else(|_| format!("TT JD {:.7}", t.tt_jd()))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn polyline_distance() {
+        // 沿赤道的线，点在其北 0.1°（约 11.1 km）
+        let line = [(0.0, -1.0), (0.0, 0.0), (0.0, 1.0)];
+        let d = distance_to_polyline_km((0.1, 0.5), &line).unwrap();
+        assert!((d - 11.12).abs() < 0.05, "{d}");
+        // 跨 180° 经线
+        let line = [(10.0, 179.5), (10.0, -179.5)];
+        let d = distance_to_polyline_km((10.0, 180.0), &line).unwrap();
+        assert!(d < 1e-6, "{d}");
+    }
 }

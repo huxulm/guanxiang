@@ -55,6 +55,8 @@ pub struct SatTransit {
     pub centerline_nearest: (f64, f64),
     /// 能看到穿越的带宽的一半（km），近似为中心线距离 × 视半径 / 最小角距
     pub band_half_width_km: f64,
+    /// 地面中心线：最近时刻前后各 10 秒、每 0.5 秒一点的（纬度, 经度），度
+    pub centerline: Vec<(f64, f64)>,
 }
 
 impl SatTransit {
@@ -306,6 +308,15 @@ fn refine(
         (f64::INFINITY, site.fixed)
     };
     let (lat, lon) = geodetic(nearest);
+    let mut centerline = Vec::new();
+    let mut k = -10.0;
+    while k <= 10.0 {
+        if let Some(p) = line_point(tc + k)? {
+            let (la, lo) = geodetic(p);
+            centerline.push((la.to_degrees(), lo.to_degrees()));
+        }
+        k += 0.5;
+    }
     let band_half_width_km = if sep > 1e-7 && distance.is_finite() {
         distance * sd / sep
     } else {
@@ -327,6 +338,7 @@ fn refine(
         distance_to_centerline_km: distance,
         centerline_nearest: (lat.to_degrees(), lon.to_degrees()),
         band_half_width_km,
+        centerline,
     }))
 }
 

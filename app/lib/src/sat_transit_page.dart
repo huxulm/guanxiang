@@ -1,0 +1,142 @@
+import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+
+import 'rust/api/guanxiang.dart';
+
+/// 一次卫星接近的详情：地面中心线地图 + 数据。
+///
+/// 底图用 OpenStreetMap 瓦片（需要联网；离线时地图空白，数据照常显示）。
+class SatTransitPage extends StatelessWidget {
+  const SatTransitPage({
+    super.key,
+    required this.item,
+    required this.observerLat,
+    required this.observerLon,
+  });
+
+  final SatTransitItem item;
+  final double observerLat;
+  final double observerLon;
+
+  /// 经度换成与测站相差不超过 180° 的值，跨 180° 经线时折线不会绕地球一圈。
+  double _unwrap(double lon) =>
+      observerLon + ((lon - observerLon + 540) % 360 - 180);
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final observer = LatLng(observerLat, observerLon);
+    final line = [
+      for (final p in item.centerline)
+        LatLng(p.latitudeDeg, _unwrap(p.longitudeDeg)),
+    ];
+    final nearest = LatLng(
+      item.centerlineNearest.latitudeDeg,
+      _unwrap(item.centerlineNearest.longitudeDeg),
+    );
+    final points = [observer, nearest, ...line];
+    final bounds = LatLngBounds.fromPoints(points);
+    final lineColor = item.isTransit ? Colors.red : Colors.orange;
+
+    return Scaffold(
+      appBar: AppBar(title: Text(item.title)),
+      body: ListView(
+        children: [
+          SizedBox(
+            height: 320,
+            child: FlutterMap(
+              options: MapOptions(
+                initialCameraFit: CameraFit.bounds(
+                  bounds: bounds,
+                  padding: const EdgeInsets.all(32),
+                  maxZoom: 13,
+                ),
+                interactionOptions: const InteractionOptions(
+                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                ),
+              ),
+              children: [
+                TileLayer(
+                  urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                  userAgentPackageName: 'cn.ac.xao.guanxiang',
+                ),
+                PolylineLayer(
+                  polylines: [
+                    Polyline(points: line, color: lineColor, strokeWidth: 4),
+                    Polyline(
+                      points: [observer, nearest],
+                      color: theme.colorScheme.primary,
+                      strokeWidth: 2,
+                      pattern: StrokePattern.dashed(segments: const [6, 6]),
+                    ),
+                  ],
+                ),
+                MarkerLayer(
+                  markers: [
+                    Marker(
+                      point: observer,
+                      width: 32,
+                      height: 32,
+                      child: Icon(
+                        Icons.person_pin_circle,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const RichAttributionWidget(
+                  attributions: [TextSourceAttribution('© OpenStreetMap 贡献者')],
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text('${item.utc} UTC', style: theme.textTheme.headlineSmall),
+                const SizedBox(height: 4),
+                Text(item.summary, style: theme.textTheme.bodyLarge),
+                const SizedBox(height: 4),
+                Text(
+                  '红线（未凌时为橙线）是中心线：最近时刻前后各 10 秒的地面轨迹，'
+                  '站在线上看到卫星正好穿过${item.body == 'sun' ? '日' : '月'}心。'
+                  '可见带半宽约 ${item.bandHalfWidthKm.toStringAsFixed(2)} km。',
+                  style: theme.textTheme.bodySmall,
+                ),
+                if (item.warning != null) ...[
+                  const SizedBox(height: 12),
+                  Card(
+                    color: theme.colorScheme.tertiaryContainer,
+                    child: ListTile(
+                      leading: const Icon(Icons.warning_amber),
+                      title: Text(item.warning!),
+                    ),
+                  ),
+                ],
+                const SizedBox(height: 12),
+                Card(
+                  child: Column(
+                    children: [
+                      for (final d in item.details)
+                        ListTile(
+                          dense: true,
+                          title: Text(d.label),
+                          subtitle: d.value.length > 30 ? Text(d.value) : null,
+                          trailing: d.value.length > 30
+                              ? null
+                              : Text(d.value, style: theme.textTheme.bodyLarge),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import 'event_detail_page.dart';
+import 'satellite_page.dart';
 import 'rust/api/guanxiang.dart';
 
 const _kindLabels = {
@@ -75,7 +76,14 @@ class _SearchPageState extends State<SearchPage> {
   void dispose() {
     _token?.cancel();
     _sub?.cancel();
-    for (final c in [_fromCtrl, _toCtrl, _maxSepCtrl, _latCtrl, _lonCtrl, _heightCtrl]) {
+    for (final c in [
+      _fromCtrl,
+      _toCtrl,
+      _maxSepCtrl,
+      _latCtrl,
+      _lonCtrl,
+      _heightCtrl,
+    ]) {
       c.dispose();
     }
     super.dispose();
@@ -135,7 +143,8 @@ class _SearchPageState extends State<SearchPage> {
             case UpdateKind.found:
               _results.add(u.item!);
             case UpdateKind.finished:
-              _status = '${u.cancelled ? '已取消，' : ''}共 ${u.count} 个事件，'
+              _status =
+                  '${u.cancelled ? '已取消，' : ''}共 ${u.count} 个事件，'
                   '用时 ${u.elapsedMs} ms';
           }
         });
@@ -171,19 +180,27 @@ class _SearchPageState extends State<SearchPage> {
       initialValue: value,
       decoration: InputDecoration(labelText: label, isDense: true),
       items: [
-        for (final b in items) DropdownMenuItem(value: b.label, child: Text(b.value)),
+        for (final b in items)
+          DropdownMenuItem(value: b.label, child: Text(b.value)),
       ],
       onChanged: _running ? null : (v) => onChanged(v!),
     );
   }
 
-  Widget _numberField(TextEditingController c, String label, {double width = 96}) {
+  Widget _numberField(
+    TextEditingController c,
+    String label, {
+    double width = 96,
+  }) {
     return SizedBox(
       width: width,
       child: TextField(
         controller: c,
         enabled: !_running,
-        keyboardType: const TextInputType.numberWithOptions(signed: true, decimal: true),
+        keyboardType: const TextInputType.numberWithOptions(
+          signed: true,
+          decimal: true,
+        ),
         decoration: InputDecoration(labelText: label, isDense: true),
       ),
     );
@@ -192,34 +209,53 @@ class _SearchPageState extends State<SearchPage> {
   Widget _form() {
     final bodies = switch (_kind) {
       EventKind.occultation => [
-          Expanded(
-            child: _bodyDropdown('被掩目标', _occultationTarget,
-                (v) => setState(() => _occultationTarget = v),
-                options: _occultationTargets),
+        Expanded(
+          child: _bodyDropdown(
+            '被掩目标',
+            _occultationTarget,
+            (v) => setState(() => _occultationTarget = v),
+            options: _occultationTargets,
           ),
-        ],
+        ),
+      ],
       EventKind.solarEclipse || EventKind.lunarEclipse => <Widget>[
-          const Expanded(child: Text('日月食按地心计算；打开“只显示本地可见”可得到本地情况')),
-        ],
+        const Expanded(child: Text('日月食按地心计算；打开“只显示本地可见”可得到本地情况')),
+      ],
       EventKind.transit => [
-          Expanded(
-            child: _bodyDropdown('行星', _transitPlanet, (v) => setState(() => _transitPlanet = v),
-                options: const [
-                  Detail(label: '', value: '水星和金星'),
-                  Detail(label: 'mercury', value: '水星'),
-                  Detail(label: 'venus', value: '金星'),
-                ]),
+        Expanded(
+          child: _bodyDropdown(
+            '行星',
+            _transitPlanet,
+            (v) => setState(() => _transitPlanet = v),
+            options: const [
+              Detail(label: '', value: '水星和金星'),
+              Detail(label: 'mercury', value: '水星'),
+              Detail(label: 'venus', value: '金星'),
+            ],
           ),
-        ],
+        ),
+      ],
       _ => [
-          Expanded(child: _bodyDropdown('天体 A', _bodyA, (v) => setState(() => _bodyA = v))),
+        Expanded(
+          child: _bodyDropdown(
+            '天体 A',
+            _bodyA,
+            (v) => setState(() => _bodyA = v),
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _bodyDropdown(
+            '天体 B',
+            _bodyB,
+            (v) => setState(() => _bodyB = v),
+          ),
+        ),
+        if (_kind == EventKind.appulse) ...[
           const SizedBox(width: 12),
-          Expanded(child: _bodyDropdown('天体 B', _bodyB, (v) => setState(() => _bodyB = v))),
-          if (_kind == EventKind.appulse) ...[
-            const SizedBox(width: 12),
-            _numberField(_maxSepCtrl, '角距上限°', width: 80),
-          ],
+          _numberField(_maxSepCtrl, '角距上限°', width: 80),
         ],
+      ],
     };
 
     return Column(
@@ -286,7 +322,9 @@ class _SearchPageState extends State<SearchPage> {
           ],
         ),
         const SizedBox(height: 8),
-        LinearProgressIndicator(value: _running ? _progress : (_results.isEmpty ? 0 : 1)),
+        LinearProgressIndicator(
+          value: _running ? _progress : (_results.isEmpty ? 0 : 1),
+        ),
       ],
     );
   }
@@ -294,11 +332,27 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('观象 · 天文事件搜索')),
+      appBar: AppBar(
+        title: const Text('观象 · 天文事件搜索'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.satellite_alt),
+            tooltip: '卫星凌日、凌月',
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SatellitePage(engine: widget.engine),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            Padding(padding: const EdgeInsets.fromLTRB(16, 8, 16, 8), child: _form()),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+              child: _form(),
+            ),
             const Divider(height: 1),
             Expanded(
               child: _results.isEmpty
@@ -313,7 +367,9 @@ class _SearchPageState extends State<SearchPage> {
                           subtitle: Text('${e.utc} UTC · ${e.summary}'),
                           trailing: const Icon(Icons.chevron_right),
                           onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(builder: (_) => EventDetailPage(event: e)),
+                            MaterialPageRoute(
+                              builder: (_) => EventDetailPage(event: e),
+                            ),
                           ),
                         );
                       },

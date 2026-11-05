@@ -37,6 +37,11 @@ dependencies:
   rust_lib_guanxiang:
     path: rust_builder
   flutter_rust_bridge: 2.13.0
+  http: ^1.6.0
+  path_provider: ^2.1.6
+  flutter_map: ^8.3.2
+  latlong2: ^0.10.1
+  workmanager: ^0.10.10
 
 dev_dependencies:
   flutter_test:

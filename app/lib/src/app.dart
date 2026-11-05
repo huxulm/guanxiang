@@ -56,7 +56,9 @@ class _LoadingPageState extends State<LoadingPage> {
       final ms = watch.elapsedMilliseconds;
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
-        MaterialPageRoute(builder: (_) => SearchPage(engine: engine, loadMs: ms)),
+        MaterialPageRoute(
+          builder: (_) => SearchPage(engine: engine, loadMs: ms),
+        ),
       );
     } catch (e) {
       setState(() => _error = '$e');
@@ -78,8 +80,10 @@ class _LoadingPageState extends State<LoadingPage> {
                     Text('正在加载星历…'),
                   ],
                 )
-              : Text('星历加载失败：$_error',
-                  style: TextStyle(color: Theme.of(context).colorScheme.error)),
+              : Text(
+                  '星历加载失败：$_error',
+                  style: TextStyle(color: Theme.of(context).colorScheme.error),
+                ),
         ),
       ),
     );

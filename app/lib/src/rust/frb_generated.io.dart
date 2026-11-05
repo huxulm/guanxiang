@@ -83,6 +83,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EventItem dco_decode_box_autoadd_event_item(dynamic raw);
 
   @protected
+  double dco_decode_box_autoadd_f_64(dynamic raw);
+
+  @protected
   ObserverInput dco_decode_box_autoadd_observer_input(dynamic raw);
 
   @protected
@@ -101,10 +104,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_f_64(dynamic raw);
 
   @protected
+  GeoPoint dco_decode_geo_point(dynamic raw);
+
+  @protected
   int dco_decode_i_32(dynamic raw);
 
   @protected
   List<Detail> dco_decode_list_detail(dynamic raw);
+
+  @protected
+  List<GeoPoint> dco_decode_list_geo_point(dynamic raw);
 
   @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
@@ -116,13 +125,31 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<SatTransitItem> dco_decode_list_sat_transit_item(dynamic raw);
+
+  @protected
+  List<SatelliteInfo> dco_decode_list_satellite_info(dynamic raw);
+
+  @protected
   ObserverInput dco_decode_observer_input(dynamic raw);
+
+  @protected
+  String? dco_decode_opt_String(dynamic raw);
 
   @protected
   EventItem? dco_decode_opt_box_autoadd_event_item(dynamic raw);
 
   @protected
+  double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
+
+  @protected
   ObserverInput? dco_decode_opt_box_autoadd_observer_input(dynamic raw);
+
+  @protected
+  SatTransitItem dco_decode_sat_transit_item(dynamic raw);
+
+  @protected
+  SatelliteInfo dco_decode_satellite_info(dynamic raw);
 
   @protected
   SearchRequest dco_decode_search_request(dynamic raw);
@@ -202,6 +229,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EventItem sse_decode_box_autoadd_event_item(SseDeserializer deserializer);
 
   @protected
+  double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
   ObserverInput sse_decode_box_autoadd_observer_input(
     SseDeserializer deserializer,
   );
@@ -224,10 +254,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_f_64(SseDeserializer deserializer);
 
   @protected
+  GeoPoint sse_decode_geo_point(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer);
 
   @protected
   List<Detail> sse_decode_list_detail(SseDeserializer deserializer);
+
+  @protected
+  List<GeoPoint> sse_decode_list_geo_point(SseDeserializer deserializer);
 
   @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
@@ -239,7 +275,20 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<SatTransitItem> sse_decode_list_sat_transit_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SatelliteInfo> sse_decode_list_satellite_info(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ObserverInput sse_decode_observer_input(SseDeserializer deserializer);
+
+  @protected
+  String? sse_decode_opt_String(SseDeserializer deserializer);
 
   @protected
   EventItem? sse_decode_opt_box_autoadd_event_item(
@@ -247,9 +296,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
+
+  @protected
   ObserverInput? sse_decode_opt_box_autoadd_observer_input(
     SseDeserializer deserializer,
   );
+
+  @protected
+  SatTransitItem sse_decode_sat_transit_item(SseDeserializer deserializer);
+
+  @protected
+  SatelliteInfo sse_decode_satellite_info(SseDeserializer deserializer);
 
   @protected
   SearchRequest sse_decode_search_request(SseDeserializer deserializer);
@@ -342,6 +400,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
+
+  @protected
   void sse_encode_box_autoadd_observer_input(
     ObserverInput self,
     SseSerializer serializer,
@@ -366,10 +427,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_geo_point(GeoPoint self, SseSerializer serializer);
+
+  @protected
   void sse_encode_i_32(int self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_detail(List<Detail> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_geo_point(List<GeoPoint> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_prim_i_32_strict(
@@ -387,7 +454,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_sat_transit_item(
+    List<SatTransitItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_satellite_info(
+    List<SatelliteInfo> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_observer_input(ObserverInput self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_event_item(
@@ -396,10 +478,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
+
+  @protected
   void sse_encode_opt_box_autoadd_observer_input(
     ObserverInput? self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_sat_transit_item(
+    SatTransitItem self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_satellite_info(SatelliteInfo self, SseSerializer serializer);
 
   @protected
   void sse_encode_search_request(SearchRequest self, SseSerializer serializer);

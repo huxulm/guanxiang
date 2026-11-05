@@ -27,7 +27,7 @@
 | 手机上的搜索速度 | 未验证。桌面实测见 M1、M2 记录；按经验推算，月球相关的 100 年搜索在手机上可能超过 1 秒 |
 | GitLab CI | gitlab.xao.ac.cn/xulingming/guanxiang，fmt、clippy、android-deps、test 全部通过。runner 无外网，de440s 由本项目 Generic Package Registry 提供 |
 | M4 日月食 | 全球与本地情况、1900–2100 星表、CLI `eclipse`、App 支持已完成；与 NASA 21 世纪星表逐条一致 |
-| M6 卫星凌月 | 计算核心与 CLI `satellite` 已完成，69 次接近与 Skyfield 相差 ≤ 0.007 秒；Dart 层抓取缓存、后台刷新、地图、transit-finder 对比、实测核对未做 |
+| M6 卫星凌月 | 已完成（除外部对比）：计算核心、CLI、App 卫星页（CelesTrak 下载缓存、频率限制、新旧预报比较、地图中心线、太阳安全提示、Android 后台刷新）；69 次接近与 Skyfield 相差 ≤ 0.007 秒。transit-finder 对比、实测核对未做 |
 | M5 月掩星 | 月掩行星和 550 颗亮星、本地掩始掩终、CLI `occultation`、App 支持已完成；92 次事件与 Skyfield 相差 ≤ 0.003 秒 |
 | Flutter 应用（M3） | `app/` 已创建并接入 flutter_rust_bridge 2.13；搜索、进度、取消、详情页可用。**Android 模拟器**（Android 15，16 KB 页）上集成测试全部通过；**Windows 桌面**待开启开发者模式；**Linux 桌面**待准备 Linux 工具链；**Android 真机**未测 |
 
@@ -241,11 +241,11 @@ guanxiang/
 - [x] 预报过境，计算最小角距（`events::sat_transit`，卫星方向含光行时和周日光行差）
 - [x] 计算地面中心线、带宽、持续时间和离带距离
 - [x] CLI：`guanxiang satellite --omm iss.json --at lat,lon,h`
-- [ ] Dart 层拉取并缓存数据，遵守 CelesTrak 频率限制，非 200 响应时停止请求
-- [ ] Android 用 WorkManager 后台刷新
-- [x] 显示根数龄期（结果中带 `elements_age_days`）；比较新旧预报、变化大时提醒 —— 未做（需 Dart 层缓存）
-- [ ] 地图上显示中心线
-- [x] 复用同一套逻辑支持卫星凌日（太阳和月球同一函数）；太阳观测安全提示 —— 待界面实现时加
+- [x] Dart 层拉取并缓存数据，遵守 CelesTrak 频率限制，非 200 响应时停止请求（`app/lib/src/celestrak.dart`）
+- [x] Android 用 WorkManager 后台刷新（每 6 小时，仅联网时；仍受 2 小时频率限制）
+- [x] 显示根数龄期；比较新旧预报，时刻变化 > 1 秒或中心线移动 > 1 km 时提醒，龄期 > 3 天也提醒
+- [x] 地图上显示中心线（flutter_map + OpenStreetMap 瓦片）
+- [x] 复用同一套逻辑支持卫星凌日（太阳和月球同一函数）；涉及太阳的结果和卫星页都显示观测安全提示
 
 **验收：**
 
@@ -260,6 +260,12 @@ guanxiang/
 - 根数从文件或字符串传入（D5），网络请求留给 Dart 层。测试数据 `tests/fixtures/satellite/omm_iss_css.json` 为 2026-11-04 的 CelesTrak 数据。
 - Skyfield 的 `find_minima` 在容差很小时采样点会暴涨（曾占用 24 GB 内存），对照数据脚本改为批量计算加抛物线插值。
 - 桌面上两颗卫星 7 天的搜索用时约 0.3 秒。
+- 缓存（`OmmStore`）：`<应用支持目录>/omm/<编号>.json` 为当前根数，`<编号>.prev.json` 为上一份（历元变化时轮换），`meta.json` 记录每颗卫星的下载时间、出错暂停时间和关注列表。同一颗卫星 2 小时内只请求一次（CelesTrak 约 2 小时更新一次）；任何非 200 响应后本次运行不再请求，并持久化暂停 2 小时，后台任务同样遵守。网络不通不算出错。User-Agent 为 `guanxiang/0.1 (+项目地址)`。
+- 后台任务运行在独立 isolate 里，只刷新缓存，不加载 Rust 和星历；根数是否有效用 Dart 解析 JSON 判断。
+- 新旧预报比较在桥接层做（`satellite_transits` 的 `previous_omm_json`）：旧根数里 120 秒内的同一天体事件视为同一事件；中心线移动量为旧预报的中心线最近点到新中心线的距离。
+- 桥接层的结果附带 ±10 秒、每 0.5 秒一点的中心线供地图使用；地图需要联网，离线时只是底图空白。
+- 集成测试在模拟器上用同一份根数复现北京的 6 次天宫近日事件，与 Skyfield 时刻差 < 0.05 秒。6 项集成测试全部通过（模拟器 debug 包：星历加载 8.0 秒，100 年月木合 1.7 秒）。
+- 构建：workmanager 插件的 Kotlin 源码在 pub 缓存（C 盘），工程在 A 盘，Kotlin 增量编译会失败，已在 `android/gradle.properties` 关闭增量编译。原 2 GB 内存的模拟器上测试工具反复掉线，换成 6 GB、6 核的 `guanxiang_api35_16k_hi` 后正常。
 
 ### M7 发布（2 周）
 
@@ -268,6 +274,7 @@ guanxiang/
 - [ ] Windows 和 Linux 安装包，Android 发布版
 - [ ] 第三方许可声明，包括 SOFA 致谢
 - [ ] 确认 CelesTrak 数据使用方式，用户量较大时增加缓存服务
+- [ ] 确认 OpenStreetMap 瓦片使用政策（应用内使用需标注来源、设置 User-Agent，用量大时换自建或商业瓦片）
 
 **验收：** 三个平台的安装包都在干净环境中完成安装和完整流程测试。
 
@@ -319,4 +326,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M6 的 Dart 层（CelesTrak 抓取、缓存、频率限制）和界面；或 M7 发布准备。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
+下一步：M7 发布准备（性能、星历裁剪、中英文界面、离线状态、安装包、许可声明）。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。

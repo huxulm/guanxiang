@@ -1,6 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- 下载 CelesTrak 卫星根数、地图瓦片 -->
+    <uses-permission android:name="android.permission.INTERNET" />
     <application
-        android:label="guanxiang"
+        android:label="观象"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

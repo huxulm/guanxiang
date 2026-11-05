@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `detail`, `finished`, `found`, `is_cancelled`, `progress`, `search_span`, `send`, `utc`, `year_start`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `detail`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `progress`, `sat_item`, `search_span`, `send`, `utc_ms`, `utc`, `year_start`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// 支持的天体，供界面列出：(英文名, 中文名)。
 List<Detail> bodyNames() => RustLib.instance.api.crateApiGuanxiangBodyNames();
@@ -22,6 +22,40 @@ Stream<SearchUpdate> search({
   engine: engine,
   request: request,
   token: token,
+);
+
+/// 解析 CelesTrak `FORMAT=JSON` 的 OMM。
+List<SatelliteInfo> parseOmm({required String json}) =>
+    RustLib.instance.api.crateApiGuanxiangParseOmm(json: json);
+
+/// 观测安全提示，供界面显示。
+String sunSafetyNotice() =>
+    RustLib.instance.api.crateApiGuanxiangSunSafetyNotice();
+
+/// 搜索卫星凌日、凌月。
+///
+/// `start_utc` 形如 "2026-11-06T12:00:00"，空字符串表示从根数历元开始。
+/// `previous_omm_json` 为上一份根数（可为空），用于比较新旧预报。
+Future<List<SatTransitItem>> satelliteTransits({
+  required Engine engine,
+  required String ommJson,
+  String? previousOmmJson,
+  required double latitudeDeg,
+  required double longitudeDeg,
+  required double heightM,
+  required String startUtc,
+  required double days,
+  required double maxSeparationDeg,
+}) => RustLib.instance.api.crateApiGuanxiangSatelliteTransits(
+  engine: engine,
+  ommJson: ommJson,
+  previousOmmJson: previousOmmJson,
+  latitudeDeg: latitudeDeg,
+  longitudeDeg: longitudeDeg,
+  heightM: heightM,
+  startUtc: startUtc,
+  days: days,
+  maxSeparationDeg: maxSeparationDeg,
 );
 
 // Rust type: RustOpaqueMoi<flutter_rust_bridge::for_generated::RustAutoOpaqueInner<CancelToken>>
@@ -112,6 +146,24 @@ enum EventKind {
   occultation,
 }
 
+class GeoPoint {
+  final double latitudeDeg;
+  final double longitudeDeg;
+
+  const GeoPoint({required this.latitudeDeg, required this.longitudeDeg});
+
+  @override
+  int get hashCode => latitudeDeg.hashCode ^ longitudeDeg.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is GeoPoint &&
+          runtimeType == other.runtimeType &&
+          latitudeDeg == other.latitudeDeg &&
+          longitudeDeg == other.longitudeDeg;
+}
+
 /// 测站与可见性条件。
 class ObserverInput {
   final double latitudeDeg;
@@ -150,6 +202,131 @@ class ObserverInput {
           heightM == other.heightM &&
           minAltitudeDeg == other.minAltitudeDeg &&
           maxSunAltitudeDeg == other.maxSunAltitudeDeg;
+}
+
+/// 一次卫星接近，含地图显示需要的中心线。
+class SatTransitItem {
+  final int noradId;
+  final String satellite;
+
+  /// "sun" 或 "moon"
+  final String body;
+
+  /// 是否穿过日面（月面）
+  final bool isTransit;
+  final String title;
+  final String utc;
+  final double ttJd;
+  final String summary;
+  final List<Detail> details;
+  final double distanceToCenterlineKm;
+  final double bandHalfWidthKm;
+  final double elementsAgeDays;
+  final List<GeoPoint> centerline;
+  final GeoPoint centerlineNearest;
+
+  /// 与旧根数预报相比的时刻变化（秒）；没有旧根数或旧根数里找不到对应事件为 None
+  final double? previousShiftS;
+
+  /// 与旧根数预报相比的中心线横向移动（km）
+  final double? previousShiftKm;
+
+  /// 新旧预报差别大，或根数太旧，需要提醒
+  final String? warning;
+
+  const SatTransitItem({
+    required this.noradId,
+    required this.satellite,
+    required this.body,
+    required this.isTransit,
+    required this.title,
+    required this.utc,
+    required this.ttJd,
+    required this.summary,
+    required this.details,
+    required this.distanceToCenterlineKm,
+    required this.bandHalfWidthKm,
+    required this.elementsAgeDays,
+    required this.centerline,
+    required this.centerlineNearest,
+    this.previousShiftS,
+    this.previousShiftKm,
+    this.warning,
+  });
+
+  @override
+  int get hashCode =>
+      noradId.hashCode ^
+      satellite.hashCode ^
+      body.hashCode ^
+      isTransit.hashCode ^
+      title.hashCode ^
+      utc.hashCode ^
+      ttJd.hashCode ^
+      summary.hashCode ^
+      details.hashCode ^
+      distanceToCenterlineKm.hashCode ^
+      bandHalfWidthKm.hashCode ^
+      elementsAgeDays.hashCode ^
+      centerline.hashCode ^
+      centerlineNearest.hashCode ^
+      previousShiftS.hashCode ^
+      previousShiftKm.hashCode ^
+      warning.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SatTransitItem &&
+          runtimeType == other.runtimeType &&
+          noradId == other.noradId &&
+          satellite == other.satellite &&
+          body == other.body &&
+          isTransit == other.isTransit &&
+          title == other.title &&
+          utc == other.utc &&
+          ttJd == other.ttJd &&
+          summary == other.summary &&
+          details == other.details &&
+          distanceToCenterlineKm == other.distanceToCenterlineKm &&
+          bandHalfWidthKm == other.bandHalfWidthKm &&
+          elementsAgeDays == other.elementsAgeDays &&
+          centerline == other.centerline &&
+          centerlineNearest == other.centerlineNearest &&
+          previousShiftS == other.previousShiftS &&
+          previousShiftKm == other.previousShiftKm &&
+          warning == other.warning;
+}
+
+/// 一组根数的摘要。
+class SatelliteInfo {
+  final int noradId;
+  final String name;
+
+  /// 根数历元（UTC）
+  final String epochUtc;
+  final double epochTtJd;
+
+  const SatelliteInfo({
+    required this.noradId,
+    required this.name,
+    required this.epochUtc,
+    required this.epochTtJd,
+  });
+
+  @override
+  int get hashCode =>
+      noradId.hashCode ^ name.hashCode ^ epochUtc.hashCode ^ epochTtJd.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SatelliteInfo &&
+          runtimeType == other.runtimeType &&
+          noradId == other.noradId &&
+          name == other.name &&
+          epochUtc == other.epochUtc &&
+          epochTtJd == other.epochTtJd;
 }
 
 class SearchRequest {
