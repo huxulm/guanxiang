@@ -102,7 +102,14 @@ class EventItem {
           details == other.details;
 }
 
-enum EventKind { transit, conjunction, opposition, appulse }
+enum EventKind {
+  transit,
+  conjunction,
+  opposition,
+  appulse,
+  solarEclipse,
+  lunarEclipse,
+}
 
 /// 测站与可见性条件。
 class ObserverInput {

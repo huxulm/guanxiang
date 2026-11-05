@@ -10,8 +10,11 @@
 //! 所有事件都是**地心**的；本地是否可见由 [`visibility`] 另行判断。
 
 pub mod catalog;
+pub mod local_eclipse;
 pub mod longitude;
+pub mod lunar_eclipse;
 pub mod separation;
+pub mod solar_eclipse;
 pub mod transit;
 pub mod visibility;
 

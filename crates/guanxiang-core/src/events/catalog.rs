@@ -33,6 +33,11 @@ pub enum Kind {
     SeparationMinimum = 3,
     /// tt = 凌甚；values = [接触 I, II, III, IV 的 tt]
     Transit = 4,
+    /// tt = 食甚；values = [γ, 食分, 食甚点纬度°, 食甚点经度°]（非中心食经纬度为 NaN）；
+    /// flags = 类型（1 偏食、2 环食、3 全食、4 全环食）| 0x10（非中心食）
+    SolarEclipse = 5,
+    /// tt = 食甚；values = [γ, 半影食分, 本影食分, -]；flags = 类型（1 半影、2 偏食、3 全食）
+    LunarEclipse = 6,
 }
 
 impl Kind {
@@ -42,6 +47,8 @@ impl Kind {
             2 => Kind::Opposition,
             3 => Kind::SeparationMinimum,
             4 => Kind::Transit,
+            5 => Kind::SolarEclipse,
+            6 => Kind::LunarEclipse,
             _ => return Err(Error::Catalog(format!("未知事件类型 {v}"))),
         })
     }

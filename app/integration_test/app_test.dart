@@ -63,6 +63,41 @@ void main() {
     print('月木合 100 年：${done.count} 个，用时 ${done.elapsedMs} ms');
   });
 
+  test('日月食 2024–2026：日食 6 次、月食 6 次；2035 年北京日全食', () async {
+    Future<List<EventItem>> run(EventKind kind, int from, int to, {ObserverInput? at}) async {
+      final updates = await search(
+        engine: engine,
+        request: SearchRequest(
+          kind: kind,
+          bodyA: '',
+          bodyB: '',
+          fromYear: from,
+          toYear: to,
+          maxSeparationDeg: 0,
+          observer: at,
+        ),
+        token: CancelToken(),
+      ).toList();
+      return updates.where((u) => u.kind == UpdateKind.found).map((u) => u.item!).toList();
+    }
+
+    expect((await run(EventKind.solarEclipse, 2024, 2027)).length, 6);
+    expect((await run(EventKind.lunarEclipse, 2024, 2027)).length, 6);
+    final beijing = await run(
+      EventKind.solarEclipse,
+      2035,
+      2036,
+      at: const ObserverInput(
+        latitudeDeg: 39.9,
+        longitudeDeg: 116.4,
+        heightM: 50,
+        minAltitudeDeg: 0,
+        maxSunAltitudeDeg: -6,
+      ),
+    );
+    expect(beijing.single.summary, startsWith('本地全食'));
+  });
+
   test('取消后提前结束', () async {
     final token = CancelToken();
     var progressCount = 0;

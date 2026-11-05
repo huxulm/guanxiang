@@ -10,6 +10,8 @@ const _kindLabels = {
   EventKind.conjunction: '合',
   EventKind.opposition: '冲',
   EventKind.appulse: '角距极小',
+  EventKind.solarEclipse: '日食',
+  EventKind.lunarEclipse: '月食',
 };
 
 class SearchPage extends StatefulWidget {
@@ -170,6 +172,9 @@ class _SearchPageState extends State<SearchPage> {
 
   Widget _form() {
     final bodies = switch (_kind) {
+      EventKind.solarEclipse || EventKind.lunarEclipse => <Widget>[
+          const Expanded(child: Text('日月食按地心计算；打开“只显示本地可见”可得到本地情况')),
+        ],
       EventKind.transit => [
           Expanded(
             child: _bodyDropdown('行星', _transitPlanet, (v) => setState(() => _transitPlanet = v),
@@ -194,13 +199,18 @@ class _SearchPageState extends State<SearchPage> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        SegmentedButton<EventKind>(
-          segments: [
+        // 六种事件，窄屏上自动换行
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: [
             for (final k in EventKind.values)
-              ButtonSegment(value: k, label: Text(_kindLabels[k]!)),
+              ChoiceChip(
+                label: Text(_kindLabels[k]!),
+                selected: _kind == k,
+                onSelected: _running ? null : (_) => setState(() => _kind = k),
+              ),
           ],
-          selected: {_kind},
-          onSelectionChanged: _running ? null : (s) => setState(() => _kind = s.first),
         ),
         const SizedBox(height: 12),
         Row(children: bodies),

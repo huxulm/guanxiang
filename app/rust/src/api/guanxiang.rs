@@ -8,7 +8,10 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use flutter_rust_bridge::frb;
+use guanxiang_core::events::local_eclipse::{self, LocalSolarKind};
 use guanxiang_core::events::longitude::{self, Aspect};
+use guanxiang_core::events::lunar_eclipse::{self, LunarEclipseKind, ShadowModel};
+use guanxiang_core::events::solar_eclipse::{self, SolarEclipseKind};
 use guanxiang_core::events::visibility::{apparent_altitude, VisibilityFilter};
 use guanxiang_core::events::{separation, transit, Span};
 use guanxiang_core::{AniseEphemeris, Body, DateTime, Observer, Time};
@@ -75,6 +78,8 @@ pub enum EventKind {
     Conjunction,
     Opposition,
     Appulse,
+    SolarEclipse,
+    LunarEclipse,
 }
 
 /// 测站与可见性条件。
@@ -409,6 +414,116 @@ fn search_span(
                         detail("时刻（UTC）", utc(&m.time)),
                         detail("角距", format!("{:.4}°", m.separation.to_degrees())),
                     ],
+                });
+            }
+        }
+        EventKind::SolarEclipse => {
+            for e in solar_eclipse::search(eph, span)? {
+                let name = match e.kind {
+                    SolarEclipseKind::Partial => "日偏食",
+                    SolarEclipseKind::Annular => "日环食",
+                    SolarEclipseKind::Total => "日全食",
+                    SolarEclipseKind::Hybrid => "全环食",
+                };
+                let non_central = e.kind != SolarEclipseKind::Partial && !e.central;
+                let mut details = vec![
+                    detail("食甚（全球，UTC）", utc(&e.greatest)),
+                    detail("γ", format!("{:+.4}", e.gamma)),
+                    detail("食分（全球）", format!("{:.4}", e.magnitude)),
+                ];
+                if let Some(p) = e.greatest_point {
+                    details.push(detail(
+                        "食甚点",
+                        format!("{:.2}°, {:.2}°", p.latitude_deg, p.longitude_deg),
+                    ));
+                    details.push(detail(
+                        "食甚点太阳高度",
+                        format!("{:.0}°", p.sun_altitude_deg),
+                    ));
+                    details.push(detail("食带宽度", format!("{:.0} km", p.path_width_km)));
+                }
+                let mut summary = format!("食分 {:.3}", e.magnitude);
+                if let Some(f) = filter {
+                    let Some(l) = local_eclipse::local_solar(eph, &e, &f.observer, None)? else {
+                        continue;
+                    };
+                    if !l.is_visible() {
+                        continue;
+                    }
+                    let k = match l.kind {
+                        LocalSolarKind::Partial => "偏食",
+                        LocalSolarKind::Annular => "环食",
+                        LocalSolarKind::Total => "全食",
+                    };
+                    summary = format!("本地{k}，食分 {:.3}", l.magnitude);
+                    details.push(detail("本地类型", k.to_string()));
+                    details.push(detail("本地食甚", utc(&l.maximum)));
+                    details.push(detail("本地食分", format!("{:.3}", l.magnitude)));
+                    details.push(detail("食面积", format!("{:.1}%", l.obscuration * 100.0)));
+                    let names = ["初亏（C1）", "食既（C2）", "生光（C3）", "复圆（C4）"];
+                    for (label, c) in names.iter().zip(&l.contacts) {
+                        if let Some(c) = c {
+                            details.push(detail(label, utc(c)));
+                        }
+                    }
+                    details.push(detail(
+                        "太阳高度（初亏/食甚/复圆）",
+                        format!(
+                            "{:.0}° / {:.0}° / {:.0}°",
+                            l.sun_altitude_deg[0], l.sun_altitude_deg[1], l.sun_altitude_deg[2]
+                        ),
+                    ));
+                }
+                out.push(EventItem {
+                    kind: EventKind::SolarEclipse,
+                    title: format!("{name}{}", if non_central { "（非中心）" } else { "" }),
+                    utc: utc(&e.greatest),
+                    tt_jd: e.greatest.tt_jd(),
+                    summary,
+                    details,
+                });
+            }
+        }
+        EventKind::LunarEclipse => {
+            for e in lunar_eclipse::search(eph, span, ShadowModel::Danjon)? {
+                let name = match e.kind {
+                    LunarEclipseKind::Penumbral => "半影月食",
+                    LunarEclipseKind::Partial => "月偏食",
+                    LunarEclipseKind::Total => "月全食",
+                };
+                let labels = [
+                    "半影食始（P1）",
+                    "初亏（U1）",
+                    "食既（U2）",
+                    "生光（U3）",
+                    "复圆（U4）",
+                    "半影食终（P4）",
+                ];
+                let mut details = vec![
+                    detail("食甚（UTC）", utc(&e.greatest)),
+                    detail("γ", format!("{:+.4}", e.gamma)),
+                    detail("半影食分", format!("{:.4}", e.penumbral_magnitude)),
+                    detail("本影食分", format!("{:.4}", e.umbral_magnitude)),
+                ];
+                for (label, c) in labels.iter().zip(&e.contacts) {
+                    if let Some(c) = c {
+                        details.push(detail(label, utc(c)));
+                    }
+                }
+                if let Some(f) = filter {
+                    let alt = local_eclipse::lunar_altitudes(eph, &e, &f.observer)?;
+                    if !alt.iter().any(|h| *h > 0.0) {
+                        continue;
+                    }
+                    details.push(detail("食甚时月亮高度", format!("{:.0}°", alt[3])));
+                }
+                out.push(EventItem {
+                    kind: EventKind::LunarEclipse,
+                    title: name.to_string(),
+                    utc: utc(&e.greatest),
+                    tt_jd: e.greatest.tt_jd(),
+                    summary: format!("本影食分 {:.3}", e.umbral_magnitude),
+                    details,
                 });
             }
         }

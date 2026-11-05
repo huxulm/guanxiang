@@ -1,3 +1,4 @@
+mod eclipse;
 mod search;
 
 use std::path::PathBuf;
@@ -59,6 +60,8 @@ enum Command {
     },
     /// 搜索合、冲、角距极小、凌日
     Search(search::SearchArgs),
+    /// 日月食（全球情况、本地情况、生成预计算星表）
+    Eclipse(eclipse::EclipseArgs),
 }
 
 fn main() -> ExitCode {
@@ -76,6 +79,7 @@ fn run(cli: Cli) -> guanxiang_core::Result<()> {
     let eph = AniseEphemeris::from_path(&cli.ephem)?;
     match cli.command {
         Command::Search(args) => search::run(&eph, &args)?,
+        Command::Eclipse(args) => eclipse::run(&eph, &args)?,
         Command::Info => {
             println!("星历：{}", cli.ephem.display());
             for b in Body::ALL {

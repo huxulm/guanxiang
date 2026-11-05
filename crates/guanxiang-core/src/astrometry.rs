@@ -91,29 +91,10 @@ pub fn topocentric(
     t: &Time,
     obs: &Observer,
 ) -> Result<TopocentricPlace> {
-    let (tta, ttb) = t.tt_jd_parts();
     let (uta, utb) = t.ut1_jd_parts();
     let era = era00(uta, utb);
-    let rc2i = c2i06a(tta, ttb);
-
-    // 测站在 CIRS 中的位置和速度（m、m/s），再转到 GCRS（km、km/s）
-    let mut pv = [[0.0; 3]; 2];
-    pvtob(
-        obs.longitude,
-        obs.latitude,
-        obs.height,
-        0.0,
-        0.0,
-        sp00(tta, ttb),
-        era,
-        &mut pv,
-    );
-    let mut pos = [0.0; 3];
-    let mut vel = [0.0; 3];
-    trxp(&rc2i, &pv[0], &mut pos);
-    trxp(&rc2i, &pv[1], &mut vel);
-    let pos = Vec3::from(pos) * 1e-3;
-    let vel = Vec3::from(vel) * 1e-3;
+    let rc2i = c2i_matrix(t);
+    let (pos, vel) = observer_gcrs(t, obs, &rc2i);
 
     let place = place(eph, body, t, pos, vel)?;
 
@@ -132,6 +113,49 @@ pub fn topocentric(
         },
         hour_angle: ha,
     })
+}
+
+/// GCRS → CIRS 矩阵（IAU 2006/2000A）。几小时内变化在毫角秒量级，同一事件内可复用。
+pub fn c2i_matrix(t: &Time) -> [[f64; 3]; 3] {
+    let (tta, ttb) = t.tt_jd_parts();
+    c2i06a(tta, ttb)
+}
+
+/// 测站在 GCRS 中相对地心的位置（km）和速度（km/s），WGS84，忽略极移。
+/// `rc2i` 为 [`c2i_matrix`] 的结果；地球自转角由 `t` 的 UT1 计算。
+pub fn observer_gcrs(t: &Time, obs: &Observer, rc2i: &[[f64; 3]; 3]) -> (Vec3, Vec3) {
+    let (tta, ttb) = t.tt_jd_parts();
+    let (uta, utb) = t.ut1_jd_parts();
+    let mut pv = [[0.0; 3]; 2];
+    pvtob(
+        obs.longitude,
+        obs.latitude,
+        obs.height,
+        0.0,
+        0.0,
+        sp00(tta, ttb),
+        era00(uta, utb),
+        &mut pv,
+    );
+    let mut pos = [0.0; 3];
+    let mut vel = [0.0; 3];
+    trxp(rc2i, &pv[0], &mut pos);
+    trxp(rc2i, &pv[1], &mut vel);
+    (Vec3::from(pos) * 1e-3, Vec3::from(vel) * 1e-3)
+}
+
+/// 同一时刻、同一观测者看两个天体的视方向。`geo_pos`、`geo_vel` 为观测者相对地心的
+/// GCRS 位置和速度（地心观测传零向量，站心观测用 [`observer_gcrs`]）。
+pub fn direction_pair_from(
+    eph: &dyn Ephemeris,
+    a: Body,
+    b: Body,
+    t: &Time,
+    geo_pos: Vec3,
+    geo_vel: Vec3,
+) -> Result<(Direction, Direction)> {
+    let state = ObserverState::new(eph, t, geo_pos, geo_vel)?;
+    Ok((state.direction(eph, a)?, state.direction(eph, b)?))
 }
 
 /// 视方向（GCRS 轴，未做岁差章动）。事件搜索在精修阶段反复调用它，
