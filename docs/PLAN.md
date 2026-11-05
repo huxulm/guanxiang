@@ -272,7 +272,7 @@ guanxiang/
 - [x] 确定星历裁剪范围和安装包大小：内置 de440s 的 1899-12 至 2101-02 部分（22 MB），arm64 release 包 49.0 → 39.2 MB；真机性能待测
 - [x] 中英文界面、错误提示（离线时：根数用缓存并说明原因，地图底图空白、数据照常显示）
 - [x] Android 发布版：上传密钥签名（密钥在仓库外，配置在不进 Git 的 `android/key.properties`），版本 0.1.0；arm64 包 39.7 MB，16 KB 对齐
-- [ ] Windows 和 Linux 安装包（需先开启 Windows 开发者模式、安装 Linux 桌面工具链）
+- [ ] Windows 和 Linux 安装包（需先开启 Windows 开发者模式、安装 Linux 桌面工具链）—— **v0.1.0 只发布 Android**，桌面版留到下一版
 - [x] 第三方许可声明，包括 SOFA 致谢（“关于与许可”页）
 - [x] 确认 CelesTrak 数据使用方式（已符合其使用政策）；用户量较大时增加缓存服务 —— 以后再说
 - [x] 确认 OpenStreetMap 瓦片使用政策，并按政策设置
@@ -292,6 +292,8 @@ guanxiang/
 - OSM 瓦片政策（operations.osmfoundation.org/policies/tiles）：用本应用自己的 User-Agent（与 CelesTrak 请求相同）；每块瓦片至少缓存 7 天（flutter_map 内置缓存，上限 200 MB）；地图右下角显示来源；不做离线或批量下载。瓦片地址集中在 `sat_transit_page.dart` 的 `tileUrlTemplate`，用量大时换自建或商业瓦片。
 
 **验收：** 三个平台的安装包都在干净环境中完成安装和完整流程测试。
+
+**v0.1.0（2026-11-06）**：只发布 Android（arm64-v8a、x86_64 两个 APK），附在 GitLab Release `v0.1.0`，文件存放在项目的 Generic Package Registry（`guanxiang/0.1.0/`）。已在 Android 15（16 KB 页）模拟器上验证；真机尚未测试。
 
 ## 6. 验证方法
 
@@ -341,4 +343,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M7 剩余部分（Android 发布签名与版本号；Windows、Linux 安装包需先开启开发者模式和安装 Linux 工具链）。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
+下一步：Android 真机测试；下一版补 Windows、Linux 安装包（需先开启开发者模式和安装 Linux 工具链）；M6 与 transit-finder 对比、实测核对。M6 与 transit-finder 的逐条对比、实测核对待补做。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
