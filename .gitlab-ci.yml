@@ -4,6 +4,14 @@ stages:
 
 default:
   image: rust:1.97
+  # 共享 runner 42（Kubernetes）在拉取代码时会报 `could not lock config file //.gitconfig`，
+  # 与项目无关；自动重试通常会换到其他 runner。
+  retry:
+    max: 2
+    when:
+      - script_failure
+      - runner_system_failure
+      - unknown_failure
   cache:
     key: cargo-$CI_JOB_NAME
     paths:

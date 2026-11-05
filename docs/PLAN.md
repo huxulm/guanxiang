@@ -101,7 +101,7 @@ guanxiang/
 - anise 的默认 feature `metaload` 会引入 ureq，`analysis` 会引入 rayon、csv 等，已全部关闭。关闭后 Android 依赖树里没有 TLS，也没有 `cc` / `-sys` 构建依赖。
 - anise 目前最新版是 1.0.0-beta（预发布）。正式版发布后要重新核对 API。
 - M0 只用 `cargo rustc --crate-type cdylib` 临时生成过 `.so`。因为没有导出符号，它比最终桥接库小得多，不能用来估算安装包大小。
-- GitLab 共享 runner 42（Kubernetes）偶发在拉取代码时报 `could not lock config file //.gitconfig`，重试即可，与项目无关。
+- GitLab 共享 runner 42（Kubernetes）在拉取代码时经常报 `could not lock config file //.gitconfig`（HOME 不可写），与项目无关。CI 已配置自动重试；根本解决需要 GitLab 管理员修复该 runner。
 - Android 构建命令：`cargo ndk -t arm64-v8a -P 24 build -p guanxiang-cli --release`（需设置 `ANDROID_NDK_HOME`）。
 
 ### M1 星历与坐标（2 周）
