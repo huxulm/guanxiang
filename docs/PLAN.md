@@ -27,6 +27,7 @@
 | 手机上的搜索速度 | 未验证。桌面实测见 M1、M2 记录；按经验推算，月球相关的 100 年搜索在手机上可能超过 1 秒 |
 | GitLab CI | gitlab.xao.ac.cn/xulingming/guanxiang，fmt、clippy、android-deps、test 全部通过。runner 无外网，de440s 由本项目 Generic Package Registry 提供 |
 | M4 日月食 | 全球与本地情况、1900–2100 星表、CLI `eclipse`、App 支持已完成；与 NASA 21 世纪星表逐条一致 |
+| M6 卫星凌月 | 计算核心与 CLI `satellite` 已完成，69 次接近与 Skyfield 相差 ≤ 0.007 秒；Dart 层抓取缓存、后台刷新、地图、transit-finder 对比、实测核对未做 |
 | M5 月掩星 | 月掩行星和 550 颗亮星、本地掩始掩终、CLI `occultation`、App 支持已完成；92 次事件与 Skyfield 相差 ≤ 0.003 秒 |
 | Flutter 应用（M3） | `app/` 已创建并接入 flutter_rust_bridge 2.13；搜索、进度、取消、详情页可用。**Android 模拟器**（Android 15，16 KB 页）上集成测试全部通过；**Windows 桌面**待开启开发者模式；**Linux 桌面**待准备 Linux 工具链；**Android 真机**未测 |
 
@@ -50,6 +51,7 @@
 | D14 | 预计算星表用自定义定长二进制格式（16 字节头 + 48 字节记录，按时间排序），不用 SQLite | SQLite 需要编译 C 代码，违背 M0 的无原生依赖；事件表只读、规模小，二分查找即可 |
 | D15 | 桥接层按年分块搜索，每块后回传进度、检查取消标志；回传用普通结构体（`SearchUpdate`），不用带数据的枚举 | core 不需要进度和取消接口；Dart 端不需要 freezed 代码生成 |
 | D16 | 日月食用地心视位置；月食默认 Danjon 地影放大；月球半径半影 k₁ = 0.2725076、本影 k₂ = 0.2722810 | 与 NASA 五千年星表逐条一致，便于对照和用户比对 |
+| D17 | SGP4 用 WGS72 常数和 IAU 恒星时（与 python-sgp4 默认一致），不用 sgp4 crate 默认的 WGS84 | NORAD 根数按 WGS72 拟合；与参考实现一致 |
 
 ## 4. 架构
 
@@ -68,7 +70,8 @@ guanxiang-core
   ├─ search                   通用极小值与求根（Brent）
   ├─ stars                    月掩星用的精简星表（Hipparcos，550 颗）
   ├─ events                   合冲、角距极小、凌日、日月食（全球与本地）、月掩星、可见性、星表格式
-  └─ transit（M6）             SGP4、地面中心线、窄带判定
+  ├─ satellite                SGP4（OMM/TLE，WGS72）、TEME → 地固
+  └─ events::sat_transit      卫星凌日、凌月：最小角距、历时、地面中心线、带宽
 
 guanxiang-cli                 调试、验证、生成预计算星表
 ```
@@ -233,20 +236,30 @@ guanxiang/
 
 ### M6 卫星凌月（3 周）
 
-- [ ] 用 `sgp4` 解析 OMM 并预报，确认输出坐标系
-- [ ] TEME 到地固系转换，加入 UT1-UTC
-- [ ] 预报 14 天内的过境，计算最小角距
-- [ ] 计算地面中心线、带宽、持续时间和离带距离
+- [x] 用 `sgp4` 解析 OMM 并预报，确认输出坐标系（TEME；**必须用 WGS72 常数**，见记录）
+- [x] TEME 到地固系转换，加入 UT1-UTC（GMST82(UT1)，忽略极移；UT1 由 ΔT 模型或传入值给出）
+- [x] 预报过境，计算最小角距（`events::sat_transit`，卫星方向含光行时和周日光行差）
+- [x] 计算地面中心线、带宽、持续时间和离带距离
+- [x] CLI：`guanxiang satellite --omm iss.json --at lat,lon,h`
 - [ ] Dart 层拉取并缓存数据，遵守 CelesTrak 频率限制，非 200 响应时停止请求
 - [ ] Android 用 WorkManager 后台刷新
-- [ ] 显示根数龄期，并比较新旧预报，变化大时提醒
+- [x] 显示根数龄期（结果中带 `elements_age_days`）；比较新旧预报、变化大时提醒 —— 未做（需 Dart 层缓存）
 - [ ] 地图上显示中心线
-- [ ] 复用同一套逻辑支持卫星凌日，并加入太阳观测安全提示
+- [x] 复用同一套逻辑支持卫星凌日（太阳和月球同一函数）；太阳观测安全提示 —— 待界面实现时加
 
 **验收：**
 
 - 空间站和天宫至少 10 次预报与 transit-finder 对比，时刻差 ≤ 0.5 秒，中心线差 ≤ 500 米。
-- 至少 1 次实际观测或公开影像核对。
+  ——**以 Skyfield 代替部分通过**：同一份 CelesTrak OMM、6 个测站、7 天内 69 次角距 < 10° 的接近，时刻差 ≤ 0.007 秒，角距差 ≤ 0.35″（剩余差异是本库多计入的光行时和周日光行差）。与 transit-finder 的逐条对比尚未做（需要手工从网站取数）。
+- 至少 1 次实际观测或公开影像核对。——未做。
+
+**M6 记录：**
+
+- sgp4 crate（2.4）的 `Constants::from_elements` 默认用 **WGS84** 引力常数，而 NORAD 根数是按 WGS72 拟合的；python-sgp4（Skyfield）和 Vallado 参考实现默认 WGS72。用 WGS84 时与 Skyfield 的位置差 1 天约 12 m、7 天达百米级，对应凌日时刻差约 0.03 秒。改为自行构造 `Constants::new(WGS72, iau_epoch_to_sidereal_time, …)` 后，TEME 位置与 Skyfield 在 1 mm 内一致。
+- 地面中心线：每个时刻从卫星沿“目标 → 卫星”方向延长到 WGS84 椭球的交点；可见带半宽近似为“离中心线距离 × 视半径 / 最小角距”。
+- 根数从文件或字符串传入（D5），网络请求留给 Dart 层。测试数据 `tests/fixtures/satellite/omm_iss_css.json` 为 2026-11-04 的 CelesTrak 数据。
+- Skyfield 的 `find_minima` 在容差很小时采样点会暴涨（曾占用 24 GB 内存），对照数据脚本改为批量计算加抛物线插值。
+- 桌面上两颗卫星 7 天的搜索用时约 0.3 秒。
 
 ### M7 发布（2 周）
 
@@ -306,4 +319,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M6 卫星凌月。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。
+下一步：M6 的 Dart 层（CelesTrak 抓取、缓存、频率限制）和界面；或 M7 发布准备。M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收待条件具备后补做。

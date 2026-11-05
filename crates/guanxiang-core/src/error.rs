@@ -26,6 +26,9 @@ pub enum Error {
     #[error("无法计算：{0}")]
     Unsupported(&'static str),
 
+    #[error("卫星数据错误：{0}")]
+    Satellite(String),
+
     #[error("星表格式错误：{0}")]
     Catalog(String),
 

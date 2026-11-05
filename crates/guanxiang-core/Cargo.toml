@@ -11,6 +11,8 @@ anise.workspace = true
 sofars.workspace = true
 sgp4.workspace = true
 bytes = "1"
+serde_json = "1"
+chrono = { version = "0.4", default-features = false }
 thiserror.workspace = true
 
 [lints]

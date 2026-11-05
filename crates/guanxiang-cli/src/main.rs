@@ -1,5 +1,6 @@
 mod eclipse;
 mod occultation;
+mod satellite;
 mod search;
 
 use std::path::PathBuf;
@@ -65,6 +66,8 @@ enum Command {
     Eclipse(eclipse::EclipseArgs),
     /// 月掩星（行星、亮星）
     Occultation(occultation::OccultationArgs),
+    /// 卫星凌日、凌月（根数从 OMM 文件读取）
+    Satellite(satellite::SatelliteArgs),
 }
 
 fn main() -> ExitCode {
@@ -84,6 +87,7 @@ fn run(cli: Cli) -> guanxiang_core::Result<()> {
         Command::Search(args) => search::run(&eph, &args)?,
         Command::Eclipse(args) => eclipse::run(&eph, &args)?,
         Command::Occultation(args) => occultation::run(&eph, &args)?,
+        Command::Satellite(args) => satellite::run(&eph, &args)?,
         Command::Info => {
             println!("星历：{}", cli.ephem.display());
             for b in Body::ALL {

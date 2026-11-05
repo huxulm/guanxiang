@@ -14,6 +14,7 @@ pub mod error;
 pub mod events;
 pub mod geometry;
 pub mod observer;
+pub mod satellite;
 pub mod search;
 pub mod stars;
 #[allow(clippy::approx_constant)] // 表中的 6.28、3.14 等是观测数据
