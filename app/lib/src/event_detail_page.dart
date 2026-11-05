@@ -1,0 +1,43 @@
+import 'package:flutter/material.dart';
+
+import 'rust/api/guanxiang.dart';
+
+class EventDetailPage extends StatelessWidget {
+  const EventDetailPage({super.key, required this.event});
+
+  final EventItem event;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Scaffold(
+      appBar: AppBar(title: Text(event.title)),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          Text('${event.utc} UTC', style: theme.textTheme.headlineSmall),
+          const SizedBox(height: 4),
+          Text(event.summary, style: theme.textTheme.bodyLarge),
+          const SizedBox(height: 16),
+          Card(
+            child: Column(
+              children: [
+                for (final d in event.details)
+                  ListTile(
+                    dense: true,
+                    title: Text(d.label),
+                    trailing: Text(d.value, style: theme.textTheme.bodyLarge),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '时刻为地心计算，UTC。TT 儒略日 ${event.ttJd.toStringAsFixed(6)}。',
+            style: theme.textTheme.bodySmall,
+          ),
+        ],
+      ),
+    );
+  }
+}

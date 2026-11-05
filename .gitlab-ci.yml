@@ -46,12 +46,14 @@ android-deps:
   stage: check
   script:
     - rustup target add aarch64-linux-android
-    - cargo tree -e normal,build --target aarch64-linux-android --locked --prefix none > tree.txt
+    # 只检查 core 和 CLI：桥接层（app/rust）经 flutter_rust_bridge → dart-sys 需要 cc 编译 Dart API 桩代码，
+    # 由 Flutter 构建时的 NDK / MSVC / gcc 提供，属于预期；但 core 必须保持纯 Rust、无 TLS。
+    - cargo tree -e normal,build --target aarch64-linux-android --locked --prefix none -p guanxiang-core -p guanxiang-cli > tree.txt
     - |
       if grep -Ei '^(openssl|openssl-sys|native-tls|ring|rustls|ureq|reqwest|cc|cmake|bindgen) ' tree.txt; then
         echo "发现原生依赖或 TLS 依赖"; exit 1
       fi
-    - cargo check --workspace --target aarch64-linux-android --locked
+    - cargo check -p guanxiang-core -p guanxiang-cli --target aarch64-linux-android --locked
 
 test:
   stage: test

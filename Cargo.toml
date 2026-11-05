@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/guanxiang-core", "crates/guanxiang-cli"]
+members = ["crates/guanxiang-core", "crates/guanxiang-cli", "app/rust"]
 
 [workspace.package]
 version = "0.1.0"

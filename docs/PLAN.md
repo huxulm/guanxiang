@@ -26,7 +26,7 @@
 | M2 合冲与凌日 | 合、冲、角距极小、凌日、可见性过滤、星表格式、CLI `search` 已完成，凌日次数和事件时刻验收通过；**真机耗时未测** |
 | 手机上的搜索速度 | 未验证。桌面实测见 M1、M2 记录；按经验推算，月球相关的 100 年搜索在手机上可能超过 1 秒 |
 | GitLab CI | gitlab.xao.ac.cn/xulingming/guanxiang，fmt、clippy、android-deps、test 全部通过。runner 无外网，de440s 由本项目 Generic Package Registry 提供 |
-| Flutter 应用 | 未创建，在 M3 开始 |
+| Flutter 应用（M3） | `app/` 已创建并接入 flutter_rust_bridge 2.13；搜索、进度、取消、详情页可用。**Android 模拟器**（Android 15，16 KB 页）上集成测试全部通过；**Windows 桌面**待开启开发者模式；**Linux 桌面**待准备 Linux 工具链；**Android 真机**未测 |
 
 ## 3. 关键技术决策
 
@@ -46,6 +46,7 @@
 | D12 | ΔT：1800–2026 查 USNO/IERS 表；表后用 Hermite 曲线过渡到 Espenak–Meeus 2050–2150 公式；可通过 `Time::with_delta_t` 注入实测值 | 历史段用实测值；未来段与 NASA 日月食星表的外推一致，便于 M4 对照 |
 | D13 | 星历和光行时以 Horizons 为对照，视位置以 Skyfield 为对照 | Horizons 的视位置基于 IAU76/80，与 IAU 2006/2000A 有约 0.05″ 的春分点差，2027 年后还会漂移 |
 | D14 | 预计算星表用自定义定长二进制格式（16 字节头 + 48 字节记录，按时间排序），不用 SQLite | SQLite 需要编译 C 代码，违背 M0 的无原生依赖；事件表只读、规模小，二分查找即可 |
+| D15 | 桥接层按年分块搜索，每块后回传进度、检查取消标志；回传用普通结构体（`SearchUpdate`），不用带数据的枚举 | core 不需要进度和取消接口；Dart 端不需要 freezed 代码生成 |
 
 ## 4. 架构
 
@@ -78,7 +79,7 @@ guanxiang/
 ├─ crates/
 │  ├─ guanxiang-core/
 │  └─ guanxiang-cli/
-├─ app/              Flutter 应用（M3 创建）
+├─ app/              Flutter 应用（lib/ 界面，rust/ 桥接层，rust_builder/ Cargokit）
 ├─ data/             星历等数据，不进 Git
 └─ docs/PLAN.md      本文档
 ```
@@ -160,14 +161,30 @@ guanxiang/
 
 提前打通界面，尽早暴露三端打包问题。
 
-- [ ] 在 `app/` 创建 Flutter 应用，接入 flutter_rust_bridge
-- [ ] 把 `app/rust` 加入工作区，确认 Cargokit 在工作区内正常构建
-- [ ] 打包星历，处理 Android 资源释放或 `load_from_bytes`（core 已提供 `AniseEphemeris::from_bytes`）
-- [ ] 完成基础页面：搜索条件、结果列表、事件详情
-- [ ] 搜索进度回传和取消
-- [ ] 确认 Android 的 16 KB 页大小要求（M0 产物已是 16 KB 对齐，需在最终 APK 中复核）
+- [x] 在 `app/` 创建 Flutter 应用，接入 flutter_rust_bridge（2.13.0）
+- [x] 把 `app/rust` 加入工作区，确认 Cargokit 在工作区内正常构建（Android 已验证）
+- [x] 打包星历：三端都把 asset 读成字节交给 `Engine.fromBytes`，Android 不需要释放到磁盘
+- [x] 完成基础页面：搜索条件、结果列表、事件详情
+- [x] 搜索进度回传和取消（D15）
+- [x] 确认 Android 的 16 KB 页大小要求：Android 15 16 KB 页模拟器上运行通过；`librust_lib_guanxiang.so` LOAD 段 0x4000 对齐，`zipalign -c -P 16` 通过
 
-**验收：** Windows、Linux 和 Android 真机都能完成一次凌日搜索，界面不卡顿。
+**验收：** Windows、Linux 和 Android 真机都能完成一次凌日搜索，界面不卡顿。——**部分完成**：
+
+| 平台 | 状态 |
+|---|---|
+| Android 模拟器（Android 15，16 KB 页，x86_64） | 通过：界面可用；集成测试 3 项全过（金星凌日 2004、2012；取消有效） |
+| Android 真机 | 未测（没有设备） |
+| Windows 桌面 | 未测：Flutter 插件构建需要符号链接，需在系统设置中开启“开发者模式” |
+| Linux 桌面 | 未测：WSL 中没有 Linux 版 Flutter SDK 和 GTK/clang/cmake/ninja |
+
+**M3 记录：**
+
+- 构建说明见 `app/README.md`。星历需先从 `data/` 复制到 `app/assets/`（不进 Git）。debug APK 约 97 MB，主要是 32 MB 星历和 debug 版 Flutter 引擎。
+- Flutter 默认的 NDK 28.2 本机未安装，`android/app/build.gradle.kts` 固定为 NDK 30.0.16248370（与 M0 交叉编译一致）。
+- Gradle 不读 shell 的代理变量，构建时用 `JAVA_TOOL_OPTIONS` 传代理；反过来，`HTTP_PROXY`/`HTTPS_PROXY` 会让 `flutter test integration_test` 连不上设备上的 VM service（应用停在暂停状态），运行测试前要去掉。
+- debug 包直接在设备上点开会停在启动画面，需用 `flutter run` 启动。release 包无此问题（待 M7 验证）。
+- 桥接层经 flutter_rust_bridge → `dart-sys` 引入 `cc`（编译 Dart API 桩代码）。这是构建期依赖，由 NDK / MSVC / gcc 提供；core 和 CLI 仍为纯 Rust，CI 的依赖检查限定在这两个 crate。
+- 模拟器（debug 包，core 未开优化，运行在本机 CPU 上）耗时：星历加载 4.4 s；9 年金星凌日 14 ms；100 年月木合 1.09 s。这些数字**不能代表手机**。星历加载比桌面从文件加载（38 ms）慢得多，主要是 32 MB asset 的读取和复制，M7 裁剪星历时一并处理。
 
 ### M4 日月食（3 周）
 
@@ -251,7 +268,7 @@ guanxiang/
 |---|---|---|
 | 项目许可证 | 公开仓库前 | 未定 |
 | 产品覆盖年代 | M4 前 | 1900–2100（de440s 覆盖 1849–2150） |
-| 星历打包方式 | M3 | 内置裁剪版，完整版按需下载 |
+| 星历打包方式 | M3 → M7 | M3 暂时内置完整 de440s（32 MB）；M7 改为内置裁剪版，完整版按需下载 |
 | 预计算星表格式 | M2 | **已决定**：自定义定长二进制格式（D14） |
 | 默认卫星列表 | M6 | 空间站、天宫，后续评估哈勃 |
 | 是否上架 Google Play | M7 前 | 未定 |
@@ -264,4 +281,4 @@ guanxiang/
 4. [x] 分别编译到 Android、Windows 和 Linux。
 5. [x] 下载 de440s，实现 `Ephemeris`，打印 J2000 时刻的地月距离作为第一个端到端测试。
 
-下一步：M3 Flutter 竖切（尽早拿到真机，补测 M1、M2 的手机耗时）；或先做 M4 日月食。
+下一步：补齐 M3 的 Windows（开启开发者模式）、Linux 桌面和 Android 真机验收；之后 M4 日月食。
