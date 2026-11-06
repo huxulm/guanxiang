@@ -13,7 +13,8 @@ dir=$(find "$work" -mindepth 1 -maxdepth 1 -type d | head -1)
 cd "$dir" || exit 1
 
 echo "== 动态库"
-if ldd ./guanxiang lib/*.so | grep "not found"; then
+# 插件的 .so 没有自己的 RUNPATH，运行时靠主程序的 $ORIGIN/lib 找到 libflutter_linux_gtk.so，这里照样加上 lib/
+if LD_LIBRARY_PATH="$PWD/lib" ldd ./guanxiang lib/*.so | grep "not found"; then
   echo "有找不到的动态库"; exit 1
 fi
 
