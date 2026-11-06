@@ -88,6 +88,7 @@ class Settings extends ChangeNotifier {
   final Locator _locator;
 
   LocationMode _mode = LocationMode.gps;
+  bool? _amapConsent;
   Place _manual = Place.beijing;
   Place? _gpsFix;
   DateTime? _gpsTime;
@@ -98,6 +99,9 @@ class Settings extends ChangeNotifier {
   static const fixMaxAge = Duration(minutes: 10);
 
   LocationMode get mode => _mode;
+
+  /// 是否同意使用高德地图 SDK（隐私合规）。null 表示还没问过。
+  bool? get amapConsent => _amapConsent;
   Place get manual => _manual;
   Place? get gpsFix => _gpsFix;
 
@@ -129,6 +133,8 @@ class Settings extends ChangeNotifier {
   void _load(Object? j) {
     if (j is! Map) return;
     _mode = j['mode'] == 'manual' ? LocationMode.manual : LocationMode.gps;
+    final consent = j['amapConsent'];
+    _amapConsent = consent is bool ? consent : null;
     _manual = Place.fromJson(j['manual']) ?? Place.beijing;
     _gpsFix = Place.fromJson(j['gpsFix']);
     _gpsTime = DateTime.tryParse(j['gpsTime'] as String? ?? '')?.toLocal();
@@ -140,6 +146,7 @@ class Settings extends ChangeNotifier {
     if (f == null) return;
     final j = {
       'mode': _mode.name,
+      'amapConsent': ?_amapConsent,
       'manual': _manual.toJson(),
       if (_gpsFix != null && _gpsTime != null) ...{
         'gpsFix': _gpsFix!.toJson(),
@@ -151,6 +158,13 @@ class Settings extends ChangeNotifier {
     } catch (_) {
       // 写不进去只影响下次启动，不打断使用
     }
+  }
+
+  Future<void> setAmapConsent(bool agree) async {
+    if (agree == _amapConsent) return;
+    _amapConsent = agree;
+    notifyListeners();
+    await _save();
   }
 
   Future<void> setMode(LocationMode m) async {

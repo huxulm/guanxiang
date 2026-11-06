@@ -261,8 +261,12 @@ class _SatellitePageState extends State<SatellitePage> {
           : const Icon(Icons.chevron_right),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) =>
-              SatTransitPage(item: e, observerLat: at.$1, observerLon: at.$2),
+          builder: (_) => SatTransitPage(
+            item: e,
+            observerLat: at.$1,
+            observerLon: at.$2,
+            settings: widget.settings,
+          ),
         ),
       ),
     );

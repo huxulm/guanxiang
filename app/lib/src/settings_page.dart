@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
+import 'amap_support.dart';
 import 'licenses.dart';
 import 'settings.dart';
 
@@ -202,7 +204,34 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 8),
                 Text(l.locationPrivacy, style: theme.textTheme.bodySmall),
                 const SizedBox(height: 16),
+                if (amapSupported) ...[
+                  const Divider(),
+                  Text(l.mapSection, style: theme.textTheme.titleMedium),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l.useAmap),
+                    subtitle: Text(l.useAmapHint),
+                    value: s.amapConsent == true,
+                    onChanged: (on) async {
+                      if (on) {
+                        await askAmapConsent(context, s);
+                      } else {
+                        await s.setAmapConsent(false);
+                      }
+                    },
+                  ),
+                ],
                 const Divider(),
+                ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: const Icon(Icons.privacy_tip_outlined),
+                  title: Text(l.appPrivacyPolicy),
+                  trailing: const Icon(Icons.open_in_new),
+                  onTap: () => launchUrl(
+                    Uri.parse(appPrivacyUrl),
+                    mode: LaunchMode.externalApplication,
+                  ),
+                ),
                 ListTile(
                   contentPadding: EdgeInsets.zero,
                   leading: const Icon(Icons.info_outline),

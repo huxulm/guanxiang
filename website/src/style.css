@@ -76,3 +76,42 @@ html {
     @apply mt-3 text-center text-sm text-slate-400;
   }
 }
+
+/* 隐私政策等长文页面 */
+.prose-policy h1 {
+  @apply mt-2 text-3xl font-bold tracking-tight text-white;
+}
+.prose-policy h2 {
+  @apply mt-10 mb-3 text-xl font-semibold text-white;
+}
+.prose-policy p,
+.prose-policy li {
+  @apply leading-relaxed text-slate-300;
+}
+.prose-policy p {
+  @apply mt-3;
+}
+.prose-policy ul {
+  @apply mt-3 list-disc space-y-2 pl-6;
+}
+.prose-policy .meta {
+  @apply text-sm text-slate-500;
+}
+.prose-policy .note {
+  @apply text-xs text-slate-500;
+}
+.prose-policy a {
+  @apply text-amber-200 underline decoration-amber-200/30 underline-offset-4 hover:decoration-amber-200;
+}
+.prose-policy table {
+  @apply mt-4 block w-full overflow-x-auto text-left text-sm md:table;
+}
+.prose-policy th {
+  @apply border-b border-white/10 px-3 py-2 font-medium text-slate-400;
+}
+.prose-policy td {
+  @apply border-b border-white/5 px-3 py-3 align-top text-slate-300;
+}
+.prose-policy hr {
+  @apply my-12 border-white/10;
+}

@@ -63,4 +63,13 @@ flutter build windows --release
 - 根数从 CelesTrak 下载（`lib/src/celestrak.dart`），缓存在应用支持目录的 `omm/` 下。同一颗卫星 2 小时内只请求一次；任何非 200 响应后本次运行不再请求，并暂停 2 小时。
 - 搜索起始时间默认是现在，可以在卫星页选择其他日期时间（本地时间，传给 Rust 前转成 UTC）。离根数历元越远越不准，龄期超过 3 天的结果会提醒。
 - Android 上用 WorkManager 每 6 小时在后台刷新一次（仅联网时），同样遵守上面的限制。
-- 地图底图是 OpenStreetMap 瓦片，需要联网；离线时底图空白，数据照常显示。
+- 地图：arm64 Android 上，用户在首次打开地图时同意隐私说明后用高德地图（`lib/src/amap_view.dart`），否则用 OpenStreetMap 瓦片；两者都需要联网，离线时底图空白，数据照常显示。
+
+## 高德地图
+
+- 插件是社区维护的 `amap_map`（官方 `amap_flutter_map` 不支持 Dart 3）。Key 在 `lib/src/amap_support.dart`，按包名和签名证书 SHA1 绑定。
+- `android/build.gradle.kts` 做了两件事：把插件的 compileSdk 提到 36（`flutter_plugin_android_lifecycle` 要求）；把高德 SDK 强制换成 `3dmap-location-search:11.3.100_loc11.3.101_sea9.8.1`，因为插件自带的 10.1.200 原生库只按 4 KB 对齐，在 16 KB 页设备上加载不了。升级插件时检查这两处是否还需要。
+- 高德原生库只有 arm64-v8a，没有 x86_64：模拟器、桌面一律用 OSM（`amapSupported`），所以高德地图只能在真机上验证。arm64 APK 因此大了约 40 MB。
+- 隐私合规：同意前不初始化高德 SDK（`AMapPrivacyStatement` 三项都要为 true 才能显示地图）；选择保存在设置里，设置页可以关闭。应用隐私政策在官网 `website/privacy.html`。
+- 高德底图是 GCJ-02 坐标，中心线、测站在国内先用 `lib/src/gcj02.dart` 从 WGS-84 转换再画；境外不变换。
+- release 包开了 R8，高德的保留规则在 `android/app/proguard-rules.pro`。

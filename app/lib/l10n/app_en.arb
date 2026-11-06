@@ -104,5 +104,14 @@
   "usingOldFix": "{error}; using the fix from {time}",
   "viewResults": "View results ({count})",
   "resultsTitle": "Results",
+  "mapSection": "Map",
+  "useAmap": "Use AMap (Gaode)",
+  "useAmapHint": "Show satellite transit maps with AMap (more detailed in China); when off, OpenStreetMap is used.",
+  "amapConsentTitle": "Use AMap?",
+  "amapConsentBody": "Satellite transit maps can be shown with AMap (Gaode). The AMap SDK collects device, network and location information to display maps and improve its service; see the privacy policies below.\n\nIf you agree, AMap is used; otherwise OpenStreetMap is used. You can change this later in Settings.",
+  "appPrivacyPolicy": "Guanxiang privacy policy",
+  "amapPrivacyPolicy": "AMap Open Platform privacy policy",
+  "amapAgree": "Agree",
+  "amapDecline": "Decline",
   "legalese": "Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun."
 }

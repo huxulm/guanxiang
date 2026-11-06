@@ -3,8 +3,11 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../l10n/app_localizations.dart';
+import 'amap_support.dart';
+import 'amap_view.dart';
 import 'celestrak.dart' show appUserAgent;
 import 'rust/api/guanxiang.dart';
+import 'settings.dart';
 
 /// 地图瓦片地址。OSM 瓦片政策建议不要把地址写死在多处，需要时在这里换成自建或商业瓦片。
 const tileUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -20,18 +23,43 @@ final _tileProvider = NetworkTileProvider(
 
 /// 一次卫星接近的详情：地面中心线地图 + 数据。
 ///
-/// 底图用 OpenStreetMap 瓦片（需要联网；离线时地图空白，数据照常显示）。
-class SatTransitPage extends StatelessWidget {
+/// 底图：arm64 Android 上用户同意隐私说明后用高德地图，其他情况用 OpenStreetMap 瓦片。
+/// 两者都需要联网；离线时地图空白，数据照常显示。
+class SatTransitPage extends StatefulWidget {
   const SatTransitPage({
     super.key,
     required this.item,
     required this.observerLat,
     required this.observerLon,
+    required this.settings,
   });
 
   final SatTransitItem item;
   final double observerLat;
   final double observerLon;
+  final Settings settings;
+
+  @override
+  State<SatTransitPage> createState() => _SatTransitPageState();
+}
+
+class _SatTransitPageState extends State<SatTransitPage> {
+  SatTransitItem get item => widget.item;
+  double get observerLat => widget.observerLat;
+  double get observerLon => widget.observerLon;
+
+  @override
+  void initState() {
+    super.initState();
+    // 第一次打开地图时询问是否使用高德地图
+    if (amapSupported && widget.settings.amapConsent == null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        if (!mounted) return;
+        await askAmapConsent(context, widget.settings);
+        if (mounted) setState(() {});
+      });
+    }
+  }
 
   /// 经度换成与测站相差不超过 180° 的值，跨 180° 经线时折线不会绕地球一圈。
   double _unwrap(double lon) =>
@@ -60,51 +88,73 @@ class SatTransitPage extends StatelessWidget {
         children: [
           SizedBox(
             height: 320,
-            child: FlutterMap(
-              options: MapOptions(
-                initialCameraFit: CameraFit.bounds(
-                  bounds: bounds,
-                  padding: const EdgeInsets.all(32),
-                  maxZoom: 13,
-                ),
-                interactionOptions: const InteractionOptions(
-                  flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
-                ),
-              ),
-              children: [
-                TileLayer(
-                  urlTemplate: tileUrlTemplate,
-                  tileProvider: _tileProvider,
-                ),
-                PolylineLayer(
-                  polylines: [
-                    Polyline(points: line, color: lineColor, strokeWidth: 4),
-                    Polyline(
-                      points: [observer, nearest],
-                      color: theme.colorScheme.primary,
-                      strokeWidth: 2,
-                      pattern: StrokePattern.dashed(segments: const [6, 6]),
+            child: useAmap(widget.settings)
+                ? AmapTransitMap(
+                    observer: (observerLat, observerLon),
+                    nearest: (
+                      item.centerlineNearest.latitudeDeg,
+                      _unwrap(item.centerlineNearest.longitudeDeg),
                     ),
-                  ],
-                ),
-                MarkerLayer(
-                  markers: [
-                    Marker(
-                      point: observer,
-                      width: 32,
-                      height: 32,
-                      child: Icon(
-                        Icons.person_pin_circle,
-                        color: theme.colorScheme.primary,
+                    centerline: [
+                      for (final p in item.centerline)
+                        (p.latitudeDeg, _unwrap(p.longitudeDeg)),
+                    ],
+                    lineColor: lineColor,
+                    observerLineColor: theme.colorScheme.primary,
+                    english:
+                        Localizations.localeOf(context).languageCode != 'zh',
+                  )
+                : FlutterMap(
+                    options: MapOptions(
+                      initialCameraFit: CameraFit.bounds(
+                        bounds: bounds,
+                        padding: const EdgeInsets.all(32),
+                        maxZoom: 13,
+                      ),
+                      interactionOptions: const InteractionOptions(
+                        flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                       ),
                     ),
-                  ],
-                ),
-                RichAttributionWidget(
-                  attributions: [TextSourceAttribution(l.osmAttribution)],
-                ),
-              ],
-            ),
+                    children: [
+                      TileLayer(
+                        urlTemplate: tileUrlTemplate,
+                        tileProvider: _tileProvider,
+                      ),
+                      PolylineLayer(
+                        polylines: [
+                          Polyline(
+                            points: line,
+                            color: lineColor,
+                            strokeWidth: 4,
+                          ),
+                          Polyline(
+                            points: [observer, nearest],
+                            color: theme.colorScheme.primary,
+                            strokeWidth: 2,
+                            pattern: StrokePattern.dashed(
+                              segments: const [6, 6],
+                            ),
+                          ),
+                        ],
+                      ),
+                      MarkerLayer(
+                        markers: [
+                          Marker(
+                            point: observer,
+                            width: 32,
+                            height: 32,
+                            child: Icon(
+                              Icons.person_pin_circle,
+                              color: theme.colorScheme.primary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      RichAttributionWidget(
+                        attributions: [TextSourceAttribution(l.osmAttribution)],
+                      ),
+                    ],
+                  ),
           ),
           Padding(
             padding: const EdgeInsets.all(16),

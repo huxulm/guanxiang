@@ -375,5 +375,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get resultsTitle => '搜索结果';
 
   @override
+  String get mapSection => '地图';
+
+  @override
+  String get useAmap => '使用高德地图';
+
+  @override
+  String get useAmapHint => '卫星凌日地图使用高德地图（国内更详细）；关闭则使用 OpenStreetMap。';
+
+  @override
+  String get amapConsentTitle => '使用高德地图？';
+
+  @override
+  String get amapConsentBody =>
+      '卫星凌日的地图可以使用高德地图显示。高德地图 SDK 会收集设备信息、网络信息和位置信息，用于显示地图和改进服务，具体见下面的隐私政策。\n\n同意后使用高德地图；不同意则使用 OpenStreetMap。以后可以在“设置”里更改。';
+
+  @override
+  String get appPrivacyPolicy => '观象隐私政策';
+
+  @override
+  String get amapPrivacyPolicy => '高德开放平台隐私权政策';
+
+  @override
+  String get amapAgree => '同意';
+
+  @override
+  String get amapDecline => '不同意';
+
+  @override
   String get legalese => '天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。';
 }

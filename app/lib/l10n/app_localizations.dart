@@ -722,6 +722,60 @@ abstract class AppLocalizations {
   /// **'搜索结果'**
   String get resultsTitle;
 
+  /// No description provided for @mapSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'地图'**
+  String get mapSection;
+
+  /// No description provided for @useAmap.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用高德地图'**
+  String get useAmap;
+
+  /// No description provided for @useAmapHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'卫星凌日地图使用高德地图（国内更详细）；关闭则使用 OpenStreetMap。'**
+  String get useAmapHint;
+
+  /// No description provided for @amapConsentTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'使用高德地图？'**
+  String get amapConsentTitle;
+
+  /// No description provided for @amapConsentBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'卫星凌日的地图可以使用高德地图显示。高德地图 SDK 会收集设备信息、网络信息和位置信息，用于显示地图和改进服务，具体见下面的隐私政策。\n\n同意后使用高德地图；不同意则使用 OpenStreetMap。以后可以在“设置”里更改。'**
+  String get amapConsentBody;
+
+  /// No description provided for @appPrivacyPolicy.
+  ///
+  /// In zh, this message translates to:
+  /// **'观象隐私政策'**
+  String get appPrivacyPolicy;
+
+  /// No description provided for @amapPrivacyPolicy.
+  ///
+  /// In zh, this message translates to:
+  /// **'高德开放平台隐私权政策'**
+  String get amapPrivacyPolicy;
+
+  /// No description provided for @amapAgree.
+  ///
+  /// In zh, this message translates to:
+  /// **'同意'**
+  String get amapAgree;
+
+  /// No description provided for @amapDecline.
+  ///
+  /// In zh, this message translates to:
+  /// **'不同意'**
+  String get amapDecline;
+
   /// No description provided for @legalese.
   ///
   /// In zh, this message translates to:

@@ -383,6 +383,35 @@ class AppLocalizationsEn extends AppLocalizations {
   String get resultsTitle => 'Results';
 
   @override
+  String get mapSection => 'Map';
+
+  @override
+  String get useAmap => 'Use AMap (Gaode)';
+
+  @override
+  String get useAmapHint =>
+      'Show satellite transit maps with AMap (more detailed in China); when off, OpenStreetMap is used.';
+
+  @override
+  String get amapConsentTitle => 'Use AMap?';
+
+  @override
+  String get amapConsentBody =>
+      'Satellite transit maps can be shown with AMap (Gaode). The AMap SDK collects device, network and location information to display maps and improve its service; see the privacy policies below.\n\nIf you agree, AMap is used; otherwise OpenStreetMap is used. You can change this later in Settings.';
+
+  @override
+  String get appPrivacyPolicy => 'Guanxiang privacy policy';
+
+  @override
+  String get amapPrivacyPolicy => 'AMap Open Platform privacy policy';
+
+  @override
+  String get amapAgree => 'Agree';
+
+  @override
+  String get amapDecline => 'Decline';
+
+  @override
   String get legalese =>
       'Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun.';
 }

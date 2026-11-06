@@ -23,7 +23,7 @@ const acknowledgements = '''
 
 人造卫星：轨道根数来自 CelesTrak（T. S. Kelso）提供的 GP 数据，运行时下载；轨道预报采用 SGP4（Vallado et al. 2006），通过 sgp4 crate（MIT 许可）调用。
 
-地图：底图 © OpenStreetMap 贡献者，数据以 ODbL 许可发布。
+地图：底图 © OpenStreetMap 贡献者，数据以 ODbL 许可发布。Android 上经用户同意后可改用高德地图（高德开放平台地图 SDK，© 高德软件有限公司），使用时遵守高德开放平台的服务条款和隐私权政策；中心线等坐标在国内转换为 GCJ-02 后绘制。
 
 验证：日月食结果与 NASA 五千年日月食典（Espenak & Meeus）比对，视位置与 Skyfield 比对；这些对照数据不随应用分发。
 ''';
@@ -42,7 +42,7 @@ Bright stars: the Hipparcos Catalogue (ESA 1997, ESA SP-1200), obtained from NAS
 
 Artificial satellites: orbital elements are CelesTrak GP data (T. S. Kelso), downloaded at run time; orbits are propagated with SGP4 (Vallado et al. 2006) through the sgp4 crate (MIT licence).
 
-Maps: base map © OpenStreetMap contributors, data available under the ODbL.
+Maps: base map © OpenStreetMap contributors, data available under the ODbL. On Android, with the user's consent, AMap (AutoNavi Open Platform map SDK, © AutoNavi) can be used instead, subject to its terms of service and privacy policy; inside China, coordinates are converted to GCJ-02 before drawing.
 
 Validation: eclipses were checked against the NASA Five Millennium Canon (Espenak & Meeus) and apparent positions against Skyfield; these reference data are not distributed with the app.
 ''';

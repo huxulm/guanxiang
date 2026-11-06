@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>隐私政策 · 观象</title>
+    <meta name="description" content="观象应用的隐私政策：收集哪些信息、第三方服务与 SDK。" />
+    <meta name="theme-color" content="#0b1020" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="bg-night text-slate-200 antialiased">
+    <div class="stars" aria-hidden="true"></div>
+    <header class="border-b border-white/5">
+      <nav class="mx-auto flex max-w-3xl items-center gap-3 px-4 py-3 sm:px-6">
+        <a href="/" class="flex items-center gap-2 font-semibold text-white">
+          <img src="/favicon.svg" alt="" class="h-7 w-7" />
+          <span>观象 Guanxiang</span>
+        </a>
+      </nav>
+    </header>
+
+    <main class="prose-policy mx-auto max-w-3xl px-4 py-12 sm:px-6">
+      <h1>观象隐私政策</h1>
+      <p class="meta">更新日期：2026 年 11 月 6 日　适用于观象 Android、Windows 应用</p>
+
+      <p>观象是一个天文事件搜索工具。我们没有账号系统，不投放广告，也不使用任何统计或分析服务。天文计算全部在你的设备上完成。</p>
+
+      <h2>1. 我们处理的信息</h2>
+      <ul>
+        <li><strong>观测位置。</strong>你在“设置”里选择“GPS 自动”时，应用会在你搜索本地可见事件、卫星凌日凌月或点“立即定位”时读取设备位置；选择“手动”时使用你输入的经纬度。位置只保存在本机（应用数据目录下的 settings.json），不会上传到我们或任何第三方，除非你使用了下面第 2 节所述的高德地图。</li>
+        <li><strong>卫星根数缓存、地图缓存。</strong>只保存在本机。卸载应用时可以一并删除。</li>
+      </ul>
+
+      <h2>2. 第三方服务与 SDK</h2>
+      <p>以下服务只在需要时联网访问。访问时，对方服务器会看到你的 IP 地址和本应用的 User-Agent（guanxiang/版本号），这是网络请求本身决定的。</p>
+      <table>
+        <thead><tr><th>名称</th><th>用途</th><th>涉及的信息</th><th>隐私政策</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>高德开放平台地图 SDK（高德软件有限公司）<br /><span class="note">仅 Android，且需你在应用内同意后才启用</span></td>
+            <td>在卫星凌日详情页显示地图</td>
+            <td>根据高德的说明，SDK 会收集设备信息（如设备型号、操作系统版本、设备标识）、网络信息（如 IP 地址、网络类型）以及地图显示区域等位置相关信息。不同意时应用改用 OpenStreetMap，不会初始化高德 SDK。</td>
+            <td><a href="https://lbs.amap.com/pages/privacy/">高德开放平台隐私权政策</a></td>
+          </tr>
+          <tr>
+            <td>OpenStreetMap 瓦片服务</td>
+            <td>未使用高德地图时显示地图底图</td>
+            <td>IP 地址、所请求的地图区域</td>
+            <td><a href="https://osmfoundation.org/wiki/Privacy_Policy">OSMF 隐私政策</a></td>
+          </tr>
+          <tr>
+            <td>CelesTrak</td>
+            <td>下载人造卫星轨道根数</td>
+            <td>IP 地址、所请求的卫星编号</td>
+            <td><a href="https://celestrak.org/">celestrak.org</a></td>
+          </tr>
+          <tr>
+            <td>Cloudflare（官网与安装包下载）</td>
+            <td>托管本网站和安装包</td>
+            <td>访问网站或下载时的 IP 地址等访问日志</td>
+            <td><a href="https://www.cloudflare.com/privacypolicy/">Cloudflare 隐私政策</a></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>3. 权限说明（Android）</h2>
+      <ul>
+        <li><strong>位置（可只给大致位置）：</strong>仅在“GPS 自动”模式下用于确定观测地点。</li>
+        <li><strong>网络：</strong>下载卫星根数、显示地图。</li>
+        <li><strong>后台任务、开机启动、唤醒：</strong>由系统的 WorkManager 每 6 小时在联网时刷新一次卫星根数缓存。</li>
+      </ul>
+
+      <h2>4. 你的选择</h2>
+      <ul>
+        <li>随时可以在“设置”里改用手动位置，或关闭高德地图。</li>
+        <li>可以在系统设置里撤回位置权限。</li>
+        <li>卸载应用会删除程序；Windows 安装版卸载时会询问是否同时删除设置和缓存。</li>
+      </ul>
+
+      <h2>5. 变更</h2>
+      <p>本政策如有变化，会更新本页面并修改上面的更新日期。</p>
+
+      <hr />
+
+      <h1 lang="en">Privacy policy (English)</h1>
+      <div lang="en">
+        <p>Guanxiang is an astronomical event search tool. There are no accounts, no ads and no analytics; all astronomical computation happens on your device.</p>
+        <p><strong>Location.</strong> In GPS mode the app reads your location only when you search for locally visible events or satellite transits, or tap “Locate now”. In manual mode it uses the coordinates you enter. The location is stored only on your device and is never uploaded, except as described for AMap below. Satellite element and map caches are also kept only on the device.</p>
+        <p><strong>Third-party services.</strong> When a network request is made, the server sees your IP address and the app’s User-Agent.</p>
+        <ul>
+          <li><strong>AMap (Gaode) map SDK</strong>, AutoNavi Software Co., Ltd. — Android only, and only after you agree in the app. Used to show the satellite transit map. According to AMap, the SDK collects device information (such as model, OS version and device identifiers), network information (such as IP address and network type) and location-related information such as the displayed map area. If you decline, OpenStreetMap is used and the AMap SDK is not initialised. <a href="https://lbs.amap.com/pages/privacy/">AMap privacy policy</a>.</li>
+          <li><strong>OpenStreetMap tiles</strong> — base map when AMap is not used. <a href="https://osmfoundation.org/wiki/Privacy_Policy">OSMF privacy policy</a>.</li>
+          <li><strong>CelesTrak</strong> — satellite orbital elements.</li>
+          <li><strong>Cloudflare</strong> — hosts this website and the downloads. <a href="https://www.cloudflare.com/privacypolicy/">Cloudflare privacy policy</a>.</li>
+        </ul>
+        <p><strong>Android permissions.</strong> Location (approximate is enough) for GPS mode; network for satellite elements and maps; background work, boot and wake lock so WorkManager can refresh the satellite cache every 6 hours when online.</p>
+        <p>You can switch to a manual location or turn AMap off in Settings at any time, and revoke the location permission in system settings.</p>
+      </div>
+    </main>
+
+    <footer class="border-t border-white/5">
+      <div class="mx-auto max-w-3xl px-4 py-8 text-sm text-slate-500 sm:px-6">
+        <a href="/" class="underline decoration-white/20 underline-offset-4 hover:text-slate-300">← 返回首页 / Home</a>
+      </div>
+    </footer>
+  </body>
+</html>
