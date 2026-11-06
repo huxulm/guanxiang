@@ -43,7 +43,7 @@
         <div>
           <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-200">
             <span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span>
-            <span data-i18n="badge">v0.1.8 · Android · Windows</span>
+            <span data-i18n="badge">v0.1.9 · Android · Windows · Linux</span>
           </p>
           <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl" data-i18n="heroTitle">
             抬头之前，先知道天上会发生什么
@@ -149,7 +149,7 @@
       <!-- 下载 -->
       <section id="download" class="section">
         <h2 class="section-title" data-i18n="downloadTitle">下载</h2>
-        <div class="mt-10 grid gap-4 md:grid-cols-2">
+        <div class="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div class="card">
             <h3 class="text-lg" data-i18n="dlAndroid">Android</h3>
             <p data-i18n="dlAndroidText">Android 7.0 及以上。绝大多数手机选 arm64-v8a。</p>
@@ -168,6 +168,13 @@
             <div class="mt-5 flex flex-wrap gap-3">
               <a class="btn-primary" id="dl-win" href="#" data-i18n="dlWinSetup">安装程序</a>
               <a class="btn-ghost" id="dl-win-zip" href="#" data-i18n="dlWinZip">免安装 zip</a>
+            </div>
+          </div>
+          <div class="card">
+            <h3 class="text-lg" data-i18n="dlLinux">Linux</h3>
+            <p data-i18n="dlLinuxText">Ubuntu 22.04 及以上、Debian 12 等（x64）。下载后运行 sudo apt install ./guanxiang-*.deb，然后在应用列表里打开“观象”。</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+              <a class="btn-primary" id="dl-linux-deb" href="#" data-i18n="dlLinuxDeb">.deb 安装包</a>
             </div>
           </div>
         </div>

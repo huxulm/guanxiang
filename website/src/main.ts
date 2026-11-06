@@ -4,7 +4,7 @@
 type Lang = 'zh' | 'en';
 
 /** 当前版本。发新版时只改这里。 */
-const VERSION = '0.1.8';
+const VERSION = '0.1.9';
 /** 安装包放在 Cloudflare R2（桶 huxulm-asia），由 GitHub Actions 的 release.yml 从 GitHub Release 附件同步。 */
 const DOWNLOAD_BASE = 'https://s2.huxulm.dev/guanxiang';
 
@@ -14,7 +14,7 @@ const en: Record<string, string> = {
   navAccuracy: 'Accuracy',
   navScreens: 'Screenshots',
   navDownload: 'Download',
-  badge: `v${VERSION} · Android · Windows`,
+  badge: `v${VERSION} · Android · Windows · Linux`,
   heroTitle: 'Know what the sky will do before you look up',
   heroText:
     'Guanxiang searches transits, conjunctions, oppositions, eclipses and lunar occultations from 1900 to 2100 on your phone, and predicts when and where the ISS or Tiangong will cross the Sun or the Moon. Everything is computed on the device.',
@@ -66,6 +66,10 @@ const en: Record<string, string> = {
     'Windows 10 / 11 (x64). The installer does not need administrator rights; there is also a portable zip, just unzip and run guanxiang.exe. The program is not signed, so SmartScreen may warn on first run; choose “More info → Run anyway”.',
   dlWinSetup: 'Installer',
   dlWinZip: 'Portable zip',
+  dlLinux: 'Linux',
+  dlLinuxText:
+    'Ubuntu 22.04 or later, Debian 12 and similar (x64). After downloading, run sudo apt install ./guanxiang-*.deb, then open Guanxiang from the app menu.',
+  dlLinuxDeb: '.deb package',
   dlNotes: 'SHA-256 checksums',
   safetyTitle: 'Protect your eyes when observing the Sun.',
   safetyText:
@@ -119,6 +123,7 @@ function setLinks(): void {
   (document.getElementById('dl-x86') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-x86_64.apk`;
   (document.getElementById('dl-win') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-windows-x64-setup.exe`;
   (document.getElementById('dl-win-zip') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-windows-x64.zip`;
+  (document.getElementById('dl-linux-deb') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-linux-amd64.deb`;
   (document.getElementById('dl-release') as HTMLAnchorElement).href = `${pkg}/SHA256SUMS`;
 }
 
