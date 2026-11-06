@@ -49,6 +49,7 @@ dependencies:
   amap_map: ^1.0.15
   x_amap_base: ^1.0.3
   url_launcher: ^6.3.3
+  flutter_local_notifications: ^22.3.3
 
 dev_dependencies:
   flutter_test:

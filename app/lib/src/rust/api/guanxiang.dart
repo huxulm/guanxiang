@@ -37,6 +37,8 @@ String sunSafetyNotice({required Lang lang}) =>
 ///
 /// `start_utc` 形如 "2026-11-06T12:00:00"，空字符串表示从根数历元开始。
 /// `previous_omm_json` 为上一份根数（可为空），用于比较新旧预报。
+/// `radius_km` > 0 时做范围搜索：除了在测站角距不超过 `max_separation_deg` 的接近，还返回地面中心线
+/// 经过测站 `radius_km` 以内的事件（到中心线上可以看到凌日凌月）。单次最多 14 天，更长的跨度分段调用。
 Future<List<SatTransitItem>> satelliteTransits({
   required Engine engine,
   required String ommJson,
@@ -47,6 +49,7 @@ Future<List<SatTransitItem>> satelliteTransits({
   required String startUtc,
   required double days,
   required double maxSeparationDeg,
+  required double radiusKm,
   required Lang lang,
 }) => RustLib.instance.api.crateApiGuanxiangSatelliteTransits(
   engine: engine,
@@ -58,6 +61,7 @@ Future<List<SatTransitItem>> satelliteTransits({
   startUtc: startUtc,
   days: days,
   maxSeparationDeg: maxSeparationDeg,
+  radiusKm: radiusKm,
   lang: lang,
 );
 

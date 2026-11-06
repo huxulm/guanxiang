@@ -105,6 +105,7 @@ abstract class RustLibApi extends BaseApi {
     required String startUtc,
     required double days,
     required double maxSeparationDeg,
+    required double radiusKm,
     required Lang lang,
   });
 
@@ -330,6 +331,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     required String startUtc,
     required double days,
     required double maxSeparationDeg,
+    required double radiusKm,
     required Lang lang,
   }) {
     return handler.executeNormal(
@@ -348,6 +350,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           sse_encode_String(startUtc, serializer);
           sse_encode_f_64(days, serializer);
           sse_encode_f_64(maxSeparationDeg, serializer);
+          sse_encode_f_64(radiusKm, serializer);
           sse_encode_lang(lang, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
@@ -371,6 +374,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           startUtc,
           days,
           maxSeparationDeg,
+          radiusKm,
           lang,
         ],
         apiImpl: this,
@@ -391,6 +395,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           "startUtc",
           "days",
           "maxSeparationDeg",
+          "radiusKm",
           "lang",
         ],
       );

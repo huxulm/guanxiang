@@ -65,6 +65,15 @@ flutter build windows --release
 - Android 上用 WorkManager 每 6 小时在后台刷新一次（仅联网时），同样遵守上面的限制。
 - 地图：arm64 Android 上，用户在首次打开地图时同意隐私说明后用高德地图（`lib/src/amap_view.dart`），否则用 OpenStreetMap 瓦片；两者都需要联网，离线时底图空白，数据照常显示。
 
+## 后台任务（卫星凌日）
+
+- 两种任务（`lib/src/tasks.dart`）：**长跨度搜索**用当前根数一次搜完最多 120 天，按 7 天一段计算，可中断续算，有最长计算时间；**持续监视**到截止时间为止每 4 小时刷新根数、重搜接下来 14 天。两种都可设范围半径（中心线在半径内经过也算命中）和“找到就停”。
+- 单次搜索仍限 14 天，因为根数只在两周内可靠；长跨度搜索两周以后的结果在报告里标“仅供参考”。
+- 任务保存在应用支持目录的 `tasks.json`。后台 isolate 和界面会同时读写，`TaskStore.update` 每次重读文件、只改一个任务再原子写回；已取消的任务不会被后台覆盖。
+- Android：提交时安排 WorkManager 一次性任务 `guanxiang.runTasks`（一次最多 8 分钟，没算完再排一次）；周期任务（每 6 小时）刷新根数后也跑一遍到期任务。后台 isolate 里重新 `RustLib.init()` 并加载星历。
+- 其他平台：`ForegroundTaskScheduler` 在应用打开期间每 10 分钟检查一次。
+- 通知用 `flutter_local_notifications`（Android 需要核心库脱糖，通知小图标是 `res/drawable/ic_stat_notify.xml`）。持续监视逐个通知新命中；长跨度搜索只在结束时发一条汇总。
+
 ## 高德地图
 
 - 插件是社区维护的 `amap_map`（官方 `amap_flutter_map` 不支持 Dart 3）。Key 在 `lib/src/amap_support.dart`，按包名和签名证书 SHA1 绑定。

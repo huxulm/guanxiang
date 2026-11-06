@@ -316,5 +316,153 @@
   "amapPrivacyPolicy": "高德开放平台隐私权政策",
   "amapAgree": "同意",
   "amapDecline": "不同意",
+  "tasksTitle": "后台任务",
+  "newTask": "提交后台任务",
+  "taskKindLong": "长跨度搜索",
+  "taskKindWatch": "持续监视",
+  "taskLongHint": "用当前缓存的根数一次搜完。根数只在两周内可靠，更远的结果只能作大致参考，观测前请刷新根数重新确认。",
+  "taskWatchHint": "每 4 小时刷新根数，重新搜索接下来 14 天，发现凌日凌月时通知。结果始终基于最新根数。Android 上关闭应用也会运行；其他平台需要保持应用打开。",
+  "searchDaysLabel": "搜索天数",
+  "maxRuntimeLabel": "最长计算（分钟）",
+  "watchDaysLabel": "监视天数",
+  "radiusLabel": "范围半径 km",
+  "radiusHint": "大于 0 时，也报告中心线在这个半径内经过的凌日凌月（赶到中心线上就能看到）。",
+  "stopOnHitLabel": "找到凌日凌月就结束",
+  "submit": "提交",
+  "taskSubmitted": "任务已提交，结果会出现在任务历史里",
+  "notificationDenied": "没有通知权限，结果仍会保存在任务历史里",
+  "noTasks": "还没有任务",
+  "noCachedElements": "没有可用的根数，请先在卫星页刷新根数",
+  "taskLongName": "长跨度搜索 · {days} 天",
+  "@taskLongName": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "taskWatchName": "持续监视 · 至 {until}",
+  "@taskWatchName": {
+    "placeholders": {
+      "until": {
+        "type": "String"
+      }
+    }
+  },
+  "taskHitTitle": "发现凌日凌月：{satellite}",
+  "@taskHitTitle": {
+    "placeholders": {
+      "satellite": {
+        "type": "String"
+      }
+    }
+  },
+  "taskNearbyTitle": "{km} km 外可见凌日凌月：{satellite}",
+  "@taskNearbyTitle": {
+    "placeholders": {
+      "satellite": {
+        "type": "String"
+      },
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "taskDoneTitle": "任务完成：{name}",
+  "@taskDoneTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taskTimeoutTitle": "任务到时：{name}",
+  "@taskTimeoutTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "taskDoneBody": "命中 {hits} 次，共 {total} 次接近",
+  "@taskDoneBody": {
+    "placeholders": {
+      "hits": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "statusPending": "排队中",
+  "statusRunning": "进行中",
+  "statusDone": "已完成",
+  "statusTimeout": "已到时",
+  "statusCancelled": "已取消",
+  "statusFailed": "失败：{error}",
+  "@statusFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "cancelTask": "取消任务",
+  "deleteTask": "删除",
+  "reportTitle": "任务报告",
+  "reportParams": "角距上限 {sep}°，范围半径 {radius} km",
+  "@reportParams": {
+    "placeholders": {
+      "sep": {
+        "type": "String"
+      },
+      "radius": {
+        "type": "String"
+      }
+    }
+  },
+  "reportSearched": "已搜索 {done}/{total} 天，计算用时 {seconds} 秒",
+  "@reportSearched": {
+    "placeholders": {
+      "done": {
+        "type": "String"
+      },
+      "total": {
+        "type": "String"
+      },
+      "seconds": {
+        "type": "String"
+      }
+    }
+  },
+  "reportLastRun": "上次搜索 {time}",
+  "@reportLastRun": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reportCreated": "提交于 {time}",
+  "@reportCreated": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "reportHits": "命中",
+  "reportOthers": "其他接近",
+  "hitAtSite": "测站可见",
+  "hitNearby": "{km} km 外可见",
+  "@hitNearby": {
+    "placeholders": {
+      "km": {
+        "type": "String"
+      }
+    }
+  },
+  "beyondTwoWeeks": "超过根数两周，仅供参考",
   "legalese": "天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。"
 }

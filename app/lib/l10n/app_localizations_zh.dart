@@ -403,5 +403,159 @@ class AppLocalizationsZh extends AppLocalizations {
   String get amapDecline => '不同意';
 
   @override
+  String get tasksTitle => '后台任务';
+
+  @override
+  String get newTask => '提交后台任务';
+
+  @override
+  String get taskKindLong => '长跨度搜索';
+
+  @override
+  String get taskKindWatch => '持续监视';
+
+  @override
+  String get taskLongHint =>
+      '用当前缓存的根数一次搜完。根数只在两周内可靠，更远的结果只能作大致参考，观测前请刷新根数重新确认。';
+
+  @override
+  String get taskWatchHint =>
+      '每 4 小时刷新根数，重新搜索接下来 14 天，发现凌日凌月时通知。结果始终基于最新根数。Android 上关闭应用也会运行；其他平台需要保持应用打开。';
+
+  @override
+  String get searchDaysLabel => '搜索天数';
+
+  @override
+  String get maxRuntimeLabel => '最长计算（分钟）';
+
+  @override
+  String get watchDaysLabel => '监视天数';
+
+  @override
+  String get radiusLabel => '范围半径 km';
+
+  @override
+  String get radiusHint => '大于 0 时，也报告中心线在这个半径内经过的凌日凌月（赶到中心线上就能看到）。';
+
+  @override
+  String get stopOnHitLabel => '找到凌日凌月就结束';
+
+  @override
+  String get submit => '提交';
+
+  @override
+  String get taskSubmitted => '任务已提交，结果会出现在任务历史里';
+
+  @override
+  String get notificationDenied => '没有通知权限，结果仍会保存在任务历史里';
+
+  @override
+  String get noTasks => '还没有任务';
+
+  @override
+  String get noCachedElements => '没有可用的根数，请先在卫星页刷新根数';
+
+  @override
+  String taskLongName(int days) {
+    return '长跨度搜索 · $days 天';
+  }
+
+  @override
+  String taskWatchName(String until) {
+    return '持续监视 · 至 $until';
+  }
+
+  @override
+  String taskHitTitle(String satellite) {
+    return '发现凌日凌月：$satellite';
+  }
+
+  @override
+  String taskNearbyTitle(String satellite, String km) {
+    return '$km km 外可见凌日凌月：$satellite';
+  }
+
+  @override
+  String taskDoneTitle(String name) {
+    return '任务完成：$name';
+  }
+
+  @override
+  String taskTimeoutTitle(String name) {
+    return '任务到时：$name';
+  }
+
+  @override
+  String taskDoneBody(int hits, int total) {
+    return '命中 $hits 次，共 $total 次接近';
+  }
+
+  @override
+  String get statusPending => '排队中';
+
+  @override
+  String get statusRunning => '进行中';
+
+  @override
+  String get statusDone => '已完成';
+
+  @override
+  String get statusTimeout => '已到时';
+
+  @override
+  String get statusCancelled => '已取消';
+
+  @override
+  String statusFailed(String error) {
+    return '失败：$error';
+  }
+
+  @override
+  String get cancelTask => '取消任务';
+
+  @override
+  String get deleteTask => '删除';
+
+  @override
+  String get reportTitle => '任务报告';
+
+  @override
+  String reportParams(String sep, String radius) {
+    return '角距上限 $sep°，范围半径 $radius km';
+  }
+
+  @override
+  String reportSearched(String done, String total, String seconds) {
+    return '已搜索 $done/$total 天，计算用时 $seconds 秒';
+  }
+
+  @override
+  String reportLastRun(String time) {
+    return '上次搜索 $time';
+  }
+
+  @override
+  String reportCreated(String time) {
+    return '提交于 $time';
+  }
+
+  @override
+  String get reportHits => '命中';
+
+  @override
+  String get reportOthers => '其他接近';
+
+  @override
+  String get hitAtSite => '测站可见';
+
+  @override
+  String hitNearby(String km) {
+    return '$km km 外可见';
+  }
+
+  @override
+  String get beyondTwoWeeks => '超过根数两周，仅供参考';
+
+  @override
   String get legalese => '天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。';
 }

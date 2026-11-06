@@ -9,6 +9,7 @@ import 'sat_transit_page.dart';
 import 'search_results.dart' show isNarrow;
 import 'settings.dart';
 import 'settings_page.dart';
+import 'task_pages.dart';
 
 /// 卫星凌日、凌月搜索页。
 class SatellitePage extends StatefulWidget {
@@ -178,6 +179,7 @@ class _SatellitePageState extends State<SatellitePage> {
           startUtc: startUtc,
           days: days,
           maxSeparationDeg: maxSep,
+          radiusKm: 0,
           lang: lang,
         );
         _results.addAll(found);
@@ -200,6 +202,22 @@ class _SatellitePageState extends State<SatellitePage> {
       ].join('\n');
     });
     if (isNarrow(context)) _openResults();
+  }
+
+  void _openSubmit() {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SubmitTaskPage(
+          settings: widget.settings,
+          noradIds: [
+            for (final e in _cache.entries)
+              if (e.value.json != null) e.key,
+          ],
+          maxSeparationDeg: double.tryParse(_maxSepCtrl.text.trim()) ?? 1,
+          start: _start,
+        ),
+      ),
+    );
   }
 
   String _hm(DateTime t) =>
@@ -349,7 +367,20 @@ class _SatellitePageState extends State<SatellitePage> {
     final status = _status(l);
     final narrow = isNarrow(context);
     return Scaffold(
-      appBar: AppBar(title: Text(l.satTitle)),
+      appBar: AppBar(
+        title: Text(l.satTitle),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.history),
+            tooltip: l.tasksTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => TaskListPage(settings: widget.settings),
+              ),
+            ),
+          ),
+        ],
+      ),
       body: SafeArea(
         child: ListView(
           padding: const EdgeInsets.all(16),
@@ -432,6 +463,12 @@ class _SatellitePageState extends State<SatellitePage> {
                   onPressed: _busy ? null : _search,
                   icon: const Icon(Icons.search),
                   label: Text(l.search),
+                ),
+                const SizedBox(width: 12),
+                OutlinedButton.icon(
+                  onPressed: _busy ? null : _openSubmit,
+                  icon: const Icon(Icons.schedule_send),
+                  label: Text(l.newTask),
                 ),
                 const SizedBox(width: 12),
                 if (_busy)

@@ -338,6 +338,7 @@ fn wire__crate__api__guanxiang__satellite_transits_impl(
             let api_start_utc = <String>::sse_decode(&mut deserializer);
             let api_days = <f64>::sse_decode(&mut deserializer);
             let api_max_separation_deg = <f64>::sse_decode(&mut deserializer);
+            let api_radius_km = <f64>::sse_decode(&mut deserializer);
             let api_lang = <crate::api::guanxiang::Lang>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
@@ -369,6 +370,7 @@ fn wire__crate__api__guanxiang__satellite_transits_impl(
                             api_start_utc,
                             api_days,
                             api_max_separation_deg,
+                            api_radius_km,
                             api_lang,
                         )?;
                         std::result::Result::Ok(output_ok)

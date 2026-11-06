@@ -178,6 +178,7 @@ void main() {
       startUtc: '',
       days: 7,
       maxSeparationDeg: 10,
+      radiusKm: 0,
       lang: Lang.zh,
     );
     final sun = found.where((e) => e.body == 'sun').toList();

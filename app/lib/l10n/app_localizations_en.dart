@@ -412,6 +412,165 @@ class AppLocalizationsEn extends AppLocalizations {
   String get amapDecline => 'Decline';
 
   @override
+  String get tasksTitle => 'Background tasks';
+
+  @override
+  String get newTask => 'New background task';
+
+  @override
+  String get taskKindLong => 'Long search';
+
+  @override
+  String get taskKindWatch => 'Watch';
+
+  @override
+  String get taskLongHint =>
+      'Searches the whole span with the elements cached now. Elements are reliable for about two weeks; later results are only rough guides, so refresh and check again before observing.';
+
+  @override
+  String get taskWatchHint =>
+      'Every 4 hours, refreshes the elements and searches the next 14 days; notifies you when a transit appears. Results always use the latest elements. On Android it keeps running when the app is closed; elsewhere keep the app open.';
+
+  @override
+  String get searchDaysLabel => 'Days to search';
+
+  @override
+  String get maxRuntimeLabel => 'Max compute (min)';
+
+  @override
+  String get watchDaysLabel => 'Days to watch';
+
+  @override
+  String get radiusLabel => 'Radius km';
+
+  @override
+  String get radiusHint =>
+      'When above 0, also reports transits whose centre line passes within this radius (go to the centre line to see them).';
+
+  @override
+  String get stopOnHitLabel => 'Stop at the first transit';
+
+  @override
+  String get submit => 'Submit';
+
+  @override
+  String get taskSubmitted =>
+      'Task submitted; results will appear in the task history';
+
+  @override
+  String get notificationDenied =>
+      'Notifications are not allowed; results are still saved in the task history';
+
+  @override
+  String get noTasks => 'No tasks yet';
+
+  @override
+  String get noCachedElements =>
+      'No orbital elements available; refresh them on the satellite page first';
+
+  @override
+  String taskLongName(int days) {
+    return 'Long search · $days days';
+  }
+
+  @override
+  String taskWatchName(String until) {
+    return 'Watch · until $until';
+  }
+
+  @override
+  String taskHitTitle(String satellite) {
+    return 'Transit found: $satellite';
+  }
+
+  @override
+  String taskNearbyTitle(String satellite, String km) {
+    return 'Transit visible $km km away: $satellite';
+  }
+
+  @override
+  String taskDoneTitle(String name) {
+    return 'Task finished: $name';
+  }
+
+  @override
+  String taskTimeoutTitle(String name) {
+    return 'Task time limit reached: $name';
+  }
+
+  @override
+  String taskDoneBody(int hits, int total) {
+    return '$hits hits out of $total approaches';
+  }
+
+  @override
+  String get statusPending => 'Queued';
+
+  @override
+  String get statusRunning => 'Running';
+
+  @override
+  String get statusDone => 'Finished';
+
+  @override
+  String get statusTimeout => 'Time limit reached';
+
+  @override
+  String get statusCancelled => 'Cancelled';
+
+  @override
+  String statusFailed(String error) {
+    return 'Failed: $error';
+  }
+
+  @override
+  String get cancelTask => 'Cancel task';
+
+  @override
+  String get deleteTask => 'Delete';
+
+  @override
+  String get reportTitle => 'Task report';
+
+  @override
+  String reportParams(String sep, String radius) {
+    return 'Max separation $sep°, radius $radius km';
+  }
+
+  @override
+  String reportSearched(String done, String total, String seconds) {
+    return 'Searched $done/$total days in $seconds s of computing';
+  }
+
+  @override
+  String reportLastRun(String time) {
+    return 'Last searched $time';
+  }
+
+  @override
+  String reportCreated(String time) {
+    return 'Submitted $time';
+  }
+
+  @override
+  String get reportHits => 'Hits';
+
+  @override
+  String get reportOthers => 'Other approaches';
+
+  @override
+  String get hitAtSite => 'Visible here';
+
+  @override
+  String hitNearby(String km) {
+    return 'Visible $km km away';
+  }
+
+  @override
+  String get beyondTwoWeeks =>
+      'More than two weeks from the elements; rough guide only';
+
+  @override
   String get legalese =>
       'Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun.';
 }

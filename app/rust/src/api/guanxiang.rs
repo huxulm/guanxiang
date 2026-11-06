@@ -931,10 +931,18 @@ pub fn sun_safety_notice(lang: Lang) -> String {
     .to_string()
 }
 
+/// 范围搜索时，按这个最低卫星距离（km）把半径换算成角距门槛：地面上相距 R 的两点看卫星，
+/// 视差约为 R / 距离，距离不会小于卫星高度。取偏低的值，宁可多找候选再按中心线距离筛掉。
+const RADIUS_MIN_RANGE_KM: f64 = 300.0;
+/// 范围搜索时角距门槛的上限（度）。
+const RADIUS_MAX_SEPARATION_DEG: f64 = 15.0;
+
 /// 搜索卫星凌日、凌月。
 ///
 /// `start_utc` 形如 "2026-11-06T12:00:00"，空字符串表示从根数历元开始。
 /// `previous_omm_json` 为上一份根数（可为空），用于比较新旧预报。
+/// `radius_km` > 0 时做范围搜索：除了在测站角距不超过 `max_separation_deg` 的接近，还返回地面中心线
+/// 经过测站 `radius_km` 以内的事件（到中心线上可以看到凌日凌月）。单次最多 14 天，更长的跨度分段调用。
 #[allow(clippy::too_many_arguments)]
 pub fn satellite_transits(
     engine: &Engine,
@@ -946,6 +954,7 @@ pub fn satellite_transits(
     start_utc: String,
     days: f64,
     max_separation_deg: f64,
+    radius_km: f64,
     lang: Lang,
 ) -> anyhow::Result<Vec<SatTransitItem>> {
     anyhow::ensure!(
@@ -962,8 +971,29 @@ pub fn satellite_transits(
         Some(s) if !s.trim().is_empty() => Satellite::from_omm_json(s).unwrap_or_default(),
         _ => Vec::new(),
     };
+    anyhow::ensure!(
+        (0.0..=500.0).contains(&radius_km),
+        "{}",
+        lang.s(
+            "范围半径应在 0–500 km 之间",
+            "The radius must be between 0 and 500 km"
+        )
+    );
     let bodies = [Body::Sun, Body::Moon];
     let max = max_separation_deg.to_radians();
+    // 范围搜索放宽角距门槛，找到候选后再按中心线距离筛选
+    let search_max = if radius_km > 0.0 {
+        max.max(
+            (radius_km / RADIUS_MIN_RANGE_KM)
+                .atan()
+                .min(RADIUS_MAX_SEPARATION_DEG.to_radians()),
+        )
+    } else {
+        max
+    };
+    let keep = |e: &SatTransit| {
+        e.min_separation <= max || (radius_km > 0.0 && e.distance_to_centerline_km <= radius_km)
+    };
     let mut out = Vec::new();
     for sat in &sats {
         let start = if start_utc.trim().is_empty() {
@@ -972,11 +1002,15 @@ pub fn satellite_transits(
             Time::from_utc(&start_utc.trim().parse::<DateTime>()?)?
         };
         let span = Span::new(start, start.add_seconds(days * 86_400.0))?;
-        let found = sat_transit::search(&engine.eph, sat, &bodies, span, &obs, max, None)?;
+        let found: Vec<_> =
+            sat_transit::search(&engine.eph, sat, &bodies, span, &obs, search_max, None)?
+                .into_iter()
+                .filter(keep)
+                .collect();
         // 同一历元的根数不用比较
         let old = match previous.iter().find(|p| p.norad_id == sat.norad_id) {
             Some(p) if (p.epoch.tt_seconds() - sat.epoch.tt_seconds()).abs() > 1.0 => Some(
-                sat_transit::search(&engine.eph, p, &bodies, span, &obs, max, None)?,
+                sat_transit::search(&engine.eph, p, &bodies, span, &obs, search_max, None)?,
             ),
             _ => None,
         };
@@ -1204,6 +1238,86 @@ fn utc_ms(t: &Time) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    /// 测试用星历：`GUANXIANG_EPHEM` 或仓库根目录的 data/de440s.bsp；找不到时跳过（CI 不允许跳过）。
+    fn test_engine() -> Option<Engine> {
+        let path = std::env::var_os("GUANXIANG_EPHEM")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| {
+                std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../data/de440s.bsp")
+            });
+        if !path.exists() {
+            eprintln!("跳过：找不到 {}", path.display());
+            return None;
+        }
+        Some(Engine::from_bytes(std::fs::read(path).unwrap()).unwrap())
+    }
+
+    #[test]
+    fn radius_search_adds_nearby_centerlines() {
+        let Some(engine) = test_engine() else { return };
+        let omm = std::fs::read_to_string(
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("../../crates/guanxiang-core/tests/fixtures/satellite/omm_iss_css.json"),
+        )
+        .unwrap();
+        let run = |radius: f64| {
+            satellite_transits(
+                &engine,
+                omm.clone(),
+                None,
+                39.9,
+                116.4,
+                50.0,
+                String::new(),
+                14.0,
+                1.0,
+                radius,
+                Lang::Zh,
+            )
+            .unwrap()
+        };
+        let base = run(0.0);
+        let wide = run(150.0);
+        // 普通搜索的结果都在范围搜索里
+        for b in &base {
+            assert!(
+                wide.iter().any(|w| (w.tt_jd - b.tt_jd).abs() < 1e-9),
+                "范围搜索漏掉了 {}",
+                b.utc
+            );
+        }
+        // 多出来的都是中心线在半径内经过的
+        let extra: Vec<_> = wide
+            .iter()
+            .filter(|w| !base.iter().any(|b| (w.tt_jd - b.tt_jd).abs() < 1e-9))
+            .collect();
+        assert!(!extra.is_empty(), "14 天内 150 km 范围应该能找到更多事件");
+        for w in &extra {
+            assert!(w.distance_to_centerline_km <= 150.0, "{}", w.utc);
+        }
+        eprintln!(
+            "普通 {} 个，范围 150 km {} 个，其中凌日凌月 {} 个",
+            base.len(),
+            wide.len(),
+            wide.iter().filter(|w| w.is_transit).count()
+        );
+        // 半径超出范围要报错
+        assert!(satellite_transits(
+            &engine,
+            omm.clone(),
+            None,
+            39.9,
+            116.4,
+            50.0,
+            String::new(),
+            1.0,
+            1.0,
+            501.0,
+            Lang::Zh
+        )
+        .is_err());
+    }
 
     #[test]
     fn polyline_distance() {

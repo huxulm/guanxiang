@@ -776,6 +776,258 @@ abstract class AppLocalizations {
   /// **'不同意'**
   String get amapDecline;
 
+  /// No description provided for @tasksTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'后台任务'**
+  String get tasksTitle;
+
+  /// No description provided for @newTask.
+  ///
+  /// In zh, this message translates to:
+  /// **'提交后台任务'**
+  String get newTask;
+
+  /// No description provided for @taskKindLong.
+  ///
+  /// In zh, this message translates to:
+  /// **'长跨度搜索'**
+  String get taskKindLong;
+
+  /// No description provided for @taskKindWatch.
+  ///
+  /// In zh, this message translates to:
+  /// **'持续监视'**
+  String get taskKindWatch;
+
+  /// No description provided for @taskLongHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'用当前缓存的根数一次搜完。根数只在两周内可靠，更远的结果只能作大致参考，观测前请刷新根数重新确认。'**
+  String get taskLongHint;
+
+  /// No description provided for @taskWatchHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'每 4 小时刷新根数，重新搜索接下来 14 天，发现凌日凌月时通知。结果始终基于最新根数。Android 上关闭应用也会运行；其他平台需要保持应用打开。'**
+  String get taskWatchHint;
+
+  /// No description provided for @searchDaysLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索天数'**
+  String get searchDaysLabel;
+
+  /// No description provided for @maxRuntimeLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'最长计算（分钟）'**
+  String get maxRuntimeLabel;
+
+  /// No description provided for @watchDaysLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'监视天数'**
+  String get watchDaysLabel;
+
+  /// No description provided for @radiusLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'范围半径 km'**
+  String get radiusLabel;
+
+  /// No description provided for @radiusHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'大于 0 时，也报告中心线在这个半径内经过的凌日凌月（赶到中心线上就能看到）。'**
+  String get radiusHint;
+
+  /// No description provided for @stopOnHitLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'找到凌日凌月就结束'**
+  String get stopOnHitLabel;
+
+  /// No description provided for @submit.
+  ///
+  /// In zh, this message translates to:
+  /// **'提交'**
+  String get submit;
+
+  /// No description provided for @taskSubmitted.
+  ///
+  /// In zh, this message translates to:
+  /// **'任务已提交，结果会出现在任务历史里'**
+  String get taskSubmitted;
+
+  /// No description provided for @notificationDenied.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有通知权限，结果仍会保存在任务历史里'**
+  String get notificationDenied;
+
+  /// No description provided for @noTasks.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有任务'**
+  String get noTasks;
+
+  /// No description provided for @noCachedElements.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有可用的根数，请先在卫星页刷新根数'**
+  String get noCachedElements;
+
+  /// No description provided for @taskLongName.
+  ///
+  /// In zh, this message translates to:
+  /// **'长跨度搜索 · {days} 天'**
+  String taskLongName(int days);
+
+  /// No description provided for @taskWatchName.
+  ///
+  /// In zh, this message translates to:
+  /// **'持续监视 · 至 {until}'**
+  String taskWatchName(String until);
+
+  /// No description provided for @taskHitTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'发现凌日凌月：{satellite}'**
+  String taskHitTitle(String satellite);
+
+  /// No description provided for @taskNearbyTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'{km} km 外可见凌日凌月：{satellite}'**
+  String taskNearbyTitle(String satellite, String km);
+
+  /// No description provided for @taskDoneTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'任务完成：{name}'**
+  String taskDoneTitle(String name);
+
+  /// No description provided for @taskTimeoutTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'任务到时：{name}'**
+  String taskTimeoutTitle(String name);
+
+  /// No description provided for @taskDoneBody.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中 {hits} 次，共 {total} 次接近'**
+  String taskDoneBody(int hits, int total);
+
+  /// No description provided for @statusPending.
+  ///
+  /// In zh, this message translates to:
+  /// **'排队中'**
+  String get statusPending;
+
+  /// No description provided for @statusRunning.
+  ///
+  /// In zh, this message translates to:
+  /// **'进行中'**
+  String get statusRunning;
+
+  /// No description provided for @statusDone.
+  ///
+  /// In zh, this message translates to:
+  /// **'已完成'**
+  String get statusDone;
+
+  /// No description provided for @statusTimeout.
+  ///
+  /// In zh, this message translates to:
+  /// **'已到时'**
+  String get statusTimeout;
+
+  /// No description provided for @statusCancelled.
+  ///
+  /// In zh, this message translates to:
+  /// **'已取消'**
+  String get statusCancelled;
+
+  /// No description provided for @statusFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'失败：{error}'**
+  String statusFailed(String error);
+
+  /// No description provided for @cancelTask.
+  ///
+  /// In zh, this message translates to:
+  /// **'取消任务'**
+  String get cancelTask;
+
+  /// No description provided for @deleteTask.
+  ///
+  /// In zh, this message translates to:
+  /// **'删除'**
+  String get deleteTask;
+
+  /// No description provided for @reportTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'任务报告'**
+  String get reportTitle;
+
+  /// No description provided for @reportParams.
+  ///
+  /// In zh, this message translates to:
+  /// **'角距上限 {sep}°，范围半径 {radius} km'**
+  String reportParams(String sep, String radius);
+
+  /// No description provided for @reportSearched.
+  ///
+  /// In zh, this message translates to:
+  /// **'已搜索 {done}/{total} 天，计算用时 {seconds} 秒'**
+  String reportSearched(String done, String total, String seconds);
+
+  /// No description provided for @reportLastRun.
+  ///
+  /// In zh, this message translates to:
+  /// **'上次搜索 {time}'**
+  String reportLastRun(String time);
+
+  /// No description provided for @reportCreated.
+  ///
+  /// In zh, this message translates to:
+  /// **'提交于 {time}'**
+  String reportCreated(String time);
+
+  /// No description provided for @reportHits.
+  ///
+  /// In zh, this message translates to:
+  /// **'命中'**
+  String get reportHits;
+
+  /// No description provided for @reportOthers.
+  ///
+  /// In zh, this message translates to:
+  /// **'其他接近'**
+  String get reportOthers;
+
+  /// No description provided for @hitAtSite.
+  ///
+  /// In zh, this message translates to:
+  /// **'测站可见'**
+  String get hitAtSite;
+
+  /// No description provided for @hitNearby.
+  ///
+  /// In zh, this message translates to:
+  /// **'{km} km 外可见'**
+  String hitNearby(String km);
+
+  /// No description provided for @beyondTwoWeeks.
+  ///
+  /// In zh, this message translates to:
+  /// **'超过根数两周，仅供参考'**
+  String get beyondTwoWeeks;
+
   /// No description provided for @legalese.
   ///
   /// In zh, this message translates to:

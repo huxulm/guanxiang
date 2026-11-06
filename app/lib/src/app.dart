@@ -7,10 +7,17 @@ import 'errors.dart';
 import 'rust/api/guanxiang.dart';
 import 'search_page.dart';
 import 'settings.dart';
+import 'task_service.dart';
 
 /// 随应用打包的星历：de440s 裁剪到 1899-12 至 2101-02（22 MB，原 33 MB）。三端都从 asset
 /// 读成字节交给 Rust，Android 上不需要先释放到磁盘。
 const ephemerisAsset = 'assets/de440s_1900_2100.bsp';
+
+/// 加载随应用打包的星历（界面和后台任务都用）。
+Future<Engine> loadEngine() async {
+  final data = await rootBundle.load(ephemerisAsset);
+  return Engine.fromBytes(bytes: data.buffer.asUint8List());
+}
 
 class GuanxiangApp extends StatelessWidget {
   const GuanxiangApp({super.key});
@@ -58,10 +65,11 @@ class _LoadingPageState extends State<LoadingPage> {
   Future<void> _load() async {
     try {
       final watch = Stopwatch()..start();
-      final data = await rootBundle.load(ephemerisAsset);
-      final engine = await Engine.fromBytes(bytes: data.buffer.asUint8List());
+      final engine = await loadEngine();
       final ms = watch.elapsedMilliseconds;
       final settings = await Settings.open();
+      // 非 Android 平台在应用打开期间执行后台任务
+      ForegroundTaskScheduler.instance.start(engine);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
