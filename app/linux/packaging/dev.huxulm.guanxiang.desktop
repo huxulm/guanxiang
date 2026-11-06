@@ -1,0 +1,16 @@
+[Desktop Entry]
+Type=Application
+Name=Guanxiang
+Name[zh_CN]=观象
+Name[zh_TW]=觀象
+GenericName=Astronomical Event Search
+GenericName[zh_CN]=天文事件搜索
+Comment=Search eclipses, transits, conjunctions, lunar occultations and satellite transits
+Comment[zh_CN]=搜索日月食、行星凌日、合冲、月掩星和卫星凌日凌月
+Exec=guanxiang
+Icon=dev.huxulm.guanxiang
+Terminal=false
+Categories=Education;Science;Astronomy;
+Keywords=astronomy;eclipse;transit;conjunction;occultation;satellite;ISS;
+Keywords[zh_CN]=天文;日食;月食;凌日;合;冲;月掩星;卫星;空间站;
+StartupWMClass=dev.huxulm.guanxiang

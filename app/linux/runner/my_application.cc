@@ -54,6 +54,8 @@ static void my_application_activate(GApplication* application) {
   }
 
   gtk_window_set_default_size(window, 1280, 720);
+  // Icon from the hicolor theme, installed by the .deb (tools/package_linux.sh).
+  gtk_window_set_icon_name(window, APPLICATION_ID);
 
   g_autoptr(FlDartProject) project = fl_dart_project_new();
   fl_dart_project_set_dart_entrypoint_arguments(

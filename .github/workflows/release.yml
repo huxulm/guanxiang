@@ -1,4 +1,4 @@
-# 发布镜像：GitHub Release 发布后，先在这里构建 Linux 包并补传到 Release（Android、Windows 包在本机构建、
+# 发布镜像：GitHub Release 发布后，先在这里构建 Linux 的 .deb 并补传到 Release（Android、Windows 包在本机构建、
 # 创建 Release 时上传），再把 5 个安装包同步到 Cloudflare R2
 # （桶 huxulm-asia 的 guanxiang/<版本>/，公开地址 https://s2.huxulm.dev/guanxiang/<版本>/），
 # 生成 SHA256SUMS，校验公开地址能下载且内容一致，然后部署官网。
@@ -72,7 +72,7 @@ jobs:
       - name: Linux 构建依赖
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev xvfb
+          sudo apt-get install -y -q --no-install-recommends clang cmake ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev xvfb desktop-file-utils
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
@@ -88,7 +88,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           pkg=$(bash tools/package_linux.sh "$RUNNER_TEMP/dist")
-          test "$(basename "$pkg")" = "guanxiang-$VERSION-linux-x64.tar.gz"
+          test "$(basename "$pkg")" = "guanxiang-$VERSION-linux-amd64.deb"
           bash tools/smoke_linux.sh "$pkg"
           gh release upload "$TAG" "$pkg" --clobber -R "$GITHUB_REPOSITORY"
 
@@ -108,7 +108,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           mkdir -p "out/$VERSION" && cd "out/$VERSION"
-          for f in arm64-v8a.apk x86_64.apk windows-x64-setup.exe windows-x64.zip linux-x64.tar.gz; do
+          for f in arm64-v8a.apk x86_64.apk windows-x64-setup.exe windows-x64.zip linux-amd64.deb; do
             name="guanxiang-$VERSION-$f"
             gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "$name"
             test -s "$name"

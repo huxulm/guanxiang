@@ -109,7 +109,7 @@ jobs:
       - run: flutter analyze
       - run: flutter test
 
-  # Linux 桌面：在 Xvfb 里跑设备集成测试（真的加载 Rust 库和星历、执行搜索），再构建 release 包作为 artifact
+  # Linux 桌面：在 Xvfb 里跑设备集成测试（真的加载 Rust 库和星历、执行搜索），再构建 .deb 作为 artifact
   linux:
     # 在较旧的系统上构建：GLib/glibc 只向后兼容，24.04 上构建的程序在 22.04 上会缺 g_once_init_enter_pointer
     runs-on: ubuntu-22.04
@@ -137,15 +137,15 @@ jobs:
       - name: 集成测试（Linux 桌面）
         run: xvfb-run -a flutter test integration_test -d linux
       - run: flutter build linux --release
-      - name: 打包
+      - name: 打包 .deb
         run: bash ../tools/package_linux.sh "$GITHUB_WORKSPACE/dist"
       - uses: actions/upload-artifact@v4
         with:
-          name: guanxiang-linux-x64
-          path: dist/*.tar.gz
+          name: guanxiang-linux-amd64
+          path: dist/*.deb
           retention-days: 7
 
-  # 构建出的包在不同发行版上能否启动（只装运行库，不装构建工具）
+  # 构建出的 .deb 在不同发行版上能否安装、启动、卸载（只装测试工具，运行库由 apt 按 Depends 解析）
   linux-smoke:
     needs: linux
     strategy:
@@ -159,15 +159,13 @@ jobs:
           sparse-checkout: tools
       - uses: actions/download-artifact@v4
         with:
-          name: guanxiang-linux-x64
+          name: guanxiang-linux-amd64
           path: dist
-      # 桌面系统通常自带：GTK 3，以及 Flutter 引擎运行时加载的 libEGL（Mesa）
-      - name: 运行库
+      - name: 测试工具
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends xvfb libegl1 libgles2 libgl1-mesa-dri libgtk-3-0t64 \
-            || sudo apt-get install -y -q --no-install-recommends xvfb libegl1 libgles2 libgl1-mesa-dri libgtk-3-0
-      - run: bash tools/smoke_linux.sh dist/guanxiang-*-linux-x64.tar.gz
+          sudo apt-get install -y -q --no-install-recommends xvfb desktop-file-utils
+      - run: bash tools/smoke_linux.sh dist/guanxiang-*-linux-amd64.deb
 
   website-build:
     runs-on: ubuntu-latest

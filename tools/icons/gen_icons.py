@@ -7,6 +7,7 @@
 - Windows：app/windows/runner/resources/app_icon.ico（16–256 px）
 - Android：mipmap-*/ic_launcher.png（旧版启动器，带圆角底）
            mipmap-*/ic_launcher_foreground.png + mipmap-anydpi-v26/ic_launcher.xml（自适应图标）
+- Linux：app/linux/packaging/icons/hicolor/<尺寸>/apps/dev.huxulm.guanxiang.png 和 scalable 的 svg
 """
 
 from pathlib import Path
@@ -15,6 +16,7 @@ from PIL import Image, ImageDraw
 
 ROOT = Path(__file__).resolve().parents[2]
 APP = ROOT / "app"
+APP_ID = "dev.huxulm.guanxiang"
 
 # 与 favicon.svg 一致，单位是 64×64 的 viewBox
 BACKGROUND = "#1f3a68"
@@ -84,6 +86,17 @@ def main() -> None:
         encoding="utf-8",
     )
     print("wrote Android mipmaps")
+
+    # Linux：freedesktop hicolor 主题，图标名与应用 ID 相同（.deb 里装到 /usr/share/icons/hicolor）
+    hicolor = APP / "linux/packaging/icons/hicolor"
+    for n in [16, 24, 32, 48, 64, 128, 256, 512]:
+        d = hicolor / f"{n}x{n}/apps"
+        d.mkdir(parents=True, exist_ok=True)
+        render(n, with_background=True).save(d / f"{APP_ID}.png")
+    scalable = hicolor / "scalable/apps"
+    scalable.mkdir(parents=True, exist_ok=True)
+    (scalable / f"{APP_ID}.svg").write_bytes((ROOT / "website/public/favicon.svg").read_bytes())
+    print("wrote Linux hicolor icons")
 
 
 if __name__ == "__main__":
