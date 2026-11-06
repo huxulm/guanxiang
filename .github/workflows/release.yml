@@ -51,7 +51,9 @@ jobs:
         with:
           ref: ${{ env.TAG }}
       - name: 版本号要与标签一致
-        run: grep -q "^version: $VERSION+" app/pubspec.yaml || { echo "app/pubspec.yaml 的版本不是 $VERSION"; exit 1; }
+        # 含“冒号加空格”，必须用块标量，否则 YAML 解析失败
+        run: |
+          grep -q "^version: $VERSION+" app/pubspec.yaml || { echo "app/pubspec.yaml 的版本不是 $VERSION"; exit 1; }
       - run: rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal && rustup default "$RUST_TOOLCHAIN"
       - name: 星历缓存
         uses: actions/cache@v4
