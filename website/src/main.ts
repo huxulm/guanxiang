@@ -5,7 +5,7 @@ type Lang = 'zh' | 'en';
 
 /** 当前版本。发新版时只改这里。 */
 const VERSION = '0.1.8';
-/** 安装包放在 Cloudflare R2（桶 huxulm-asia），由 CI 的 release-mirror 任务从 GitLab 包仓库同步。 */
+/** 安装包放在 Cloudflare R2（桶 huxulm-asia），由 GitHub Actions 的 release.yml 从 GitHub Release 附件同步。 */
 const DOWNLOAD_BASE = 'https://s2.huxulm.dev/guanxiang';
 
 const en: Record<string, string> = {

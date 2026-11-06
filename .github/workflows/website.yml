@@ -1,0 +1,56 @@
+# 官网部署：构建 website/ 并用 wrangler 发布到 Cloudflare Workers（https://guanx.huxulm.dev）。
+# 触发：main 上 website/ 有改动、手动运行，或 release.yml 把下载包同步到 R2 之后调用。
+# 官网的下载按钮指向 R2 上 VERSION 对应的目录，所以只有那个版本的 SHA256SUMS 已经在 R2 上时才发布，
+# 避免版本号先改了、包还没同步时出现失效的下载链接（这种情况跳过，等 Release 发布后自动部署）。
+name: Website
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - website/**
+      - .github/workflows/website.yml
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: website-deploy
+      cancel-in-progress: false
+    defaults:
+      run:
+        working-directory: website
+    steps:
+      # 始终部署 main 上的官网（release 事件里默认会检出标签）
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build
+      - name: 检查下载包是否已在 R2 上
+        id: check
+        run: |
+          VERSION=$(sed -n "s/^const VERSION = '\(.*\)';$/\1/p" src/main.ts)
+          test -n "$VERSION"
+          echo "官网版本 $VERSION"
+          if curl -fsSI --retry 3 "https://s2.huxulm.dev/guanxiang/$VERSION/SHA256SUMS" > /dev/null; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::R2 上还没有 $VERSION 的下载包，这次不发布；发布 GitHub Release 后会自动部署"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          fi
+      - name: wrangler deploy
+        if: steps.check.outputs.ok == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy

@@ -1,5 +1,5 @@
 // 观象官网：纯静态站点，用 Workers 静态资源托管（没有 Worker 脚本）。
-// 发布：npm run deploy（本机需要 CLOUDFLARE_API_TOKEN；CI 见 ../.gitlab-ci.yml）
+// 发布：npm run deploy（本机需要 CLOUDFLARE_API_TOKEN；CI 见 ../.github/workflows/website.yml）
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "guanxiang-website",

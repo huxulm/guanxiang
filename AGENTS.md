@@ -58,12 +58,14 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 
 1. 改版本号：`app/pubspec.yaml` 的 `version`、`app/lib/src/licenses.dart` 的 `appVersion`、`website/src/main.ts` 的 `VERSION`（这三处要一致）。
 2. 构建：`flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64`；`flutter build windows --release` 后运行 `ISCC.exe windows\installer.iss`，再把 Release 目录打成 zip。
-3. 把 4 个包上传到 GitLab Generic Package Registry（`guanxiang/<版本>/`），**然后**推 `v*` 标签：CI 的 `release-mirror` 会把它们同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）并生成 SHA256SUMS。之后创建 GitLab Release。
-4. 官网改动推到 main 后，由 CI 的 `website-deploy` 自动部署。
-5. GitHub 私有镜像 `huxulm/guanxiang`（远程名 `github`）：只推 main，`git push github main`，不推本地标签。发版后用 `gh release create v<版本> -R huxulm/guanxiang --target <版本提交>` 建 GitHub Release，附上同样的 4 个包和 SHA256SUMS（标签由 gh 在 GitHub 上创建）。`.github/workflows/ci.yml` 只做检查（含 GitLab 跑不了的 `flutter analyze`/`flutter test`），部署和 R2 同步仍只由 GitLab CI 负责。
+3. 提交版本号，推到两边的 main：`git push origin main`、`git push github main`（GitHub 镜像 `huxulm/guanxiang`，远程名 `github`，只推 main，不推本地标签）。
+4. 在 GitHub 上建 Release 并上传 4 个包：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --notes-file <说明> <4 个包>`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml` 把附件同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
+5. 官网平时的改动推到 GitHub main 后由 `website.yml` 自动部署；如果 R2 上还没有官网 `VERSION` 对应的包，会跳过部署，避免出现失效的下载链接。
+6. GitLab 上可以照旧推 `v*` 标签、建 GitLab Release（可选，GitLab CI 现在只做检查）。
+7. GitHub 的 `ci.yml` 跑的检查与 GitLab CI 相同，另加 `flutter analyze`/`flutter test`。
 
 ## 安全
 
 - 不要提交密钥：`app/android/key.properties`、签名密钥（`~/.android/guanxiang-upload.jks`）、各种 token 都不进 Git，也不要打印到日志里。
-- 调用 GitLab API 时，`GITLAB_TOKEN` 只放在单次请求的请求头里，不要写进 `.git/config`。CI 里的 `CLOUDFLARE_API_TOKEN`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY` 是受保护且隐藏的变量，只在 main 分支和 `v*` 标签上可用。
+- 调用 GitLab API 时，`GITLAB_TOKEN` 只放在单次请求的请求头里，不要写进 `.git/config`。`CLOUDFLARE_API_TOKEN`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY` 存在 GitHub 仓库的 Actions Secrets 里（GitLab 上也还留有同名的受保护变量，现在不再使用）。
 - 涉及观测太阳的界面和文档，都要保留安全提示（ISO 12312-2 滤光膜）。

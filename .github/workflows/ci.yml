@@ -1,6 +1,6 @@
-# GitHub 镜像（huxulm/guanxiang）上的检查。主仓库在 GitLab，部署官网和同步 R2 只在 GitLab CI 做，
-# 这里只跑检查：与 .gitlab-ci.yml 的 fmt、clippy、android-deps、test、website-build 对应，
-# 另加 GitLab runner 跑不了的 flutter analyze / flutter test。
+# GitHub 镜像（huxulm/guanxiang）上的检查：与 .gitlab-ci.yml 的 fmt、clippy、android-deps、test、
+# website-build 对应，另加 GitLab runner 跑不了的 flutter analyze / flutter test。
+# 部署官网见 website.yml，安装包同步到 R2 见 release.yml。
 name: CI
 
 on:
