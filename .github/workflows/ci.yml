@@ -145,6 +145,29 @@ jobs:
           path: dist/*.tar.gz
           retention-days: 7
 
+  # 构建出的包在不同发行版上能否启动（只装运行库，不装构建工具）
+  linux-smoke:
+    needs: linux
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: tools
+      - uses: actions/download-artifact@v4
+        with:
+          name: guanxiang-linux-x64
+          path: dist
+      - name: 运行库
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q --no-install-recommends xvfb libgtk-3-0t64 \
+            || sudo apt-get install -y -q --no-install-recommends xvfb libgtk-3-0
+      - run: bash tools/smoke_linux.sh dist/guanxiang-*-linux-x64.tar.gz
+
   website-build:
     runs-on: ubuntu-latest
     defaults:
