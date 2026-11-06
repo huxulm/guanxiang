@@ -161,11 +161,12 @@ jobs:
         with:
           name: guanxiang-linux-x64
           path: dist
+      # 桌面系统通常自带：GTK 3，以及 Flutter 引擎运行时加载的 libEGL（Mesa）
       - name: 运行库
         run: |
           sudo apt-get update -q
-          sudo apt-get install -y -q --no-install-recommends xvfb libgtk-3-0t64 \
-            || sudo apt-get install -y -q --no-install-recommends xvfb libgtk-3-0
+          sudo apt-get install -y -q --no-install-recommends xvfb libegl1 libgles2 libgl1-mesa-dri libgtk-3-0t64 \
+            || sudo apt-get install -y -q --no-install-recommends xvfb libegl1 libgles2 libgl1-mesa-dri libgtk-3-0
       - run: bash tools/smoke_linux.sh dist/guanxiang-*-linux-x64.tar.gz
 
   website-build:

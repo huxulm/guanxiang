@@ -27,7 +27,7 @@ cat "$work/run.log"
 if [ "$code" -ne 124 ]; then
   echo "程序提前退出，退出码 $code"; exit 1
 fi
-if grep -Ei "undefined symbol|symbol lookup error|Unhandled Exception|Failed to load" "$work/run.log"; then
+if grep -Ei "undefined symbol|symbol lookup error|cannot open shared object|Unhandled Exception|Failed to load" "$work/run.log"; then
   echo "日志里有错误"; exit 1
 fi
 if [ ! -d "$data" ]; then
