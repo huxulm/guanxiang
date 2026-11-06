@@ -4,7 +4,7 @@
 type Lang = 'zh' | 'en';
 
 /** 当前版本与下载地址。发新版时只改这里。 */
-const VERSION = '0.1.3';
+const VERSION = '0.1.4';
 const RELEASE_BASE = 'https://gitlab.xao.ac.cn/xulingming/guanxiang/-/releases';
 
 const en: Record<string, string> = {
@@ -13,7 +13,7 @@ const en: Record<string, string> = {
   navAccuracy: 'Accuracy',
   navScreens: 'Screenshots',
   navDownload: 'Download',
-  badge: `v${VERSION} · Android`,
+  badge: `v${VERSION} · Android · Windows`,
   heroTitle: 'Know what the sky will do before you look up',
   heroText:
     'Guanxiang searches transits, conjunctions, oppositions, eclipses and lunar occultations from 1900 to 2100 on your phone, and predicts when and where the ISS or Tiangong will cross the Sun or the Moon. Everything is computed on the device.',
@@ -61,8 +61,10 @@ const en: Record<string, string> = {
   dlAndroidText: 'Android 7.0 or later. Most phones need arm64-v8a.',
   dlCert: 'Signing certificate SHA-256: ',
   dlWindows: 'Windows',
-  dlWindowsText: 'A Windows 10 / 11 (x64) build is on its way.',
-  soon: 'Coming soon',
+  dlWindowsText:
+    'Windows 10 / 11 (x64). The installer does not need administrator rights; there is also a portable zip, just unzip and run guanxiang.exe. The program is not signed, so SmartScreen may warn on first run; choose “More info → Run anyway”.',
+  dlWinSetup: 'Installer',
+  dlWinZip: 'Portable zip',
   dlNotes: 'Release notes and checksums',
   safetyTitle: 'Protect your eyes when observing the Sun.',
   safetyText:
@@ -113,6 +115,8 @@ function setLinks(): void {
   const pkg = `${RELEASE_BASE}/v${VERSION}/downloads`;
   (document.getElementById('dl-arm64') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-arm64-v8a.apk`;
   (document.getElementById('dl-x86') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-x86_64.apk`;
+  (document.getElementById('dl-win') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-windows-x64-setup.exe`;
+  (document.getElementById('dl-win-zip') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-windows-x64.zip`;
   (document.getElementById('dl-release') as HTMLAnchorElement).href = `${RELEASE_BASE}/v${VERSION}`;
 }
 

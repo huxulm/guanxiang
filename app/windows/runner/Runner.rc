@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "cn.ac.xao" "\0"
-            VALUE "FileDescription", "guanxiang" "\0"
+            VALUE "FileDescription", "Guanxiang" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
             VALUE "InternalName", "guanxiang" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 cn.ac.xao. All rights reserved." "\0"
             VALUE "OriginalFilename", "guanxiang.exe" "\0"
-            VALUE "ProductName", "guanxiang" "\0"
+            VALUE "ProductName", "Guanxiang" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

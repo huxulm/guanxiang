@@ -41,6 +41,22 @@ flutter build apk --release --split-per-abi --target-platform android-arm64,andr
 - 版本号在 `pubspec.yaml` 的 `version`；分 ABI 打包时 versionCode 自动加 1000 × ABI 序号。
 - 校验：`apksigner verify --print-certs <apk>`、`zipalign -c -P 16 4 <apk>`（16 KB 页对齐）。
 
+## Windows 发布
+
+```sh
+flutter build windows --release
+"C:\Program Files\Inno Setup 7\ISCC.exe" windows\installer.iss
+# 安装程序：build\windows\installer\guanxiang-<版本>-windows-x64-setup.exe
+# 免安装包：把 build\windows\x64\runner\Release\ 整个目录打成 zip
+```
+
+- 需要 Visual Studio 的“使用 C++ 的桌面开发”和 Inno Setup 7；CI 的 runner 是 Linux，Windows 包在本机构建。
+- 安装程序默认装到当前用户目录（`%LOCALAPPDATA%\Programs\Guanxiang`），不需要管理员权限，向导里可改为所有用户。版本号取自 exe 的 ProductVersion（即 `pubspec.yaml`），`installer.iss` 里不用改；`AppId` 固定，升级时覆盖安装。
+- 卸载时询问是否删除用户数据（`%APPDATA%\cn.ac.xao\guanxiang` 等，路径由 Runner.rc 的 CompanyName/ProductName 决定，改这两项会换数据目录）。
+- `windows/runner/*.cpp`、`*.rc` 只能用 ASCII：MSVC 按系统代码页读没有 BOM 的源文件，中文会让编译失败或变成乱码。窗口标题“观象”用 `\u` 转义写在 `main.cpp`。
+- 程序未签名，SmartScreen 会提示“未知发布者”。
+- 应用图标由 `tools/icons/gen_icons.py` 按官网的 `website/public/favicon.svg` 生成（Windows `.ico` 和 Android 自适应图标）。
+
 ## 卫星
 
 - 根数从 CelesTrak 下载（`lib/src/celestrak.dart`），缓存在应用支持目录的 `omm/` 下。同一颗卫星 2 小时内只请求一次；任何非 200 响应后本次运行不再请求，并暂停 2 小时。

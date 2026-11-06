@@ -43,7 +43,7 @@
         <div>
           <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-200">
             <span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span>
-            <span data-i18n="badge">v0.1.3 · Android</span>
+            <span data-i18n="badge">v0.1.4 · Android · Windows</span>
           </p>
           <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl" data-i18n="heroTitle">
             抬头之前，先知道天上会发生什么
@@ -164,8 +164,11 @@
           </div>
           <div class="card">
             <h3 class="text-lg" data-i18n="dlWindows">Windows</h3>
-            <p data-i18n="dlWindowsText">Windows 10 / 11（x64）版本正在准备，很快发布。</p>
-            <p class="mt-5 inline-block rounded-full bg-white/5 px-3 py-1 text-sm text-slate-400" data-i18n="soon">即将推出</p>
+            <p data-i18n="dlWindowsText">Windows 10 / 11（x64）。安装程序不需要管理员权限；也可以下载免安装的 zip，解压后运行 guanxiang.exe。程序未签名，首次运行时 SmartScreen 可能提示，点“更多信息 → 仍要运行”。</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+              <a class="btn-primary" id="dl-win" href="#" data-i18n="dlWinSetup">安装程序</a>
+              <a class="btn-ghost" id="dl-win-zip" href="#" data-i18n="dlWinZip">免安装 zip</a>
+            </div>
           </div>
         </div>
         <p class="mt-6 text-sm text-slate-500">
