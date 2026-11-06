@@ -1,6 +1,6 @@
 # AGENTS.md
 
-观象（Guanxiang）：跨平台天文事件搜索。Rust 计算核心 + Flutter 界面（Android、Windows，Linux 待做），另有一个静态官网。计划与进度见 `docs/PLAN.md`，各子目录的细节见对应的 README。
+观象（Guanxiang）：跨平台天文事件搜索。Rust 计算核心 + Flutter 界面（Android、Windows、Linux），另有一个静态官网。计划与进度见 `docs/PLAN.md`，各子目录的细节见对应的 README。
 
 ## 目录
 
@@ -59,10 +59,11 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 1. 改版本号：`app/pubspec.yaml` 的 `version`、`app/lib/src/licenses.dart` 的 `appVersion`、`website/src/main.ts` 的 `VERSION`（这三处要一致）。
 2. 构建：`flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64`；`flutter build windows --release` 后运行 `ISCC.exe windows\installer.iss`，再把 Release 目录打成 zip。
 3. 提交版本号，推到两边的 main：`git push origin main`、`git push github main`（GitHub 镜像 `huxulm/guanxiang`，远程名 `github`，只推 main，不推本地标签）。
-4. 在 GitHub 上建 Release 并上传 4 个包：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --notes-file <说明> <4 个包>`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml` 把附件同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
+4. 在 GitHub 上建 Release 并上传本机构建的 4 个包（Linux 包由 Actions 构建）：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --notes-file <说明> <4 个包>`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml` 先在 ubuntu-22.04 上构建 Linux 包（`tools/package_linux.sh`，冒烟测试 `tools/smoke_linux.sh`）补传到 Release，再把 5 个包同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
 5. 官网平时的改动推到 GitHub main 后由 `website.yml` 自动部署；如果 R2 上还没有官网 `VERSION` 对应的包，会跳过部署，避免出现失效的下载链接。
 6. GitLab 上可以照旧推 `v*` 标签、建 GitLab Release（可选，GitLab CI 现在只做检查）。
 7. GitHub 的 `ci.yml` 跑的检查与 GitLab CI 相同，另加 `flutter analyze`/`flutter test`。
+8. Linux 版只在 GitHub Actions 上构建和测试（`ci.yml` 的 `linux`、`linux-smoke`），不在本机 WSL 里编译测试。必须在 ubuntu-22.04 上构建：在更新的系统上构建的程序会依赖新版 GLib，在 22.04 上无法启动。
 
 ## 安全
 
