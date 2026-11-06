@@ -104,11 +104,8 @@ class _LoadingPageState extends State<LoadingPage> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => MainScaffold(
-            engine: engine,
-            loadMs: ms,
-            settings: settings,
-          ),
+          builder: (_) =>
+              MainScaffold(engine: engine, loadMs: ms, settings: settings),
         ),
       );
     } catch (e) {

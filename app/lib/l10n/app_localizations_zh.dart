@@ -566,7 +566,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get navSearch => '搜索';
 
   @override
-  String get navSatellite => '空间站';
+  String get navSatellite => '卫星';
 
   @override
   String get navSettings => '设置';
@@ -614,12 +614,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickConjunctionsDesc => '金星、木星、土星近距离相合';
 
   @override
-  String get quickOccultations => '月掩亮星与行星';
-
-  @override
-  String get quickOccultationsDesc => '月球遮掩大行星及一等亮星';
-
-  @override
   String get quickSpaceStation => '空间站凌日凌月';
 
   @override
@@ -629,26 +623,15 @@ class AppLocalizationsZh extends AppLocalizations {
   String get currentLocation => '观测地';
 
   @override
-  String get curatedHighlights => '精选重磅天象';
+  String get curatedHighlights => '近期天象';
 
   @override
-  String get curatedSolar2026 => '2026-08-12 日全食（格陵兰/冰岛/西班牙）';
+  String get upcomingHint =>
+      '未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，点开可看详情。';
 
   @override
-  String get curatedLunar2026 => '2026-03-03 月全食（中国全境红月亮）';
+  String get upcomingLoading => '正在计算…';
 
   @override
-  String get curatedConjunction2026 => '2026-06-09 金星合木星（角距 0.2° 极近）';
-
-  @override
-  String get curatedSolar2027 => '2027-08-02 世纪日全食（埃及全食长达 6 分 23 秒）';
-
-  @override
-  String get curatedRareTag => '极罕见';
-
-  @override
-  String get curatedNoticeTag => '肉眼可见';
-
-  @override
-  String get timeZoneNotice => '时刻已按本地时区换算';
+  String get upcomingNone => '没有找到';
 }

@@ -629,12 +629,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickConjunctionsDesc => 'Close approaches of bright planets';
 
   @override
-  String get quickOccultations => 'Lunar Occultations';
-
-  @override
-  String get quickOccultationsDesc => 'Moon occulting planets & 1st mag stars';
-
-  @override
   String get quickSpaceStation => 'Space Station Transits';
 
   @override
@@ -644,30 +638,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get currentLocation => 'Observation Site';
 
   @override
-  String get curatedHighlights => 'Milestone Celestial Events';
+  String get curatedHighlights => 'Upcoming events';
 
   @override
-  String get curatedSolar2026 =>
-      '2026-08-12 Total Solar Eclipse (Iceland/Spain)';
+  String get upcomingHint =>
+      'Eclipses and close pairings of bright planets (within 3°) over the next year or so, computed on this device; eclipses are global. Tap for details.';
 
   @override
-  String get curatedLunar2026 =>
-      '2026-03-03 Total Lunar Eclipse (Asia/Pacific)';
+  String get upcomingLoading => 'Computing…';
 
   @override
-  String get curatedConjunction2026 =>
-      '2026-06-09 Venus conjunct Jupiter (Sep. 0.2°)';
-
-  @override
-  String get curatedSolar2027 =>
-      '2027-08-02 Great Solar Eclipse (Luxor 6m 23s)';
-
-  @override
-  String get curatedRareTag => 'Rare';
-
-  @override
-  String get curatedNoticeTag => 'Naked eye';
-
-  @override
-  String get timeZoneNotice => 'Times converted to local time';
+  String get upcomingNone => 'Nothing found';
 }

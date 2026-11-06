@@ -3,7 +3,8 @@ import 'dart:io' show Platform;
 import 'dart:ui' show Locale, PlatformDispatcher;
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:workmanager/workmanager.dart' show ExistingWorkPolicy, Workmanager;
+import 'package:workmanager/workmanager.dart'
+    show ExistingWorkPolicy, Workmanager;
 
 import '../l10n/app_localizations.dart';
 import 'celestrak.dart';

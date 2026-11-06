@@ -27,7 +27,13 @@ void main() {
 
     final formatted = formatAstroTime('2026-03-03 11:33:45');
     expect(formatted, contains('UTC'));
-    expect(formatted, contains('11:33'));
+    expect(formatted, contains('11:33:45'), reason: '要精确到秒');
+
+    final local = DateTime.utc(2026, 3, 3, 11, 33, 45).toLocal();
+    expect(
+      zoneLabel(local),
+      matches(RegExp(r'^([A-Za-z]{2,5}|UTC[+-]\d+(:\d\d)?)$')),
+    );
   });
 
   test('深空与红光夜间设计系统主题配置', () {

@@ -3,13 +3,19 @@
 // 验证：星历能从 asset 加载、各类搜索能在设备上跑通且结果正确、取消能让搜索提前结束、
 // 许可声明打进了安装包。性能数据请用 profile 模式：
 // flutter drive --profile --driver=test_driver/integration_test.dart --target=integration_test/app_test.dart -d <设备>
+import 'dart:io';
+
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:guanxiang/l10n/app_localizations.dart';
 import 'package:guanxiang/src/app.dart';
+import 'package:guanxiang/src/dashboard_page.dart';
 import 'package:guanxiang/src/licenses.dart';
 import 'package:guanxiang/src/rust/api/guanxiang.dart';
 import 'package:guanxiang/src/rust/frb_generated.dart';
+import 'package:guanxiang/src/settings.dart';
 import 'package:integration_test/integration_test.dart';
 
 void main() {
@@ -229,5 +235,42 @@ void main() {
       containsAll(['Moon', 'Jupiter']),
     );
     expect(sunSafetyNotice(lang: Lang.en), contains('solar filter'));
+  });
+
+  testWidgets('看板：近期天象由本机星历算出，不报错', (tester) async {
+    final dir = await Directory.systemTemp.createTemp('guanxiang_dash');
+    final settings = await Settings.openFile(File('${dir.path}/settings.json'));
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('zh'),
+        supportedLocales: const [Locale('en'), Locale('zh')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: DashboardPage(engine: engine, settings: settings),
+      ),
+    );
+    // 列表是懒构建的：一边往下滚一边等，直到出现结果卡片（或“没有找到”/错误）
+    final scrollable = find.byType(Scrollable).first;
+    final tiles = find.byWidgetPredicate(
+      (w) => w is ListTile && w.isThreeLine == true,
+    );
+    final none = find.text('没有找到');
+    for (var i = 0; i < 300; i++) {
+      if (tiles.evaluate().isNotEmpty || none.evaluate().isNotEmpty) break;
+      await tester.drag(scrollable, const Offset(0, -300));
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(none, findsNothing);
+    expect(tiles, findsWidgets);
+    await tester.drag(scrollable, const Offset(0, -3000));
+    await tester.pumpAndSettle();
+    for (final t in tiles.evaluate()) {
+      final tile = t.widget as ListTile;
+      // ignore: avoid_print
+      print(
+        '近期天象：${(tile.title as Text).data} | ${(tile.subtitle as Text).data}',
+      );
+    }
+    await tester.pumpWidget(const SizedBox());
+    await dir.delete(recursive: true);
   });
 }

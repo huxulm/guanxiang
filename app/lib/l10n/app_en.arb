@@ -174,17 +174,11 @@
   "quickTransitsDesc": "Rare Mercury & Venus transits",
   "quickConjunctions": "Major Conjunctions",
   "quickConjunctionsDesc": "Close approaches of bright planets",
-  "quickOccultations": "Lunar Occultations",
-  "quickOccultationsDesc": "Moon occulting planets & 1st mag stars",
   "quickSpaceStation": "Space Station Transits",
   "quickSpaceStationDesc": "CSS & ISS solar and lunar transit paths",
   "currentLocation": "Observation Site",
-  "curatedHighlights": "Milestone Celestial Events",
-  "curatedSolar2026": "2026-08-12 Total Solar Eclipse (Iceland/Spain)",
-  "curatedLunar2026": "2026-03-03 Total Lunar Eclipse (Asia/Pacific)",
-  "curatedConjunction2026": "2026-06-09 Venus conjunct Jupiter (Sep. 0.2°)",
-  "curatedSolar2027": "2027-08-02 Great Solar Eclipse (Luxor 6m 23s)",
-  "curatedRareTag": "Rare",
-  "curatedNoticeTag": "Naked eye",
-  "timeZoneNotice": "Times converted to local time"
+  "curatedHighlights": "Upcoming events",
+  "upcomingHint": "Eclipses and close pairings of bright planets (within 3°) over the next year or so, computed on this device; eclipses are global. Tap for details.",
+  "upcomingLoading": "Computing…",
+  "upcomingNone": "Nothing found"
 }

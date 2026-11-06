@@ -14,7 +14,7 @@ import 'settings_page.dart';
 /// 包含四个核心功能模块：
 /// 0. 看板（今日天象、快捷探索、精选重磅事件）
 /// 1. 搜索（全量合冲、凌日、日月食、月掩星离线计算）
-/// 2. 空间站（空间站过境监视、中心线地图、后台任务）
+/// 2. 卫星（卫星凌日凌月、中心线地图、后台任务）
 /// 3. 设置（观测位置配置、外观主题切换、关于与许可）
 ///
 /// 窄屏（手机）采用底部 [NavigationBar]；宽屏（平板/桌面）采用侧边 [NavigationRail]。
@@ -151,7 +151,9 @@ class _MainScaffoldState extends State<MainScaffold> {
             ],
           ),
           const VerticalDivider(width: 1),
-          Expanded(child: IndexedStack(index: _currentIndex, children: pages)),
+          Expanded(
+            child: IndexedStack(index: _currentIndex, children: pages),
+          ),
         ],
       ),
     );

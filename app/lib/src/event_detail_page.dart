@@ -17,7 +17,10 @@ class EventDetailPage extends StatelessWidget {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
-          Text(formatAstroTime(event.utc), style: theme.textTheme.headlineSmall),
+          Text(
+            formatAstroTime(event.utc),
+            style: theme.textTheme.headlineSmall,
+          ),
           const SizedBox(height: 4),
           Text(event.summary, style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),

@@ -1,9 +1,15 @@
+import 'dart:async';
+import 'dart:math' show min;
+
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import 'errors.dart';
+import 'event_detail_page.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'settings.dart';
+import 'time_format.dart';
 
 /// 首页“观象 · 近期看点”看板。
 ///
@@ -21,21 +27,17 @@ class DashboardPage extends StatelessWidget {
   final Engine engine;
   final Settings settings;
 
-  /// 切换底部导航 Tab 的回调：0 看板, 1 搜索, 2 空间站, 3 设置
+  /// 切换底部导航 Tab 的回调：0 看板, 1 搜索, 2 卫星, 3 设置
   final ValueChanged<int>? onSelectTab;
 
   /// 快捷预设搜索条件并切换至搜索页的回调
   final void Function(EventKind kind, {int? fromYear, int? toYear})?
   onPresetSearch;
 
-  String _two(int v) => v.toString().padLeft(2, '0');
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
-    final now = DateTime.now();
-    final utc = now.toUtc();
 
     return Scaffold(
       appBar: AppBar(
@@ -55,7 +57,7 @@ class DashboardPage extends StatelessWidget {
             // -----------------------------------------------------------------
             // 1. 今日时刻与测站状态卡片 (Hero Card)
             // -----------------------------------------------------------------
-            _buildHeroStatusCard(context, now, utc, l, theme),
+            _HeroCard(settings: settings, onTap: () => onSelectTab?.call(3)),
             const SizedBox(height: 12),
 
             // -----------------------------------------------------------------
@@ -97,11 +99,7 @@ class DashboardPage extends StatelessWidget {
             // -----------------------------------------------------------------
             Row(
               children: [
-                Icon(
-                  Icons.explore,
-                  size: 20,
-                  color: theme.colorScheme.primary,
-                ),
+                Icon(Icons.explore, size: 20, color: theme.colorScheme.primary),
                 const SizedBox(width: 8),
                 Text(
                   l.quickExplore,
@@ -135,115 +133,7 @@ class DashboardPage extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 10),
-            _buildCuratedHighlights(context, l, theme),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeroStatusCard(
-    BuildContext context,
-    DateTime now,
-    DateTime utc,
-    AppLocalizations l,
-    ThemeData theme,
-  ) {
-    final localTimeStr =
-        '${now.year}-${_two(now.month)}-${_two(now.day)} ${_two(now.hour)}:${_two(now.minute)}';
-    final utcTimeStr = '${_two(utc.hour)}:${_two(utc.minute)} UTC';
-    final tz = now.timeZoneName;
-
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  '$localTimeStr $tz',
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.2,
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surfaceContainerHigh,
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    utcTimeStr,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                      fontFamily: 'monospace',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 6),
-            Text(
-              l.dashboardSubtitle,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 12),
-            const Divider(height: 1),
-            const SizedBox(height: 10),
-            ListenableBuilder(
-              listenable: settings,
-              builder: (context, _) {
-                final isGps = settings.mode == LocationMode.gps;
-                final fix = settings.gpsFix;
-                final manual = settings.manual;
-                final desc = isGps
-                    ? (fix == null
-                          ? l.gpsNoFix
-                          : 'GPS · ${fix.lat.toStringAsFixed(2)}°N, ${fix.lon.toStringAsFixed(2)}°E')
-                    : '手动 · ${manual.lat.toStringAsFixed(2)}°N, ${manual.lon.toStringAsFixed(2)}°E';
-
-                return InkWell(
-                  borderRadius: BorderRadius.circular(8),
-                  onTap: () => onSelectTab?.call(3),
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 2),
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.place_outlined,
-                          size: 16,
-                          color: theme.colorScheme.primary,
-                        ),
-                        const SizedBox(width: 6),
-                        Expanded(
-                          child: Text(
-                            '${l.currentLocation}：$desc',
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        Icon(
-                          Icons.chevron_right,
-                          size: 16,
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+            _UpcomingEvents(engine: engine),
           ],
         ),
       ),
@@ -367,157 +257,330 @@ class DashboardPage extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildCuratedHighlights(
-    BuildContext context,
-    AppLocalizations l,
-    ThemeData theme,
-  ) {
-    return Column(
-      children: [
-        _milestoneCard(
-          theme: theme,
-          title: l.curatedLunar2026,
-          dateBadge: '2026-03-03',
-          tag: l.curatedNoticeTag,
-          tagColor: theme.colorScheme.primary,
-          detail: '月全食 · 中国大部可见红月亮盛景 · 食分 1.156',
-          onTap: () {
-            onPresetSearch?.call(
-              EventKind.lunarEclipse,
-              fromYear: 2026,
-              toYear: 2027,
-            );
-            onSelectTab?.call(1);
-          },
-        ),
-        const SizedBox(height: 8),
-        _milestoneCard(
-          theme: theme,
-          title: l.curatedSolar2026,
-          dateBadge: '2026-08-12',
-          tag: l.curatedRareTag,
-          tagColor: theme.colorScheme.secondary,
-          detail: '日全食 · 格陵兰、冰岛西部及西班牙全食带 · 历时 2分18秒',
-          onTap: () {
-            onPresetSearch?.call(
-              EventKind.solarEclipse,
-              fromYear: 2026,
-              toYear: 2027,
-            );
-            onSelectTab?.call(1);
-          },
-        ),
-        const SizedBox(height: 8),
-        _milestoneCard(
-          theme: theme,
-          title: l.curatedConjunction2026,
-          dateBadge: '2026-06-09',
-          tag: l.curatedNoticeTag,
-          tagColor: theme.colorScheme.primary,
-          detail: '金星合木星 · 傍晚西方天空极近相合 · 最小角距仅 0.2°',
-          onTap: () {
-            onPresetSearch?.call(
-              EventKind.conjunction,
-              fromYear: 2026,
-              toYear: 2027,
-            );
-            onSelectTab?.call(1);
-          },
-        ),
-        const SizedBox(height: 8),
-        _milestoneCard(
-          theme: theme,
-          title: l.curatedSolar2027,
-          dateBadge: '2027-08-02',
-          tag: l.curatedRareTag,
-          tagColor: theme.colorScheme.secondary,
-          detail: '世纪日全食 · 埃及卢克索长达 6分23秒 壮丽全食',
-          onTap: () {
-            onPresetSearch?.call(
-              EventKind.solarEclipse,
-              fromYear: 2027,
-              toYear: 2028,
-            );
-            onSelectTab?.call(1);
-          },
-        ),
-      ],
+/// 当前时间和观测地。时间每 20 秒刷新一次（页面一直保留在 IndexedStack 里）。
+class _HeroCard extends StatefulWidget {
+  const _HeroCard({required this.settings, required this.onTap});
+
+  final Settings settings;
+  final VoidCallback onTap;
+
+  @override
+  State<_HeroCard> createState() => _HeroCardState();
+}
+
+class _HeroCardState extends State<_HeroCard> {
+  late final Timer _timer;
+  DateTime _now = DateTime.now();
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(
+      const Duration(seconds: 20),
+      (_) => setState(() => _now = DateTime.now()),
     );
   }
 
-  Widget _milestoneCard({
-    required ThemeData theme,
-    required String title,
-    required String dateBadge,
-    required String tag,
-    required Color tagColor,
-    required String detail,
-    required VoidCallback onTap,
-  }) {
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  static String _two(int v) => v.toString().padLeft(2, '0');
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    final now = _now;
+    final utc = now.toUtc();
+    final localTimeStr =
+        '${now.year}-${_two(now.month)}-${_two(now.day)} '
+        '${_two(now.hour)}:${_two(now.minute)} ${zoneLabel(now)}';
+    final utcTimeStr = '${_two(utc.hour)}:${_two(utc.minute)} UTC';
+
     return Card(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.all(14),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              alignment: WrapAlignment.spaceBetween,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 8,
+              runSpacing: 4,
+              children: [
+                Text(
+                  localTimeStr,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.2,
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 2,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHigh,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    utcTimeStr,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontFamily: 'monospace',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            Text(
+              l.dashboardSubtitle,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 12),
+            const Divider(height: 1),
+            const SizedBox(height: 10),
+            ListenableBuilder(
+              listenable: widget.settings,
+              builder: (context, _) {
+                final s = widget.settings;
+                final String desc;
+                if (s.mode == LocationMode.manual) {
+                  desc = '${l.locationManual} · ${s.manual.describe()}';
+                } else {
+                  final fix = s.gpsFix;
+                  desc = fix == null
+                      ? '${l.locationGps} · ${l.gpsLocateOnSearch}'
+                      : '${l.locationGps} · ${fix.describe()}';
+                }
+                return InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: widget.onTap,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.place_outlined,
+                          size: 16,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 6),
+                        Expanded(
+                          child: Text(
+                            '${l.currentLocation} · $desc',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 16,
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 近期天象：用本机星历算接下来一年多的日月食和亮行星相合，按时间排序取前几条。
+///
+/// 内容全部来自计算核心（标题、摘要由 Rust 按语言生成），不写死任何日期或数值。
+class _UpcomingEvents extends StatefulWidget {
+  const _UpcomingEvents({required this.engine});
+
+  final Engine engine;
+
+  @override
+  State<_UpcomingEvents> createState() => _UpcomingEventsState();
+}
+
+class _UpcomingEventsState extends State<_UpcomingEvents> {
+  /// 亮行星两两组合（不含水星：离太阳太近，不好看）
+  static const _pairs = [
+    ('venus', 'mars'),
+    ('venus', 'jupiter'),
+    ('venus', 'saturn'),
+    ('mars', 'jupiter'),
+    ('mars', 'saturn'),
+    ('jupiter', 'saturn'),
+  ];
+  static const _maxPairDeg = 3.0;
+  static const _maxItems = 6;
+
+  Lang? _lang;
+  Future<List<EventItem>>? _future;
+  CancelToken? _token;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final lang = rustLang(context);
+    if (lang != _lang) {
+      _lang = lang;
+      _token?.cancel();
+      final token = CancelToken();
+      _token = token;
+      _future = _load(lang, token);
+    }
+  }
+
+  @override
+  void dispose() {
+    _token?.cancel();
+    super.dispose();
+  }
+
+  Future<List<EventItem>> _load(Lang lang, CancelToken token) async {
+    final now = DateTime.now().toUtc();
+    final years = widget.engine.coverageYears();
+    // 年份区间 [from, to)：今年和明年，保证至少覆盖未来 12 个月
+    final from = now.year;
+    final to = min(now.year + 2, years[1]);
+    if (from >= to) return [];
+    final requests = [
+      for (final k in [EventKind.solarEclipse, EventKind.lunarEclipse])
+        SearchRequest(
+          kind: k,
+          bodyA: '',
+          bodyB: '',
+          fromYear: from,
+          toYear: to,
+          maxSeparationDeg: 0,
+          lang: lang,
+        ),
+      for (final (a, b) in _pairs)
+        SearchRequest(
+          kind: EventKind.appulse,
+          bodyA: a,
+          bodyB: b,
+          fromYear: from,
+          toYear: to,
+          maxSeparationDeg: _maxPairDeg,
+          lang: lang,
+        ),
+    ];
+    final out = <EventItem>[];
+    // 逐个搜索，不和用户手动发起的搜索抢 CPU
+    for (final r in requests) {
+      await for (final u in search(
+        engine: widget.engine,
+        request: r,
+        token: token,
+      )) {
+        final e = u.item;
+        if (u.kind != UpdateKind.found || e == null) continue;
+        final t = parseUtc(e.utc);
+        if (t != null && t.isAfter(now)) out.add(e);
+      }
+      if (!mounted) break;
+    }
+    out.sort((a, b) => a.ttJd.compareTo(b.ttJd));
+    return out.take(_maxItems).toList();
+  }
+
+  static IconData _icon(EventKind k) => switch (k) {
+    EventKind.solarEclipse => Icons.wb_sunny_outlined,
+    EventKind.lunarEclipse => Icons.nightlight_outlined,
+    _ => Icons.brightness_medium,
+  };
+
+  static String _kindLabel(AppLocalizations l, EventKind k) => switch (k) {
+    EventKind.transit => l.kindTransit,
+    EventKind.conjunction => l.kindConjunction,
+    EventKind.opposition => l.kindOpposition,
+    EventKind.appulse => l.kindAppulse,
+    EventKind.solarEclipse => l.kindSolarEclipse,
+    EventKind.lunarEclipse => l.kindLunarEclipse,
+    EventKind.occultation => l.kindOccultation,
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final l = AppLocalizations.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l.upcomingHint,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(height: 8),
+        FutureBuilder<List<EventItem>>(
+          future: _future,
+          builder: (context, snap) {
+            if (snap.hasError) {
+              return Text(
+                describeError(snap.error!, l),
+                style: TextStyle(color: theme.colorScheme.error),
+              );
+            }
+            if (!snap.hasData) {
+              return Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: tagColor.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                    child: Text(
-                      tag,
-                      style: TextStyle(
-                        fontSize: 11,
-                        color: tagColor,
-                        fontWeight: FontWeight.bold,
+                  const SizedBox.square(
+                    dimension: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(l.upcomingLoading),
+                ],
+              );
+            }
+            final items = snap.data!;
+            if (items.isEmpty) return Text(l.upcomingNone);
+            return Column(
+              children: [
+                for (final e in items)
+                  Card(
+                    child: ListTile(
+                      leading: Icon(
+                        _icon(e.kind),
+                        color: theme.colorScheme.primary,
+                      ),
+                      title: Text(e.title),
+                      subtitle: Text(
+                        '${_kindLabel(l, e.kind)} · '
+                        '${formatAstroTime(e.utc, showUtc: false)}\n'
+                        '${e.summary}',
+                      ),
+                      isThreeLine: true,
+                      trailing: const Icon(Icons.chevron_right),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => EventDetailPage(event: e),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  Text(
-                    dateBadge,
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontFamily: 'monospace',
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                  ),
-                  const Spacer(),
-                  Icon(
-                    Icons.arrow_forward_ios,
-                    size: 13,
-                    color: theme.colorScheme.outline,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                detail,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
+              ],
+            );
+          },
         ),
-      ),
+      ],
     );
   }
 }
