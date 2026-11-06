@@ -60,6 +60,7 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 2. 构建：`flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64`；`flutter build windows --release` 后运行 `ISCC.exe windows\installer.iss`，再把 Release 目录打成 zip。
 3. 把 4 个包上传到 GitLab Generic Package Registry（`guanxiang/<版本>/`），**然后**推 `v*` 标签：CI 的 `release-mirror` 会把它们同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）并生成 SHA256SUMS。之后创建 GitLab Release。
 4. 官网改动推到 main 后，由 CI 的 `website-deploy` 自动部署。
+5. GitHub 私有镜像 `huxulm/guanxiang`（远程名 `github`）：只推 main，`git push github main`，不推标签，也不在 GitHub 上建 Release。`.github/workflows/ci.yml` 只做检查（含 GitLab 跑不了的 `flutter analyze`/`flutter test`），部署和 R2 同步仍只由 GitLab CI 负责。
 
 ## 安全
 
