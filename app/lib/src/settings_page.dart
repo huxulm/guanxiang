@@ -19,16 +19,31 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  late final _latCtrl = TextEditingController(
-    text: '${widget.settings.manual.lat}',
-  );
-  late final _lonCtrl = TextEditingController(
-    text: '${widget.settings.manual.lon}',
-  );
-  late final _heightCtrl = TextEditingController(
-    text: '${widget.settings.manual.height}',
-  );
+  final _latCtrl = TextEditingController();
+  final _lonCtrl = TextEditingController();
+  final _heightCtrl = TextEditingController();
   String? _manualError;
+
+  @override
+  void initState() {
+    super.initState();
+    _fillManual();
+  }
+
+  /// 把设置里的手动位置填进输入框（经纬度保留 6 位小数，约 0.1 米）。
+  void _fillManual() {
+    final m = widget.settings.manual;
+    _latCtrl.text = formatNumber(m.lat, 6);
+    _lonCtrl.text = formatNumber(m.lon, 6);
+    _heightCtrl.text = formatNumber(m.height, 1);
+    _manualError = null;
+  }
+
+  Future<void> _setMode(LocationMode m) async {
+    // 切到手动时用最新的手动位置（可能刚被 GPS 定位更新过）
+    if (m == LocationMode.manual) setState(_fillManual);
+    await widget.settings.setMode(m);
+  }
 
   @override
   void dispose() {
@@ -161,7 +176,7 @@ class _SettingsPageState extends State<SettingsPage> {
                     ),
                   ],
                   selected: {s.mode},
-                  onSelectionChanged: (v) => s.setMode(v.single),
+                  onSelectionChanged: (v) => _setMode(v.single),
                 ),
                 const SizedBox(height: 12),
                 if (s.mode == LocationMode.gps)
@@ -203,6 +218,15 @@ class _SettingsPageState extends State<SettingsPage> {
       ),
     );
   }
+}
+
+/// 数字转文字：最多保留 [digits] 位小数，去掉末尾的 0。
+String formatNumber(double v, int digits) {
+  var t = v.toStringAsFixed(digits);
+  if (t.contains('.')) {
+    t = t.replaceFirst(RegExp(r'0+$'), '').replaceFirst(RegExp(r'\.$'), '');
+  }
+  return t == '-0' ? '0' : t;
 }
 
 /// 搜索页上的一行位置摘要，点击进入设置页。

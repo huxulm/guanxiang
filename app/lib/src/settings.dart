@@ -110,7 +110,12 @@ class Settings extends ChangeNotifier {
 
   static Future<Settings> open() async {
     final dir = await getApplicationSupportDirectory();
-    final s = Settings._(File('${dir.path}/settings.json'), _gpsLocate);
+    return openFile(File('${dir.path}/settings.json'));
+  }
+
+  /// 从指定文件读设置（文件不存在时用默认值）。
+  static Future<Settings> openFile(File file, {Locator? locator}) async {
+    final s = Settings._(file, locator ?? _gpsLocate);
     try {
       if (await s._file!.exists()) {
         s._load(jsonDecode(await s._file.readAsString()));
@@ -178,6 +183,8 @@ class Settings extends ChangeNotifier {
     try {
       final p = await _locator();
       _gpsFix = p;
+      // 定位结果同时作为手动位置的默认值：之后切到手动时从这里开始改
+      _manual = p;
       _gpsTime = DateTime.now();
       _gpsError = null;
       await _save();
