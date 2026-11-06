@@ -3,9 +3,10 @@
 
 type Lang = 'zh' | 'en';
 
-/** 当前版本与下载地址。发新版时只改这里。 */
+/** 当前版本。发新版时只改这里。 */
 const VERSION = '0.1.4';
-const RELEASE_BASE = 'https://gitlab.xao.ac.cn/xulingming/guanxiang/-/releases';
+/** 安装包放在 Cloudflare R2（桶 huxulm-asia），由 CI 的 release-mirror 任务从 GitLab 包仓库同步。 */
+const DOWNLOAD_BASE = 'https://s2.huxulm.dev/guanxiang';
 
 const en: Record<string, string> = {
   brand: 'Guanxiang',
@@ -65,7 +66,7 @@ const en: Record<string, string> = {
     'Windows 10 / 11 (x64). The installer does not need administrator rights; there is also a portable zip, just unzip and run guanxiang.exe. The program is not signed, so SmartScreen may warn on first run; choose “More info → Run anyway”.',
   dlWinSetup: 'Installer',
   dlWinZip: 'Portable zip',
-  dlNotes: 'Release notes and checksums',
+  dlNotes: 'SHA-256 checksums',
   safetyTitle: 'Protect your eyes when observing the Sun.',
   safetyText:
     'Use a certified solar filter (ISO 12312-2). Never look at the Sun with the naked eye, ordinary sunglasses, or an unfiltered telescope or camera.',
@@ -112,12 +113,12 @@ const zhAltText: Record<string, string> = {
 };
 
 function setLinks(): void {
-  const pkg = `${RELEASE_BASE}/v${VERSION}/downloads`;
+  const pkg = `${DOWNLOAD_BASE}/${VERSION}`;
   (document.getElementById('dl-arm64') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-arm64-v8a.apk`;
   (document.getElementById('dl-x86') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-x86_64.apk`;
   (document.getElementById('dl-win') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-windows-x64-setup.exe`;
   (document.getElementById('dl-win-zip') as HTMLAnchorElement).href = `${pkg}/guanxiang-${VERSION}-windows-x64.zip`;
-  (document.getElementById('dl-release') as HTMLAnchorElement).href = `${RELEASE_BASE}/v${VERSION}`;
+  (document.getElementById('dl-release') as HTMLAnchorElement).href = `${pkg}/SHA256SUMS`;
 }
 
 let lang: Lang = storedLang() ?? (navigator.language.toLowerCase().startsWith('zh') ? 'zh' : 'en');
