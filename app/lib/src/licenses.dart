@@ -100,7 +100,7 @@ void showAbout(BuildContext context) {
   showLicensePage(
     context: context,
     applicationName: l.appTitle,
-    applicationVersion: '0.1.0',
+    applicationVersion: '0.1.1',
     applicationLegalese: l.legalese,
   );
 }
