@@ -1,0 +1,19 @@
+{
+  "name": "guanxiang-website",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "deploy": "npm run build && wrangler deploy"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.4",
+    "tailwindcss": "4.3.4",
+    "typescript": "5.9.3",
+    "vite": "8.3.6",
+    "wrangler": "4.158.0"
+  }
+}

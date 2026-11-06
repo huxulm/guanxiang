@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>观象 · 天文事件搜索</title>
+    <meta
+      name="description"
+      content="观象：在本机搜索 1900–2100 年的凌日、合冲、日月食、月掩星，以及国际空间站、天宫的凌日凌月。"
+    />
+    <meta name="theme-color" content="#0b1020" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="bg-night text-slate-200 antialiased">
+    <div class="stars" aria-hidden="true"></div>
+
+    <header class="sticky top-0 z-20 border-b border-white/5 bg-night/80 backdrop-blur">
+      <nav class="mx-auto flex max-w-6xl items-center gap-6 px-4 py-3 sm:px-6">
+        <a href="#top" class="flex items-center gap-2 font-semibold text-white">
+          <img src="/favicon.svg" alt="" class="h-7 w-7" />
+          <span data-i18n="brand">观象</span>
+        </a>
+        <div class="ml-auto hidden gap-6 text-sm text-slate-400 md:flex">
+          <a href="#features" class="hover:text-white" data-i18n="navFeatures">功能</a>
+          <a href="#accuracy" class="hover:text-white" data-i18n="navAccuracy">精度</a>
+          <a href="#screens" class="hover:text-white" data-i18n="navScreens">截图</a>
+          <a href="#download" class="hover:text-white" data-i18n="navDownload">下载</a>
+        </div>
+        <button
+          id="lang"
+          type="button"
+          class="ml-auto rounded-full border border-white/15 px-3 py-1 text-sm text-slate-300 hover:border-white/40 hover:text-white md:ml-0"
+        >
+          EN
+        </button>
+      </nav>
+    </header>
+
+    <main id="top">
+      <!-- 首屏 -->
+      <section class="mx-auto grid max-w-6xl items-center gap-12 px-4 pt-16 pb-20 sm:px-6 md:grid-cols-[1.2fr_1fr] md:pt-24">
+        <div>
+          <p class="mb-4 inline-flex items-center gap-2 rounded-full border border-amber-300/20 bg-amber-300/10 px-3 py-1 text-xs text-amber-200">
+            <span class="h-1.5 w-1.5 rounded-full bg-amber-300"></span>
+            <span data-i18n="badge">v0.1.3 · Android</span>
+          </p>
+          <h1 class="text-4xl font-bold tracking-tight text-white sm:text-6xl" data-i18n="heroTitle">
+            抬头之前，先知道天上会发生什么
+          </h1>
+          <p class="mt-6 max-w-xl text-lg leading-relaxed text-slate-400" data-i18n="heroText">
+            观象在你的手机上搜索 1900–2100 年的凌日、合冲、日月食和月掩星，也能预报国际空间站、天宫从太阳或月亮前面掠过的时刻和地点。计算全部在本机完成。
+          </p>
+          <div class="mt-8 flex flex-wrap gap-3">
+            <a href="#download" class="btn-primary" data-i18n="ctaDownload">下载 Android 版</a>
+            <a href="#features" class="btn-ghost" data-i18n="ctaMore">了解功能</a>
+          </div>
+        </div>
+        <div class="relative mx-auto w-56 sm:w-64">
+          <div class="absolute -inset-10 rounded-full bg-indigo-500/20 blur-3xl" aria-hidden="true"></div>
+          <img src="/screenshots/search.png" alt="" data-i18n-alt="altSearch" class="phone relative" width="1080" height="2400" />
+        </div>
+      </section>
+
+      <!-- 功能 -->
+      <section id="features" class="section">
+        <h2 class="section-title" data-i18n="featuresTitle">能找到什么</h2>
+        <div class="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <article class="card">
+            <div class="icon">☉</div>
+            <h3 data-i18n="f1Title">水星、金星凌日</h3>
+            <p data-i18n="f1Text">行星从日面经过的时刻和最小角距，可只看本地可见的。</p>
+          </article>
+          <article class="card">
+            <div class="icon">☌</div>
+            <h3 data-i18n="f2Title">合、冲、角距极小</h3>
+            <p data-i18n="f2Text">任选两个天体，找出它们靠得最近或正好相对的时刻。</p>
+          </article>
+          <article class="card">
+            <div class="icon">◐</div>
+            <h3 data-i18n="f3Title">日食、月食</h3>
+            <p data-i18n="f3Text">食的类型与 NASA 五千年食典一致，还能算出你所在地的本地情况。</p>
+          </article>
+          <article class="card">
+            <div class="icon">☾</div>
+            <h3 data-i18n="f4Title">月掩星</h3>
+            <p data-i18n="f4Text">月亮遮住行星或 550 颗亮星中任意一颗的时刻。</p>
+          </article>
+          <article class="card">
+            <div class="icon">🛰</div>
+            <h3 data-i18n="f5Title">卫星凌日、凌月</h3>
+            <p data-i18n="f5Text">国际空间站、天宫掠过日面月面的时刻，地图上画出可见带的中心线。</p>
+          </article>
+          <article class="card">
+            <div class="icon">⌖</div>
+            <h3 data-i18n="f6Title">离线计算，位置不外传</h3>
+            <p data-i18n="f6Text">内置 JPL DE440 星历；只有卫星根数和地图底图需要联网。GPS 位置只存在本机。</p>
+          </article>
+        </div>
+      </section>
+
+      <!-- 精度 -->
+      <section id="accuracy" class="section">
+        <h2 class="section-title" data-i18n="accuracyTitle">和独立来源对比</h2>
+        <p class="section-text" data-i18n="accuracyText">每一类结果都和独立的天文软件或星表逐条核对过。</p>
+        <div class="mt-8 overflow-hidden rounded-2xl border border-white/10">
+          <table class="w-full text-left text-sm">
+            <thead class="bg-white/5 text-slate-400">
+              <tr>
+                <th class="px-4 py-3 font-medium" data-i18n="thItem">项目</th>
+                <th class="px-4 py-3 font-medium" data-i18n="thRef">对照</th>
+                <th class="px-4 py-3 font-medium" data-i18n="thDiff">差别</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+              <tr><td class="td" data-i18n="r1">视位置</td><td class="td">Skyfield</td><td class="td num">≤ 0.0004″</td></tr>
+              <tr><td class="td" data-i18n="r2">合、冲时刻</td><td class="td">Skyfield</td><td class="td num" data-i18n="r2d">≤ 0.002 秒</td></tr>
+              <tr><td class="td" data-i18n="r3">日月食食甚</td><td class="td" data-i18n="r3r">NASA 五千年食典</td><td class="td num" data-i18n="r3d">≤ 2.3 秒，类型全部一致</td></tr>
+              <tr><td class="td" data-i18n="r4">月掩星</td><td class="td">Skyfield</td><td class="td num" data-i18n="r4d">≤ 0.003 秒</td></tr>
+              <tr><td class="td" data-i18n="r5">卫星接近</td><td class="td">Skyfield</td><td class="td num" data-i18n="r5d">≤ 0.007 秒</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- 截图 -->
+      <section id="screens" class="section">
+        <h2 class="section-title" data-i18n="screensTitle">界面</h2>
+        <div class="mt-10 flex snap-x gap-6 overflow-x-auto pb-4 md:grid md:grid-cols-4 md:overflow-visible">
+          <figure class="shot">
+            <img src="/screenshots/search.png" alt="" data-i18n-alt="altSearch" class="phone" loading="lazy" width="1080" height="2400" />
+            <figcaption data-i18n="capSearch">选择事件类型和年份</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/screenshots/results.png" alt="" data-i18n-alt="altResults" class="phone" loading="lazy" width="1080" height="2400" />
+            <figcaption data-i18n="capResults">搜索结果单独一页</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/screenshots/satellite.png" alt="" data-i18n-alt="altSatellite" class="phone" loading="lazy" width="1080" height="2400" />
+            <figcaption data-i18n="capSatellite">空间站掠过太阳的预报</figcaption>
+          </figure>
+          <figure class="shot">
+            <img src="/screenshots/settings.png" alt="" data-i18n-alt="altSettings" class="phone" loading="lazy" width="1080" height="2400" />
+            <figcaption data-i18n="capSettings">GPS 自动或手动输入位置</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <!-- 下载 -->
+      <section id="download" class="section">
+        <h2 class="section-title" data-i18n="downloadTitle">下载</h2>
+        <div class="mt-10 grid gap-4 md:grid-cols-2">
+          <div class="card">
+            <h3 class="text-lg" data-i18n="dlAndroid">Android</h3>
+            <p data-i18n="dlAndroidText">Android 7.0 及以上。绝大多数手机选 arm64-v8a。</p>
+            <div class="mt-5 flex flex-wrap gap-3">
+              <a class="btn-primary" id="dl-arm64" href="#">arm64-v8a</a>
+              <a class="btn-ghost" id="dl-x86" href="#">x86_64</a>
+            </div>
+            <p class="mt-4 text-xs text-slate-500">
+              <span data-i18n="dlCert">签名证书 SHA-256：</span>
+              <code class="break-all">be424a5ac6fb3bc335856bb6b2251384e5c16d9b8a2641d2b4727f85b6aa4db5</code>
+            </p>
+          </div>
+          <div class="card">
+            <h3 class="text-lg" data-i18n="dlWindows">Windows</h3>
+            <p data-i18n="dlWindowsText">Windows 10 / 11（x64）版本正在准备，很快发布。</p>
+            <p class="mt-5 inline-block rounded-full bg-white/5 px-3 py-1 text-sm text-slate-400" data-i18n="soon">即将推出</p>
+          </div>
+        </div>
+        <p class="mt-6 text-sm text-slate-500">
+          <a id="dl-release" class="underline decoration-white/20 underline-offset-4 hover:text-slate-300" href="#" data-i18n="dlNotes">版本说明与校验值</a>
+        </p>
+      </section>
+
+      <!-- 安全提示 -->
+      <section class="mx-auto max-w-6xl px-4 pb-20 sm:px-6">
+        <div class="rounded-2xl border border-red-400/30 bg-red-500/10 p-5 text-red-100" role="note">
+          <strong data-i18n="safetyTitle">观测太阳务必做好防护。</strong>
+          <span data-i18n="safetyText">必须使用合格的太阳滤光膜（ISO 12312-2）。切勿用肉眼、普通墨镜，或未加滤光的望远镜、相机直视太阳。</span>
+        </div>
+      </section>
+    </main>
+
+    <footer class="border-t border-white/5">
+      <div class="mx-auto max-w-6xl px-4 py-10 text-sm text-slate-500 sm:px-6">
+        <p data-i18n="credits">
+          星历：JPL DE440。岁差章动等算法：IAU SOFA。卫星根数：CelesTrak。地图：© OpenStreetMap 贡献者。完整的许可与致谢见应用内“设置 → 关于与许可”。
+        </p>
+        <p class="mt-3" data-i18n="disclaimer">计算结果仅供参考。</p>
+      </div>
+    </footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

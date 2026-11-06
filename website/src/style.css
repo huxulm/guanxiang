@@ -1,0 +1,78 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-night: #0b1020;
+  --font-sans: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4rem;
+}
+
+/* 星空背景：几层随机分布的小点，不用图片 */
+.stars {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(1px 1px at 12% 18%, #fff8 50%, transparent 51%),
+    radial-gradient(1px 1px at 72% 12%, #fff6 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 38% 66%, #fff7 50%, transparent 51%),
+    radial-gradient(1px 1px at 88% 52%, #fff5 50%, transparent 51%),
+    radial-gradient(1px 1px at 22% 88%, #fff6 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 58% 34%, #fde68a88 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 86%, #fff5 50%, transparent 51%),
+    radial-gradient(1px 1px at 6% 48%, #fff5 50%, transparent 51%),
+    radial-gradient(ellipse 80% 50% at 50% -10%, #312e8155, transparent),
+    var(--color-night);
+  background-size:
+    320px 320px, 280px 280px, 420px 420px, 360px 360px, 300px 300px, 520px 520px, 380px 380px, 260px 260px,
+    100% 100%, 100% 100%;
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center rounded-full bg-amber-300 px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-amber-200;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center rounded-full border border-white/15 px-5 py-2.5 text-sm font-semibold text-slate-200 transition hover:border-white/40 hover:text-white;
+  }
+  .section {
+    @apply mx-auto max-w-6xl px-4 py-20 sm:px-6;
+  }
+  .section-title {
+    @apply text-3xl font-bold tracking-tight text-white sm:text-4xl;
+  }
+  .section-text {
+    @apply mt-4 max-w-2xl text-slate-400;
+  }
+  .card {
+    @apply rounded-2xl border border-white/10 bg-white/[0.03] p-6 transition hover:border-white/20;
+  }
+  .card h3 {
+    @apply font-semibold text-white;
+  }
+  .card p {
+    @apply mt-2 text-sm leading-relaxed text-slate-400;
+  }
+  .icon {
+    @apply mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-400/15 text-xl text-indigo-200;
+  }
+  .td {
+    @apply px-4 py-3;
+  }
+  .num {
+    @apply font-mono text-amber-200 tabular-nums;
+  }
+  .phone {
+    @apply h-auto w-full rounded-[2rem] border-4 border-slate-700/80 shadow-2xl shadow-black/50;
+  }
+  .shot {
+    @apply w-52 shrink-0 snap-center md:w-auto;
+  }
+  .shot figcaption {
+    @apply mt-3 text-center text-sm text-slate-400;
+  }
+}

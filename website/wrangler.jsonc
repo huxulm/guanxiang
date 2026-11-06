@@ -1,0 +1,16 @@
+// 观象官网：纯静态站点，用 Workers 静态资源托管（没有 Worker 脚本）。
+// 发布：npm run deploy（本机需要 CLOUDFLARE_API_TOKEN；CI 见 ../.gitlab-ci.yml）
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "guanxiang-website",
+  "account_id": "91f44dde3088db468b022fa6bd66986b",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    "not_found_handling": "404-page"
+  },
+  "routes": [{ "pattern": "guanx.huxulm.dev", "zone_name": "huxulm.dev", "custom_domain": true }],
+  // 不开放 *.workers.dev 子域，只用自定义域名
+  "workers_dev": false,
+  "preview_urls": false
+}

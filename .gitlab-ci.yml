@@ -85,3 +85,43 @@ test:
     # App 打包的裁剪星历（1900–2100）必须能从 de440s 复现，且范围内位置逐位一致（工具内校验）
     - cargo run -q --locked -p guanxiang-core --example trim_spk -- data/de440s.bsp data/de440s_1900_2100.bsp 1899-12-01 2101-02-01
     - echo "1b7ff150cbc00d364f584ad65dad651129fde4ab2e7aa23f9551dc9b9674afaa  data/de440s_1900_2100.bsp" | sha256sum -c
+
+# 官网（website/）：改动 website/ 时构建；main 分支上再用 wrangler 发布到 Cloudflare。
+# 发布需要在 GitLab「设置 → CI/CD → 变量」里配置 CLOUDFLARE_API_TOKEN（受保护、隐藏），
+# 账号 ID 已写在 website/wrangler.jsonc。没有配置时只构建不发布。
+# 参考 https://developers.cloudflare.com/workers/ci-cd/external-cicd/gitlab-cicd/
+.website:
+  image: node:24-slim
+  cache:
+    key: website-npm
+    paths:
+      - website/.npm/
+  before_script:
+    - cd website
+    - npm ci --cache .npm --prefer-offline --no-audit --no-fund
+  rules:
+    - changes:
+        - website/**/*
+        - .gitlab-ci.yml
+
+website-build:
+  extends: .website
+  stage: check
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - website/dist/
+    expire_in: 1 week
+
+website-deploy:
+  extends: .website
+  stage: test
+  needs: [website-build]
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH && $CLOUDFLARE_API_TOKEN'
+      changes:
+        - website/**/*
+        - .gitlab-ci.yml
+  script:
+    - npx wrangler deploy
