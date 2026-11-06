@@ -160,7 +160,7 @@ release-mirror:
     - sha256sum guanxiang-* > SHA256SUMS && cat SHA256SUMS
     - cd .. && rclone copy --checksum -v --exclude SHA256SUMS "$VERSION" "$R2_DEST/$VERSION"
     # 校验值文件按文本返回，浏览器里能直接看
-    - rclone copyto --no-check-dest --header-upload "Content-Type: text/plain; charset=utf-8" "$VERSION/SHA256SUMS" "$R2_DEST/$VERSION/SHA256SUMS"
+    - 'rclone copyto --no-check-dest --header-upload "Content-Type: text/plain; charset=utf-8" "$VERSION/SHA256SUMS" "$R2_DEST/$VERSION/SHA256SUMS"'
     # 校验公开地址能下载、内容一致
     - |
       for name in $(cut -d' ' -f3 "$VERSION/SHA256SUMS") SHA256SUMS; do
