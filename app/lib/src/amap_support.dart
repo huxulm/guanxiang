@@ -13,7 +13,7 @@ import 'settings.dart';
 const amapAndroidKey = '3527fb755dbe252bf8b1d342e0c443a7';
 
 /// 本应用隐私政策（包含高德 SDK 的说明）与高德开放平台隐私权政策。
-const appPrivacyUrl = 'https://guanx.huxulm.dev/privacy.html';
+const appPrivacyUrl = 'https://guanx.huxulm.dev/privacy';
 const amapPrivacyUrl = 'https://lbs.amap.com/pages/privacy/';
 
 /// 高德地图只在 arm64 的 Android 上可用：高德原生库没有 x86_64 版本，模拟器和桌面用 OpenStreetMap。
