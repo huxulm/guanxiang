@@ -111,7 +111,8 @@ jobs:
 
   # Linux 桌面：在 Xvfb 里跑设备集成测试（真的加载 Rust 库和星历、执行搜索），再构建 release 包作为 artifact
   linux:
-    runs-on: ubuntu-latest
+    # 在较旧的系统上构建：GLib/glibc 只向后兼容，24.04 上构建的程序在 22.04 上会缺 g_once_init_enter_pointer
+    runs-on: ubuntu-22.04
     needs: test
     defaults:
       run:

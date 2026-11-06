@@ -39,7 +39,8 @@ env:
 jobs:
   # 在标签对应的提交上构建 Linux 包，上传到同一个 Release（已存在则覆盖）
   linux:
-    runs-on: ubuntu-latest
+    # 在较旧的系统上构建：GLib/glibc 只向后兼容，24.04 上构建的程序在 22.04 上会缺 g_once_init_enter_pointer
+    runs-on: ubuntu-22.04
     permissions:
       contents: write
     steps:
