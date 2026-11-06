@@ -90,7 +90,12 @@ jobs:
           pkg=$(bash tools/package_linux.sh "$RUNNER_TEMP/dist")
           test "$(basename "$pkg")" = "guanxiang-$VERSION-linux-amd64.deb"
           bash tools/smoke_linux.sh "$pkg"
-          gh release upload "$TAG" "$pkg" --clobber -R "$GITHUB_REPOSITORY"
+          for i in 1 2 3 4; do
+            gh release upload "$TAG" "$pkg" --clobber -R "$GITHUB_REPOSITORY" && break
+            [ "$i" -lt 4 ] || exit 1
+            echo "上传失败，15 秒后重试（第 $i 次）"
+            sleep 15
+          done
 
   mirror:
     runs-on: ubuntu-latest
@@ -110,7 +115,13 @@ jobs:
           mkdir -p "out/$VERSION" && cd "out/$VERSION"
           for f in arm64-v8a.apk x86_64.apk windows-x64-setup.exe windows-x64.zip linux-amd64.deb; do
             name="guanxiang-$VERSION-$f"
-            gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "$name"
+            # GitHub API 偶尔返回 500，失败时重试
+            for i in 1 2 3 4; do
+              gh release download "$TAG" -R "$GITHUB_REPOSITORY" -p "$name" --clobber && break
+              [ "$i" -lt 4 ] || exit 1
+              echo "下载 $name 失败，15 秒后重试（第 $i 次）"
+              sleep 15
+            done
             test -s "$name"
           done
           sha256sum guanxiang-* > SHA256SUMS
