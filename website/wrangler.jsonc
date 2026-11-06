@@ -3,7 +3,7 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "guanxiang-website",
-  "account_id": "91f44dde3088db468b022fa6bd66986b",
+  "account_id": "945740d1b097841869dbae6bba8f8353",
   "compatibility_date": "2026-11-01",
   "assets": {
     "directory": "./dist",
