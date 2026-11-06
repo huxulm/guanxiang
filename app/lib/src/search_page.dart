@@ -4,11 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import 'errors.dart';
-import 'event_detail_page.dart';
-import 'licenses.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'satellite_page.dart';
+import 'search_results.dart';
+import 'settings.dart';
+import 'settings_page.dart';
 
 String _kindLabel(AppLocalizations l, EventKind k) => switch (k) {
   EventKind.transit => l.kindTransit,
@@ -38,9 +39,15 @@ List<Detail> _occultationTargets(
 ];
 
 class SearchPage extends StatefulWidget {
-  const SearchPage({super.key, required this.engine, required this.loadMs});
+  const SearchPage({
+    super.key,
+    required this.engine,
+    required this.loadMs,
+    required this.settings,
+  });
 
   final Engine engine;
+  final Settings settings;
   final int loadMs;
 
   @override
@@ -51,9 +58,6 @@ class _SearchPageState extends State<SearchPage> {
   final _fromCtrl = TextEditingController();
   final _toCtrl = TextEditingController();
   final _maxSepCtrl = TextEditingController(text: '5');
-  final _latCtrl = TextEditingController(text: '39.9');
-  final _lonCtrl = TextEditingController(text: '116.4');
-  final _heightCtrl = TextEditingController(text: '50');
 
   EventKind _kind = EventKind.transit;
   String _transitPlanet = '';
@@ -62,13 +66,14 @@ class _SearchPageState extends State<SearchPage> {
   String _bodyB = 'sun';
   bool _local = false;
 
-  final List<EventItem> _results = [];
-  StreamSubscription<SearchUpdate>? _sub;
-  CancelToken? _token;
-  double _progress = 0;
+  /// 当前（或上一次）搜索
+  SearchSession? _session;
 
-  /// 状态栏文字，在 build 时按当前语言生成
-  late String Function(AppLocalizations) _status;
+  /// 正在为搜索取得 GPS 定位
+  bool _locating = false;
+
+  /// 搜索开始前的状态栏文字，在 build 时按当前语言生成
+  late String Function(AppLocalizations) _idleStatus;
   late final YearRange _years;
 
   @override
@@ -79,29 +84,28 @@ class _SearchPageState extends State<SearchPage> {
     final year = DateTime.now().year.clamp(_years.from, _years.toExclusive - 1);
     _fromCtrl.text = '$year';
     _toCtrl.text = '${(year + 30).clamp(year + 1, _years.toExclusive)}';
-    _status = (l) => l.ephemerisLoaded(widget.loadMs);
+    _idleStatus = (l) => l.ephemerisLoaded(widget.loadMs);
   }
 
   @override
   void dispose() {
-    _token?.cancel();
-    _sub?.cancel();
-    for (final c in [
-      _fromCtrl,
-      _toCtrl,
-      _maxSepCtrl,
-      _latCtrl,
-      _lonCtrl,
-      _heightCtrl,
-    ]) {
+    _session?.dispose();
+    for (final c in [_fromCtrl, _toCtrl, _maxSepCtrl]) {
       c.dispose();
     }
     super.dispose();
   }
 
-  bool get _running => _sub != null;
+  bool get _running => _locating || (_session?.running ?? false);
 
-  void _start() {
+  void _sessionChanged() {
+    if (mounted) setState(() {});
+  }
+
+  String _hm(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  Future<void> _start() async {
     final l = AppLocalizations.of(context);
     final from = int.tryParse(_fromCtrl.text.trim());
     final to = int.tryParse(_toCtrl.text.trim());
@@ -112,17 +116,37 @@ class _SearchPageState extends State<SearchPage> {
     }
     ObserverInput? observer;
     if (_local) {
-      final lat = double.tryParse(_latCtrl.text.trim());
-      final lon = double.tryParse(_lonCtrl.text.trim());
-      final h = double.tryParse(_heightCtrl.text.trim());
-      if (lat == null || lon == null || h == null) {
-        _snack(l.invalidObserver);
+      setState(() {
+        _locating = true;
+        _idleStatus = (l) => l.locating;
+      });
+      PlaceResult r;
+      try {
+        r = await widget.settings.place();
+      } on LocationException catch (e) {
+        if (!mounted) return;
+        setState(() {
+          _locating = false;
+          _idleStatus = (l) => e.describe(l);
+        });
+        _snack(e.describe(AppLocalizations.of(context)));
         return;
       }
+      if (!mounted) return;
+      setState(() => _locating = false);
+      if (r.stale) {
+        final l = AppLocalizations.of(context);
+        _snack(
+          l.usingOldFix(
+            widget.settings.gpsError?.describe(l) ?? '',
+            _hm(widget.settings.gpsTime!),
+          ),
+        );
+      }
       observer = ObserverInput(
-        latitudeDeg: lat,
-        longitudeDeg: lon,
-        heightM: h,
+        latitudeDeg: r.place.lat,
+        longitudeDeg: r.place.lon,
+        heightM: r.place.height,
         minAltitudeDeg: 0,
         maxSunAltitudeDeg: -6,
       );
@@ -140,46 +164,25 @@ class _SearchPageState extends State<SearchPage> {
       observer: observer,
       lang: rustLang(context),
     );
-    final token = CancelToken();
-    setState(() {
-      _results.clear();
-      _progress = 0;
-      _status = (l) => l.searching;
-      _token = token;
-    });
-    _sub = search(engine: widget.engine, request: request, token: token).listen(
-      (u) {
-        setState(() {
-          switch (u.kind) {
-            case UpdateKind.progress:
-              _progress = u.fraction;
-            case UpdateKind.found:
-              _results.add(u.item!);
-            case UpdateKind.finished:
-              final (count, ms) = (u.count, u.elapsedMs.toInt());
-              _status = u.cancelled
-                  ? (l) => l.searchCancelled(count, ms)
-                  : (l) => l.searchFinished(count, ms);
-          }
-        });
-      },
-      onError: (Object e) {
-        if (!mounted) return;
-        final l = AppLocalizations.of(context);
-        _snack(l.searchFailed(describeError(e, l)));
-        setState(() => _status = (l) => l.searchFailedShort);
-        _finish();
-      },
-      onDone: _finish,
+    final kind = _kind;
+    final session = SearchSession(
+      title: (l) => '${_kindLabel(l, kind)} · $from–$to',
+    )..addListener(_sessionChanged);
+    session.start(
+      search(engine: widget.engine, request: request, token: session.token),
     );
+    setState(() {
+      _session?.dispose();
+      _session = session;
+    });
+    if (isNarrow(context)) _openResults();
   }
 
-  void _finish() {
-    if (!mounted) return;
-    setState(() {
-      _sub = null;
-      _token = null;
-    });
+  void _openResults() {
+    final s = _session;
+    if (s == null) return;
+    Navigator.of(context)
+        .push(MaterialPageRoute(builder: (_) => SearchResultsPage(session: s)));
   }
 
   void _snack(String msg) =>
@@ -315,15 +318,7 @@ class _SearchPageState extends State<SearchPage> {
           onChanged: _running ? null : (v) => setState(() => _local = v),
         ),
         if (_local)
-          Wrap(
-            spacing: 12,
-            runSpacing: 8,
-            children: [
-              _numberField(_latCtrl, l.latitude),
-              _numberField(_lonCtrl, l.longitude, width: 120),
-              _numberField(_heightCtrl, l.height),
-            ],
-          ),
+          LocationSummary(settings: widget.settings, enabled: !_running),
         const SizedBox(height: 12),
         Row(
           children: [
@@ -334,16 +329,29 @@ class _SearchPageState extends State<SearchPage> {
             ),
             const SizedBox(width: 12),
             OutlinedButton(
-              onPressed: _running ? () => _token?.cancel() : null,
+              onPressed: (_session?.running ?? false)
+                  ? () => _session!.cancel()
+                  : null,
               child: Text(l.cancel),
             ),
             const SizedBox(width: 16),
-            Expanded(child: Text(_status(l), overflow: TextOverflow.ellipsis)),
+            Expanded(
+              child: Text(
+                _locating || _session == null
+                    ? _idleStatus(l)
+                    : _session!.status(l),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 8),
         LinearProgressIndicator(
-          value: _running ? _progress : (_results.isEmpty ? 0 : 1),
+          value: _locating
+              ? null
+              : _session == null
+              ? 0
+              : (_session!.running ? _session!.progress : 1),
         ),
       ],
     );
@@ -352,57 +360,62 @@ class _SearchPageState extends State<SearchPage> {
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
+    final narrow = isNarrow(context);
+    final session = _session;
     return Scaffold(
       appBar: AppBar(
-        title: Text(l.searchTitle),
+        title: Text(narrow ? l.appTitle : l.searchTitle),
         actions: [
           IconButton(
             icon: const Icon(Icons.satellite_alt),
             tooltip: l.satelliteTooltip,
             onPressed: () => Navigator.of(context).push(
               MaterialPageRoute(
-                builder: (_) => SatellitePage(engine: widget.engine),
+                builder: (_) => SatellitePage(
+                  engine: widget.engine,
+                  settings: widget.settings,
+                ),
               ),
             ),
           ),
           IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: l.aboutTooltip,
-            onPressed: () => showAbout(context),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: l.settingsTitle,
+            onPressed: () => Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => SettingsPage(settings: widget.settings),
+              ),
+            ),
           ),
         ],
       ),
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-              child: _form(l),
-            ),
-            const Divider(height: 1),
-            Expanded(
-              child: _results.isEmpty
-                  ? Center(child: Text(_running ? '' : l.noResults))
-                  : ListView.separated(
-                      itemCount: _results.length,
-                      separatorBuilder: (_, _) => const Divider(height: 1),
-                      itemBuilder: (context, i) {
-                        final e = _results[i];
-                        return ListTile(
-                          title: Text(e.title),
-                          subtitle: Text('${e.utc} UTC · ${e.summary}'),
-                          trailing: const Icon(Icons.chevron_right),
-                          onTap: () => Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => EventDetailPage(event: e),
-                            ),
-                          ),
-                        );
-                      },
+        child: narrow
+            // 手机：只有表单，结果在单独的页面
+            ? ListView(
+                padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                children: [
+                  _form(l),
+                  if (session != null) ...[
+                    const SizedBox(height: 12),
+                    OutlinedButton.icon(
+                      onPressed: _openResults,
+                      icon: const Icon(Icons.list),
+                      label: Text(l.viewResults(session.results.length)),
                     ),
-            ),
-          ],
-        ),
+                  ],
+                ],
+              )
+            : Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+                    child: _form(l),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(child: EventResultsList(session: session)),
+                ],
+              ),
       ),
     );
   }

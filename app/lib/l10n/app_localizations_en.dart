@@ -309,6 +309,80 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get locationSection => 'Observer location';
+
+  @override
+  String get observerLocation => 'Observer location';
+
+  @override
+  String get locationGps => 'GPS';
+
+  @override
+  String get locationManual => 'Manual';
+
+  @override
+  String get locateNow => 'Locate now';
+
+  @override
+  String get locating => 'Locating…';
+
+  @override
+  String gpsFixAt(String time) {
+    return 'Fixed at $time';
+  }
+
+  @override
+  String get gpsNoFix =>
+      'No fix yet. Tap “Locate now”, or it will be located when you search';
+
+  @override
+  String get gpsLocateOnSearch => 'located when you search';
+
+  @override
+  String get locationPrivacy =>
+      'Location is only requested when you search for locally visible events or satellite transits, or tap “Locate now”; a fix less than 10 minutes old is reused. It stays on this device and is never uploaded.';
+
+  @override
+  String get locServiceOff =>
+      'Location services are off. Turn them on or use a manual location';
+
+  @override
+  String get locDenied =>
+      'Location permission denied. Allow it or use a manual location';
+
+  @override
+  String get locDeniedForever =>
+      'Location permission was denied. Allow it in system settings or use a manual location';
+
+  @override
+  String get locTimeout =>
+      'Location timed out. Try again in the open or use a manual location';
+
+  @override
+  String locUnavailable(String detail) {
+    return 'Location unavailable: $detail';
+  }
+
+  @override
+  String get openSystemSettings => 'Open system settings';
+
+  @override
+  String usingOldFix(String error, String time) {
+    return '$error; using the fix from $time';
+  }
+
+  @override
+  String viewResults(int count) {
+    return 'View results ($count)';
+  }
+
+  @override
+  String get resultsTitle => 'Results';
+
+  @override
   String get legalese =>
       'Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun.';
 }

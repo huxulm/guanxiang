@@ -306,5 +306,74 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get settingsTitle => '设置';
+
+  @override
+  String get locationSection => '观测位置';
+
+  @override
+  String get observerLocation => '观测位置';
+
+  @override
+  String get locationGps => 'GPS 自动';
+
+  @override
+  String get locationManual => '手动';
+
+  @override
+  String get locateNow => '立即定位';
+
+  @override
+  String get locating => '正在定位…';
+
+  @override
+  String gpsFixAt(String time) {
+    return '$time 定位';
+  }
+
+  @override
+  String get gpsNoFix => '还没有定位，点“立即定位”或在搜索时自动定位';
+
+  @override
+  String get gpsLocateOnSearch => '搜索时自动定位';
+
+  @override
+  String get locationPrivacy =>
+      '只在搜索本地可见事件、卫星凌日凌月或点“立即定位”时定位，10 分钟内的定位会直接沿用。位置只保存在本机，不会上传。';
+
+  @override
+  String get locServiceOff => '定位服务已关闭，请打开定位或改用手动位置';
+
+  @override
+  String get locDenied => '没有定位权限，请允许定位或改用手动位置';
+
+  @override
+  String get locDeniedForever => '定位权限已被拒绝，请在系统设置中允许，或改用手动位置';
+
+  @override
+  String get locTimeout => '定位超时，请到开阔处重试或改用手动位置';
+
+  @override
+  String locUnavailable(String detail) {
+    return '无法定位：$detail';
+  }
+
+  @override
+  String get openSystemSettings => '打开系统设置';
+
+  @override
+  String usingOldFix(String error, String time) {
+    return '$error；使用 $time 的定位';
+  }
+
+  @override
+  String viewResults(int count) {
+    return '查看结果（$count）';
+  }
+
+  @override
+  String get resultsTitle => '搜索结果';
+
+  @override
   String get legalese => '天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。';
 }

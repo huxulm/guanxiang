@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import 'errors.dart';
 import 'rust/api/guanxiang.dart';
 import 'search_page.dart';
+import 'settings.dart';
 
 /// 随应用打包的星历：de440s 裁剪到 1899-12 至 2101-02（22 MB，原 33 MB）。三端都从 asset
 /// 读成字节交给 Rust，Android 上不需要先释放到磁盘。
@@ -60,10 +61,12 @@ class _LoadingPageState extends State<LoadingPage> {
       final data = await rootBundle.load(ephemerisAsset);
       final engine = await Engine.fromBytes(bytes: data.buffer.asUint8List());
       final ms = watch.elapsedMilliseconds;
+      final settings = await Settings.open();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) => SearchPage(engine: engine, loadMs: ms),
+          builder: (_) =>
+              SearchPage(engine: engine, loadMs: ms, settings: settings),
         ),
       );
     } catch (e) {

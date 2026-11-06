@@ -602,6 +602,126 @@ abstract class AppLocalizations {
   /// **'数据格式错误：{message}'**
   String errFormat(String message);
 
+  /// No description provided for @settingsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置'**
+  String get settingsTitle;
+
+  /// No description provided for @locationSection.
+  ///
+  /// In zh, this message translates to:
+  /// **'观测位置'**
+  String get locationSection;
+
+  /// No description provided for @observerLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'观测位置'**
+  String get observerLocation;
+
+  /// No description provided for @locationGps.
+  ///
+  /// In zh, this message translates to:
+  /// **'GPS 自动'**
+  String get locationGps;
+
+  /// No description provided for @locationManual.
+  ///
+  /// In zh, this message translates to:
+  /// **'手动'**
+  String get locationManual;
+
+  /// No description provided for @locateNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'立即定位'**
+  String get locateNow;
+
+  /// No description provided for @locating.
+  ///
+  /// In zh, this message translates to:
+  /// **'正在定位…'**
+  String get locating;
+
+  /// No description provided for @gpsFixAt.
+  ///
+  /// In zh, this message translates to:
+  /// **'{time} 定位'**
+  String gpsFixAt(String time);
+
+  /// No description provided for @gpsNoFix.
+  ///
+  /// In zh, this message translates to:
+  /// **'还没有定位，点“立即定位”或在搜索时自动定位'**
+  String get gpsNoFix;
+
+  /// No description provided for @gpsLocateOnSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索时自动定位'**
+  String get gpsLocateOnSearch;
+
+  /// No description provided for @locationPrivacy.
+  ///
+  /// In zh, this message translates to:
+  /// **'只在搜索本地可见事件、卫星凌日凌月或点“立即定位”时定位，10 分钟内的定位会直接沿用。位置只保存在本机，不会上传。'**
+  String get locationPrivacy;
+
+  /// No description provided for @locServiceOff.
+  ///
+  /// In zh, this message translates to:
+  /// **'定位服务已关闭，请打开定位或改用手动位置'**
+  String get locServiceOff;
+
+  /// No description provided for @locDenied.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有定位权限，请允许定位或改用手动位置'**
+  String get locDenied;
+
+  /// No description provided for @locDeniedForever.
+  ///
+  /// In zh, this message translates to:
+  /// **'定位权限已被拒绝，请在系统设置中允许，或改用手动位置'**
+  String get locDeniedForever;
+
+  /// No description provided for @locTimeout.
+  ///
+  /// In zh, this message translates to:
+  /// **'定位超时，请到开阔处重试或改用手动位置'**
+  String get locTimeout;
+
+  /// No description provided for @locUnavailable.
+  ///
+  /// In zh, this message translates to:
+  /// **'无法定位：{detail}'**
+  String locUnavailable(String detail);
+
+  /// No description provided for @openSystemSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'打开系统设置'**
+  String get openSystemSettings;
+
+  /// No description provided for @usingOldFix.
+  ///
+  /// In zh, this message translates to:
+  /// **'{error}；使用 {time} 的定位'**
+  String usingOldFix(String error, String time);
+
+  /// No description provided for @viewResults.
+  ///
+  /// In zh, this message translates to:
+  /// **'查看结果（{count}）'**
+  String viewResults(int count);
+
+  /// No description provided for @resultsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索结果'**
+  String get resultsTitle;
+
   /// No description provided for @legalese.
   ///
   /// In zh, this message translates to:

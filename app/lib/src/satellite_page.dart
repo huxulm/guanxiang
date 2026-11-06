@@ -6,12 +6,21 @@ import 'errors.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'sat_transit_page.dart';
+import 'search_results.dart' show isNarrow;
+import 'settings.dart';
+import 'settings_page.dart';
 
 /// 卫星凌日、凌月搜索页。
 class SatellitePage extends StatefulWidget {
-  const SatellitePage({super.key, required this.engine, this.store});
+  const SatellitePage({
+    super.key,
+    required this.engine,
+    required this.settings,
+    this.store,
+  });
 
   final Engine engine;
+  final Settings settings;
 
   /// 测试时可注入；默认打开应用支持目录下的缓存
   final OmmStore? store;
@@ -21,9 +30,6 @@ class SatellitePage extends StatefulWidget {
 }
 
 class _SatellitePageState extends State<SatellitePage> {
-  final _latCtrl = TextEditingController(text: '39.9');
-  final _lonCtrl = TextEditingController(text: '116.4');
-  final _heightCtrl = TextEditingController(text: '50');
   final _daysCtrl = TextEditingController(text: '7');
   final _maxSepCtrl = TextEditingController(text: '1');
   final _addCtrl = TextEditingController();
@@ -34,6 +40,9 @@ class _SatellitePageState extends State<SatellitePage> {
   final List<SatTransitItem> _results = [];
   bool _busy = false;
   (double, double) _searchedAt = (0, 0);
+
+  /// 至少完成过一次搜索（手机上显示“查看结果”按钮）
+  bool _searched = false;
 
   /// 搜索起始时间（本地时间）；null 表示从现在开始
   DateTime? _start;
@@ -49,14 +58,7 @@ class _SatellitePageState extends State<SatellitePage> {
 
   @override
   void dispose() {
-    for (final c in [
-      _latCtrl,
-      _lonCtrl,
-      _heightCtrl,
-      _daysCtrl,
-      _maxSepCtrl,
-      _addCtrl,
-    ]) {
+    for (final c in [_daysCtrl, _maxSepCtrl, _addCtrl]) {
       c.dispose();
     }
     super.dispose();
@@ -126,16 +128,9 @@ class _SatellitePageState extends State<SatellitePage> {
   Future<void> _search() async {
     final l = AppLocalizations.of(context);
     final lang = rustLang(context);
-    final lat = double.tryParse(_latCtrl.text.trim());
-    final lon = double.tryParse(_lonCtrl.text.trim());
-    final h = double.tryParse(_heightCtrl.text.trim());
     final days = double.tryParse(_daysCtrl.text.trim());
     final maxSep = double.tryParse(_maxSepCtrl.text.trim());
-    if (lat == null ||
-        lon == null ||
-        h == null ||
-        days == null ||
-        maxSep == null) {
+    if (days == null || maxSep == null || days <= 0) {
       _snack(l.invalidInput);
       return;
     }
@@ -144,12 +139,30 @@ class _SatellitePageState extends State<SatellitePage> {
       _snack(l.noElementsYet);
       return;
     }
-    _searchedAt = (lat, lon);
     setState(() {
       _busy = true;
       _results.clear();
-      _status = (l) => l.computing;
+      _status = (l) => l.locating;
     });
+    PlaceResult r;
+    try {
+      r = await widget.settings.place();
+    } on LocationException catch (e) {
+      if (!mounted) return;
+      setState(() => _busy = false);
+      _setStatus((l) => e.describe(l));
+      return;
+    }
+    if (!mounted) return;
+    final stale = r.stale
+        ? (AppLocalizations l) => l.usingOldFix(
+            widget.settings.gpsError?.describe(l) ?? '',
+            _hm(widget.settings.gpsTime!),
+          )
+        : null;
+    final (lat, lon, h) = (r.place.lat, r.place.lon, r.place.height);
+    _searchedAt = (lat, lon);
+    setState(() => _status = (l) => l.computing);
     final watch = Stopwatch()..start();
     final startUtc = (_start ?? DateTime.now()).toUtc().toIso8601String();
     final errors = <String Function(AppLocalizations)>[];
@@ -173,16 +186,86 @@ class _SatellitePageState extends State<SatellitePage> {
       }
     }
     _results.sort((a, b) => a.ttJd.compareTo(b.ttJd));
+    if (!mounted) return;
     setState(() {
       _busy = false;
+      _searched = true;
       final count = _results.length;
       final transits = _results.where((e) => e.isTransit).length;
       final ms = watch.elapsedMilliseconds;
       _status = (l) => [
         l.satSummary(count, transits, ms),
+        ?stale?.call(l),
         for (final e in errors) e(l),
       ].join('\n');
     });
+    if (isNarrow(context)) _openResults();
+  }
+
+  String _hm(DateTime t) =>
+      '${t.hour.toString().padLeft(2, '0')}:${t.minute.toString().padLeft(2, '0')}';
+
+  void _openResults() {
+    final items = List.of(_results);
+    final at = _searchedAt;
+    final status = _status;
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) {
+          final l = AppLocalizations.of(context);
+          return Scaffold(
+            appBar: AppBar(title: Text(l.resultsTitle)),
+            body: SafeArea(
+              child: ListView(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      status(l),
+                      style: Theme.of(context).textTheme.bodySmall,
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  if (items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.all(24),
+                      child: Center(child: Text(l.noResults)),
+                    ),
+                  for (final e in items) _resultTile(context, e, at),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _resultTile(
+    BuildContext context,
+    SatTransitItem e,
+    (double, double) at,
+  ) {
+    final theme = Theme.of(context);
+    return ListTile(
+      contentPadding: EdgeInsets.zero,
+      leading: Icon(
+        e.body == 'sun' ? Icons.wb_sunny_outlined : Icons.nightlight_outlined,
+        color: e.isTransit ? theme.colorScheme.primary : null,
+      ),
+      title: Text(e.title),
+      subtitle: Text('${e.utc} UTC · ${e.summary}'),
+      trailing: e.warning != null
+          ? Icon(Icons.warning_amber, color: theme.colorScheme.error)
+          : const Icon(Icons.chevron_right),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              SatTransitPage(item: e, observerLat: at.$1, observerLon: at.$2),
+        ),
+      ),
+    );
   }
 
   /// 选择起始日期和时间（本地时间）。
@@ -260,6 +343,7 @@ class _SatellitePageState extends State<SatellitePage> {
     final theme = Theme.of(context);
     final l = AppLocalizations.of(context);
     final status = _status(l);
+    final narrow = isNarrow(context);
     return Scaffold(
       appBar: AppBar(title: Text(l.satTitle)),
       body: SafeArea(
@@ -308,13 +392,11 @@ class _SatellitePageState extends State<SatellitePage> {
               ],
             ),
             const SizedBox(height: 8),
+            LocationSummary(settings: widget.settings, enabled: !_busy),
             Wrap(
               spacing: 12,
               runSpacing: 8,
               children: [
-                _numberField(_latCtrl, l.latitude),
-                _numberField(_lonCtrl, l.longitude, width: 120),
-                _numberField(_heightCtrl, l.height),
                 _numberField(_daysCtrl, l.days, width: 64),
                 _numberField(_maxSepCtrl, l.maxSeparation, width: 80),
               ],
@@ -360,31 +442,18 @@ class _SatellitePageState extends State<SatellitePage> {
               Text(status, style: theme.textTheme.bodySmall),
             ],
             const Divider(),
-            if (_results.isEmpty && !_busy) Center(child: Text(l.noResults)),
-            for (final e in _results)
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: Icon(
-                  e.body == 'sun'
-                      ? Icons.wb_sunny_outlined
-                      : Icons.nightlight_outlined,
-                  color: e.isTransit ? theme.colorScheme.primary : null,
-                ),
-                title: Text(e.title),
-                subtitle: Text('${e.utc} UTC · ${e.summary}'),
-                trailing: e.warning != null
-                    ? Icon(Icons.warning_amber, color: theme.colorScheme.error)
-                    : const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => SatTransitPage(
-                      item: e,
-                      observerLat: _searchedAt.$1,
-                      observerLon: _searchedAt.$2,
-                    ),
-                  ),
-                ),
-              ),
+            if (narrow)
+              _searched && !_busy
+                  ? OutlinedButton.icon(
+                      onPressed: _openResults,
+                      icon: const Icon(Icons.list),
+                      label: Text(l.viewResults(_results.length)),
+                    )
+                  : const SizedBox.shrink()
+            else ...[
+              if (_results.isEmpty && !_busy) Center(child: Text(l.noResults)),
+              for (final e in _results) _resultTile(context, e, _searchedAt),
+            ],
           ],
         ),
       ),

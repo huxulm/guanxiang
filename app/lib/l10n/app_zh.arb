@@ -256,5 +256,56 @@
       }
     }
   },
+  "settingsTitle": "设置",
+  "locationSection": "观测位置",
+  "observerLocation": "观测位置",
+  "locationGps": "GPS 自动",
+  "locationManual": "手动",
+  "locateNow": "立即定位",
+  "locating": "正在定位…",
+  "gpsFixAt": "{time} 定位",
+  "@gpsFixAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "gpsNoFix": "还没有定位，点“立即定位”或在搜索时自动定位",
+  "gpsLocateOnSearch": "搜索时自动定位",
+  "locationPrivacy": "只在搜索本地可见事件、卫星凌日凌月或点“立即定位”时定位，10 分钟内的定位会直接沿用。位置只保存在本机，不会上传。",
+  "locServiceOff": "定位服务已关闭，请打开定位或改用手动位置",
+  "locDenied": "没有定位权限，请允许定位或改用手动位置",
+  "locDeniedForever": "定位权限已被拒绝，请在系统设置中允许，或改用手动位置",
+  "locTimeout": "定位超时，请到开阔处重试或改用手动位置",
+  "locUnavailable": "无法定位：{detail}",
+  "@locUnavailable": {
+    "placeholders": {
+      "detail": {
+        "type": "String"
+      }
+    }
+  },
+  "openSystemSettings": "打开系统设置",
+  "usingOldFix": "{error}；使用 {time} 的定位",
+  "@usingOldFix": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      },
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "viewResults": "查看结果（{count}）",
+  "@viewResults": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "resultsTitle": "搜索结果",
   "legalese": "天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。"
 }
