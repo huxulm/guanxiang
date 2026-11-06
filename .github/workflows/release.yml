@@ -23,7 +23,7 @@ concurrency:
 
 env:
   TAG: ${{ github.event.release.tag_name || inputs.tag }}
-  RCLONE_VERSION: v1.75.0
+  RCL_RELEASE: v1.75.0  # 不要用 RCLONE_ 开头：rclone 会把 RCLONE_* 环境变量当成参数（RCLONE_VERSION 即 --version）
   RCLONE_CONFIG_R2_TYPE: s3
   RCLONE_CONFIG_R2_PROVIDER: Cloudflare
   RCLONE_CONFIG_R2_ENDPOINT: https://945740d1b097841869dbae6bba8f8353.r2.cloudflarestorage.com
@@ -41,9 +41,9 @@ jobs:
           echo "VERSION=${TAG#v}" >> "$GITHUB_ENV"
       - name: 安装 rclone
         run: |
-          curl -fsSL --retry 3 -o rclone.zip "https://downloads.rclone.org/$RCLONE_VERSION/rclone-$RCLONE_VERSION-linux-amd64.zip"
+          curl -fsSL --retry 3 -o rclone.zip "https://downloads.rclone.org/$RCL_RELEASE/rclone-$RCL_RELEASE-linux-amd64.zip"
           unzip -q rclone.zip
-          sudo install "rclone-$RCLONE_VERSION-linux-amd64/rclone" /usr/local/bin/rclone
+          sudo install "rclone-$RCL_RELEASE-linux-amd64/rclone" /usr/local/bin/rclone
           rclone version | head -1
       - name: 下载 Release 附件
         env:
