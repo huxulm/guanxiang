@@ -11,6 +11,21 @@ import '../l10n/app_localizations.dart';
 /// 观测位置从哪里来。
 enum LocationMode { gps, manual }
 
+/// 应用外观主题模式。
+enum AppThemeMode {
+  /// 跟随系统深浅色设置（深色时使用深空暗夜）
+  system,
+
+  /// 深空暗夜模式（OLED 纯黑与星空冷蓝调）
+  deepSpace,
+
+  /// 天文夜间红光模式（专为户外实地观星暗适应设计）
+  astroRed,
+
+  /// 明亮浅色模式
+  light,
+}
+
 /// 一个观测位置：纬度、经度（东正）、高度（米）。
 @immutable
 class Place {
@@ -88,6 +103,7 @@ class Settings extends ChangeNotifier {
   final Locator _locator;
 
   LocationMode _mode = LocationMode.gps;
+  AppThemeMode _themeMode = AppThemeMode.system;
   bool? _amapConsent;
   Place _manual = Place.beijing;
   Place? _gpsFix;
@@ -99,6 +115,7 @@ class Settings extends ChangeNotifier {
   static const fixMaxAge = Duration(minutes: 10);
 
   LocationMode get mode => _mode;
+  AppThemeMode get themeMode => _themeMode;
 
   /// 是否同意使用高德地图 SDK（隐私合规）。null 表示还没问过。
   bool? get amapConsent => _amapConsent;
@@ -133,6 +150,12 @@ class Settings extends ChangeNotifier {
   void _load(Object? j) {
     if (j is! Map) return;
     _mode = j['mode'] == 'manual' ? LocationMode.manual : LocationMode.gps;
+    _themeMode = switch (j['themeMode']) {
+      'deepSpace' => AppThemeMode.deepSpace,
+      'astroRed' => AppThemeMode.astroRed,
+      'light' => AppThemeMode.light,
+      _ => AppThemeMode.system,
+    };
     final consent = j['amapConsent'];
     _amapConsent = consent is bool ? consent : null;
     _manual = Place.fromJson(j['manual']) ?? Place.beijing;
@@ -146,6 +169,7 @@ class Settings extends ChangeNotifier {
     if (f == null) return;
     final j = {
       'mode': _mode.name,
+      'themeMode': _themeMode.name,
       'amapConsent': ?_amapConsent,
       'manual': _manual.toJson(),
       if (_gpsFix != null && _gpsTime != null) ...{
@@ -158,6 +182,13 @@ class Settings extends ChangeNotifier {
     } catch (_) {
       // 写不进去只影响下次启动，不打断使用
     }
+  }
+
+  Future<void> setThemeMode(AppThemeMode m) async {
+    if (_themeMode == m) return;
+    _themeMode = m;
+    notifyListeners();
+    await _save();
   }
 
   Future<void> setAmapConsent(bool agree) async {

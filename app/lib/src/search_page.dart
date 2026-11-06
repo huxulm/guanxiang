@@ -42,19 +42,21 @@ class SearchPage extends StatefulWidget {
   const SearchPage({
     super.key,
     required this.engine,
-    required this.loadMs,
+    this.loadMs = 0,
     required this.settings,
+    this.isEmbedded = false,
   });
 
   final Engine engine;
   final Settings settings;
   final int loadMs;
+  final bool isEmbedded;
 
   @override
-  State<SearchPage> createState() => _SearchPageState();
+  State<SearchPage> createState() => SearchPageState();
 }
 
-class _SearchPageState extends State<SearchPage> {
+class SearchPageState extends State<SearchPage> {
   final _fromCtrl = TextEditingController();
   final _toCtrl = TextEditingController();
   final _maxSepCtrl = TextEditingController(text: '5');
@@ -357,6 +359,23 @@ class _SearchPageState extends State<SearchPage> {
     );
   }
 
+  /// 供外部预设搜索条件（如从看板快捷卡片点击跳转）
+  void preset({
+    required EventKind kind,
+    int? fromYear,
+    int? toYear,
+    String? bodyA,
+    String? bodyB,
+  }) {
+    setState(() {
+      _kind = kind;
+      if (fromYear != null) _fromCtrl.text = '$fromYear';
+      if (toYear != null) _toCtrl.text = '$toYear';
+      if (bodyA != null) _bodyA = bodyA;
+      if (bodyB != null) _bodyB = bodyB;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -364,30 +383,36 @@ class _SearchPageState extends State<SearchPage> {
     final session = _session;
     return Scaffold(
       appBar: AppBar(
-        title: Text(narrow ? l.appTitle : l.searchTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.satellite_alt),
-            tooltip: l.satelliteTooltip,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => SatellitePage(
-                  engine: widget.engine,
-                  settings: widget.settings,
+        title: Text(
+          widget.isEmbedded
+              ? l.navSearch
+              : (narrow ? l.appTitle : l.searchTitle),
+        ),
+        actions: widget.isEmbedded
+            ? null
+            : [
+                IconButton(
+                  icon: const Icon(Icons.satellite_alt),
+                  tooltip: l.satelliteTooltip,
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SatellitePage(
+                        engine: widget.engine,
+                        settings: widget.settings,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
-            ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l.settingsTitle,
-            onPressed: () => Navigator.of(context).push(
-              MaterialPageRoute(
-                builder: (_) => SettingsPage(settings: widget.settings),
-              ),
-            ),
-          ),
-        ],
+                IconButton(
+                  icon: const Icon(Icons.settings_outlined),
+                  tooltip: l.settingsTitle,
+                  onPressed: () => Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => SettingsPage(settings: widget.settings),
+                    ),
+                  ),
+                ),
+              ],
       ),
       body: SafeArea(
         child: narrow

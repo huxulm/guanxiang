@@ -10,6 +10,7 @@ import 'search_results.dart' show isNarrow;
 import 'settings.dart';
 import 'settings_page.dart';
 import 'task_pages.dart';
+import 'time_format.dart';
 
 /// 卫星凌日、凌月搜索页。
 class SatellitePage extends StatefulWidget {
@@ -273,7 +274,7 @@ class _SatellitePageState extends State<SatellitePage> {
         color: e.isTransit ? theme.colorScheme.primary : null,
       ),
       title: Text(e.title),
-      subtitle: Text('${e.utc} UTC · ${e.summary}'),
+      subtitle: Text('${formatAstroTime(e.utc)} · ${e.summary}'),
       trailing: e.warning != null
           ? Icon(Icons.warning_amber, color: theme.colorScheme.error)
           : const Icon(Icons.chevron_right),

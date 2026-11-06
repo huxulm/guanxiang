@@ -558,4 +558,97 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get legalese => '天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。';
+
+  @override
+  String get navDashboard => '看板';
+
+  @override
+  String get navSearch => '搜索';
+
+  @override
+  String get navSatellite => '空间站';
+
+  @override
+  String get navSettings => '设置';
+
+  @override
+  String get themeMode => '外观主题';
+
+  @override
+  String get themeSystem => '跟随系统';
+
+  @override
+  String get themeDeepSpace => '深空暗夜';
+
+  @override
+  String get themeAstroRed => '夜间红光（保护暗适应）';
+
+  @override
+  String get themeLight => '明亮浅色';
+
+  @override
+  String get dashboardTitle => '观象 · 近期看点';
+
+  @override
+  String get dashboardSubtitle => '探索天地大美，把握天象先机';
+
+  @override
+  String get quickExplore => '快捷探索';
+
+  @override
+  String get quickEclipses => '近期日月食';
+
+  @override
+  String get quickEclipsesDesc => '探索未来几年的日全食、日环食与月全食';
+
+  @override
+  String get quickTransits => '行星凌日';
+
+  @override
+  String get quickTransitsDesc => '水星与金星凌日稀有天象一览';
+
+  @override
+  String get quickConjunctions => '大行星相合';
+
+  @override
+  String get quickConjunctionsDesc => '金星、木星、土星近距离相合';
+
+  @override
+  String get quickOccultations => '月掩亮星与行星';
+
+  @override
+  String get quickOccultationsDesc => '月球遮掩大行星及一等亮星';
+
+  @override
+  String get quickSpaceStation => '空间站凌日凌月';
+
+  @override
+  String get quickSpaceStationDesc => '天宫与国际空间站地面中心线预报';
+
+  @override
+  String get currentLocation => '观测地';
+
+  @override
+  String get curatedHighlights => '精选重磅天象';
+
+  @override
+  String get curatedSolar2026 => '2026-08-12 日全食（格陵兰/冰岛/西班牙）';
+
+  @override
+  String get curatedLunar2026 => '2026-03-03 月全食（中国全境红月亮）';
+
+  @override
+  String get curatedConjunction2026 => '2026-06-09 金星合木星（角距 0.2° 极近）';
+
+  @override
+  String get curatedSolar2027 => '2027-08-02 世纪日全食（埃及全食长达 6 分 23 秒）';
+
+  @override
+  String get curatedRareTag => '极罕见';
+
+  @override
+  String get curatedNoticeTag => '肉眼可见';
+
+  @override
+  String get timeZoneNotice => '时刻已按本地时区换算';
 }

@@ -573,4 +573,101 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get legalese =>
       'Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun.';
+
+  @override
+  String get navDashboard => 'Dashboard';
+
+  @override
+  String get navSearch => 'Search';
+
+  @override
+  String get navSatellite => 'Satellites';
+
+  @override
+  String get navSettings => 'Settings';
+
+  @override
+  String get themeMode => 'Theme';
+
+  @override
+  String get themeSystem => 'Follow system';
+
+  @override
+  String get themeDeepSpace => 'Deep space dark';
+
+  @override
+  String get themeAstroRed => 'Astro red (Night vision)';
+
+  @override
+  String get themeLight => 'Light';
+
+  @override
+  String get dashboardTitle => 'Guanxiang · Highlights';
+
+  @override
+  String get dashboardSubtitle => 'Explore celestial events with precision';
+
+  @override
+  String get quickExplore => 'Quick Explore';
+
+  @override
+  String get quickEclipses => 'Upcoming Eclipses';
+
+  @override
+  String get quickEclipsesDesc => 'Solar & lunar eclipses in the coming years';
+
+  @override
+  String get quickTransits => 'Planetary Transits';
+
+  @override
+  String get quickTransitsDesc => 'Rare Mercury & Venus transits';
+
+  @override
+  String get quickConjunctions => 'Major Conjunctions';
+
+  @override
+  String get quickConjunctionsDesc => 'Close approaches of bright planets';
+
+  @override
+  String get quickOccultations => 'Lunar Occultations';
+
+  @override
+  String get quickOccultationsDesc => 'Moon occulting planets & 1st mag stars';
+
+  @override
+  String get quickSpaceStation => 'Space Station Transits';
+
+  @override
+  String get quickSpaceStationDesc => 'CSS & ISS solar and lunar transit paths';
+
+  @override
+  String get currentLocation => 'Observation Site';
+
+  @override
+  String get curatedHighlights => 'Milestone Celestial Events';
+
+  @override
+  String get curatedSolar2026 =>
+      '2026-08-12 Total Solar Eclipse (Iceland/Spain)';
+
+  @override
+  String get curatedLunar2026 =>
+      '2026-03-03 Total Lunar Eclipse (Asia/Pacific)';
+
+  @override
+  String get curatedConjunction2026 =>
+      '2026-06-09 Venus conjunct Jupiter (Sep. 0.2°)';
+
+  @override
+  String get curatedSolar2027 =>
+      '2027-08-02 Great Solar Eclipse (Luxor 6m 23s)';
+
+  @override
+  String get curatedRareTag => 'Rare';
+
+  @override
+  String get curatedNoticeTag => 'Naked eye';
+
+  @override
+  String get timeZoneNotice => 'Times converted to local time';
 }

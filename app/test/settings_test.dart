@@ -108,15 +108,18 @@ void main() {
 
     await b.setManual(const Place(-33.9, 18.4, 10));
     await b.setMode(LocationMode.gps);
+    await b.setThemeMode(AppThemeMode.astroRed);
     final c = await Settings.openFile(file);
     expect(c.mode, LocationMode.gps);
     expect(c.manual.lat, -33.9);
+    expect(c.themeMode, AppThemeMode.astroRed);
 
     // 文件损坏时用默认值
     await file.writeAsString('{oops');
     final d = await Settings.openFile(file);
     expect(d.mode, LocationMode.gps);
     expect(d.manual.lat, Place.beijing.lat);
+    expect(d.themeMode, AppThemeMode.system);
   });
 
   test('输入框数字格式', () {

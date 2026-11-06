@@ -6,6 +6,7 @@ import '../l10n/app_localizations.dart';
 import 'errors.dart';
 import 'event_detail_page.dart';
 import 'rust/api/guanxiang.dart';
+import 'time_format.dart';
 
 /// 窄于这个宽度（逻辑像素）时按手机布局：搜索结果单独一页。
 const narrowLayoutWidth = 600.0;
@@ -102,7 +103,7 @@ class EventResultsList extends StatelessWidget {
             final e = s.results[i];
             return ListTile(
               title: Text(e.title),
-              subtitle: Text('${e.utc} UTC · ${e.summary}'),
+              subtitle: Text('${formatAstroTime(e.utc)} · ${e.summary}'),
               trailing: const Icon(Icons.chevron_right),
               onTap: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => EventDetailPage(event: e)),

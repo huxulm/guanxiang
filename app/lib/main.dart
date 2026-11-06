@@ -5,10 +5,11 @@ import 'package:workmanager/workmanager.dart';
 
 import 'src/app.dart';
 import 'src/celestrak.dart';
-import 'src/tasks.dart';
 import 'src/licenses.dart';
 import 'src/rust/frb_generated.dart';
+import 'src/settings.dart';
 import 'src/task_service.dart';
+import 'src/tasks.dart';
 
 /// 后台刷新任务名（Android WorkManager）。
 const ommRefreshTask = 'guanxiang.ommRefresh';
@@ -46,6 +47,7 @@ Future<void> main() async {
   await RustLib.init();
   registerLicenses();
   await Notifications.init();
+  final settings = await Settings.open();
   if (Platform.isAndroid) {
     // 每 6 小时刷新一次（OmmStore 内部仍遵守 2 小时的频率限制），只在联网时运行
     await Workmanager().initialize(backgroundDispatcher);
@@ -57,5 +59,5 @@ Future<void> main() async {
       existingWorkPolicy: ExistingPeriodicWorkPolicy.keep,
     );
   }
-  runApp(const GuanxiangApp());
+  runApp(GuanxiangApp(settings: settings));
 }

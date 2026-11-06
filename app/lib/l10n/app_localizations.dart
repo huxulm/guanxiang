@@ -1033,6 +1033,192 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。'**
   String get legalese;
+
+  /// No description provided for @navDashboard.
+  ///
+  /// In zh, this message translates to:
+  /// **'看板'**
+  String get navDashboard;
+
+  /// No description provided for @navSearch.
+  ///
+  /// In zh, this message translates to:
+  /// **'搜索'**
+  String get navSearch;
+
+  /// No description provided for @navSatellite.
+  ///
+  /// In zh, this message translates to:
+  /// **'空间站'**
+  String get navSatellite;
+
+  /// No description provided for @navSettings.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置'**
+  String get navSettings;
+
+  /// No description provided for @themeMode.
+  ///
+  /// In zh, this message translates to:
+  /// **'外观主题'**
+  String get themeMode;
+
+  /// No description provided for @themeSystem.
+  ///
+  /// In zh, this message translates to:
+  /// **'跟随系统'**
+  String get themeSystem;
+
+  /// No description provided for @themeDeepSpace.
+  ///
+  /// In zh, this message translates to:
+  /// **'深空暗夜'**
+  String get themeDeepSpace;
+
+  /// No description provided for @themeAstroRed.
+  ///
+  /// In zh, this message translates to:
+  /// **'夜间红光（保护暗适应）'**
+  String get themeAstroRed;
+
+  /// No description provided for @themeLight.
+  ///
+  /// In zh, this message translates to:
+  /// **'明亮浅色'**
+  String get themeLight;
+
+  /// No description provided for @dashboardTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'观象 · 近期看点'**
+  String get dashboardTitle;
+
+  /// No description provided for @dashboardSubtitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'探索天地大美，把握天象先机'**
+  String get dashboardSubtitle;
+
+  /// No description provided for @quickExplore.
+  ///
+  /// In zh, this message translates to:
+  /// **'快捷探索'**
+  String get quickExplore;
+
+  /// No description provided for @quickEclipses.
+  ///
+  /// In zh, this message translates to:
+  /// **'近期日月食'**
+  String get quickEclipses;
+
+  /// No description provided for @quickEclipsesDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'探索未来几年的日全食、日环食与月全食'**
+  String get quickEclipsesDesc;
+
+  /// No description provided for @quickTransits.
+  ///
+  /// In zh, this message translates to:
+  /// **'行星凌日'**
+  String get quickTransits;
+
+  /// No description provided for @quickTransitsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'水星与金星凌日稀有天象一览'**
+  String get quickTransitsDesc;
+
+  /// No description provided for @quickConjunctions.
+  ///
+  /// In zh, this message translates to:
+  /// **'大行星相合'**
+  String get quickConjunctions;
+
+  /// No description provided for @quickConjunctionsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'金星、木星、土星近距离相合'**
+  String get quickConjunctionsDesc;
+
+  /// No description provided for @quickOccultations.
+  ///
+  /// In zh, this message translates to:
+  /// **'月掩亮星与行星'**
+  String get quickOccultations;
+
+  /// No description provided for @quickOccultationsDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'月球遮掩大行星及一等亮星'**
+  String get quickOccultationsDesc;
+
+  /// No description provided for @quickSpaceStation.
+  ///
+  /// In zh, this message translates to:
+  /// **'空间站凌日凌月'**
+  String get quickSpaceStation;
+
+  /// No description provided for @quickSpaceStationDesc.
+  ///
+  /// In zh, this message translates to:
+  /// **'天宫与国际空间站地面中心线预报'**
+  String get quickSpaceStationDesc;
+
+  /// No description provided for @currentLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'观测地'**
+  String get currentLocation;
+
+  /// No description provided for @curatedHighlights.
+  ///
+  /// In zh, this message translates to:
+  /// **'精选重磅天象'**
+  String get curatedHighlights;
+
+  /// No description provided for @curatedSolar2026.
+  ///
+  /// In zh, this message translates to:
+  /// **'2026-08-12 日全食（格陵兰/冰岛/西班牙）'**
+  String get curatedSolar2026;
+
+  /// No description provided for @curatedLunar2026.
+  ///
+  /// In zh, this message translates to:
+  /// **'2026-03-03 月全食（中国全境红月亮）'**
+  String get curatedLunar2026;
+
+  /// No description provided for @curatedConjunction2026.
+  ///
+  /// In zh, this message translates to:
+  /// **'2026-06-09 金星合木星（角距 0.2° 极近）'**
+  String get curatedConjunction2026;
+
+  /// No description provided for @curatedSolar2027.
+  ///
+  /// In zh, this message translates to:
+  /// **'2027-08-02 世纪日全食（埃及全食长达 6 分 23 秒）'**
+  String get curatedSolar2027;
+
+  /// No description provided for @curatedRareTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'极罕见'**
+  String get curatedRareTag;
+
+  /// No description provided for @curatedNoticeTag.
+  ///
+  /// In zh, this message translates to:
+  /// **'肉眼可见'**
+  String get curatedNoticeTag;
+
+  /// No description provided for @timeZoneNotice.
+  ///
+  /// In zh, this message translates to:
+  /// **'时刻已按本地时区换算'**
+  String get timeZoneNotice;
 }
 
 class _AppLocalizationsDelegate

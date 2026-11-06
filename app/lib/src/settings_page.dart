@@ -204,6 +204,44 @@ class _SettingsPageState extends State<SettingsPage> {
                 const SizedBox(height: 8),
                 Text(l.locationPrivacy, style: theme.textTheme.bodySmall),
                 const SizedBox(height: 16),
+                const Divider(),
+                Text(l.themeMode, style: theme.textTheme.titleMedium),
+                const SizedBox(height: 8),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [
+                    ChoiceChip(
+                      avatar: const Icon(Icons.brightness_auto, size: 18),
+                      label: Text(l.themeSystem),
+                      selected: s.themeMode == AppThemeMode.system,
+                      onSelected: (_) => s.setThemeMode(AppThemeMode.system),
+                    ),
+                    ChoiceChip(
+                      avatar: const Icon(Icons.dark_mode, size: 18),
+                      label: Text(l.themeDeepSpace),
+                      selected: s.themeMode == AppThemeMode.deepSpace,
+                      onSelected: (_) => s.setThemeMode(AppThemeMode.deepSpace),
+                    ),
+                    ChoiceChip(
+                      avatar: const Icon(
+                        Icons.nightlight,
+                        size: 18,
+                        color: Color(0xFFFF4444),
+                      ),
+                      label: Text(l.themeAstroRed),
+                      selected: s.themeMode == AppThemeMode.astroRed,
+                      onSelected: (_) => s.setThemeMode(AppThemeMode.astroRed),
+                    ),
+                    ChoiceChip(
+                      avatar: const Icon(Icons.light_mode, size: 18),
+                      label: Text(l.themeLight),
+                      selected: s.themeMode == AppThemeMode.light,
+                      onSelected: (_) => s.setThemeMode(AppThemeMode.light),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 if (amapSupported) ...[
                   const Divider(),
                   Text(l.mapSection, style: theme.textTheme.titleMedium),
