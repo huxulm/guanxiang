@@ -4,7 +4,7 @@
 type Lang = 'zh' | 'en';
 
 /** 当前版本。发新版时只改这里。 */
-const VERSION = '0.1.6';
+const VERSION = '0.1.7';
 /** 安装包放在 Cloudflare R2（桶 huxulm-asia），由 CI 的 release-mirror 任务从 GitLab 包仓库同步。 */
 const DOWNLOAD_BASE = 'https://s2.huxulm.dev/guanxiang';
 
