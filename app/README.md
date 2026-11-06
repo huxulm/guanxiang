@@ -38,6 +38,7 @@ flutter build apk --release --split-per-abi --target-platform android-arm64,andr
 
 - 签名配置在 `android/key.properties`（不进 Git），指向仓库外的上传密钥 `~/.android/guanxiang-upload.jks`（别名 `upload`，RSA 4096，有效期 10000 天）。**密钥文件和 key.properties 里的密码务必另行备份**，丢失后无法再发布同一应用的更新。
 - 没有 key.properties 时 release 包退回调试签名，只能自己测试。
+- 包名（applicationId）是 `dev.huxulm.guanxiang`（0.1.4 及以前是 `cn.ac.xao.guanxiang`，两者在系统里是不同的应用，不能互相覆盖升级）。高德等地图 SDK 的 Key 按包名和签名证书 SHA1 绑定，发布证书 SHA1 为 `29:D5:27:97:04:24:E8:FC:FF:9D:E5:ED:E2:0F:E0:EE:F6:A4:09:F3`。
 - 版本号在 `pubspec.yaml` 的 `version`；分 ABI 打包时 versionCode 自动加 1000 × ABI 序号。
 - 校验：`apksigner verify --print-certs <apk>`、`zipalign -c -P 16 4 <apk>`（16 KB 页对齐）。
 

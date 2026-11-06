@@ -15,7 +15,7 @@ val keyProperties = Properties().apply {
 val hasReleaseKey = keyProperties.getProperty("storeFile") != null
 
 android {
-    namespace = "cn.ac.xao.guanxiang"
+    namespace = "dev.huxulm.guanxiang"
     compileSdk = flutter.compileSdkVersion
     // 固定为 NDK 30（与 M0 交叉编译用的同一版本）；Flutter 默认的 28.2 本机未安装
     ndkVersion = "30.0.16248370"
@@ -26,7 +26,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "cn.ac.xao.guanxiang"
+        applicationId = "dev.huxulm.guanxiang"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

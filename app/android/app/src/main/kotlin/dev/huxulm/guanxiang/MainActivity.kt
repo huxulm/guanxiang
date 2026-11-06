@@ -1,4 +1,4 @@
-package cn.ac.xao.guanxiang
+package dev.huxulm.guanxiang
 
 import io.flutter.embedding.android.FlutterActivity
 
