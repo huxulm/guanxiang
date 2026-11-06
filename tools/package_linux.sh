@@ -46,13 +46,14 @@ chmod 755 "$stage/opt/guanxiang/guanxiang"
 find "$stage/opt/guanxiang/lib" -name '*.so' -exec chmod 755 {} +
 
 size=$(du -sk --exclude=DEBIAN "$stage" | cut -f1)
+# libegl1、libgles2：Flutter 引擎运行时用 dlopen 加载 libEGL.so.1 和 libGLESv2.so.2，ldd 看不出来
 cat > "$stage/DEBIAN/control" <<EOF
 Package: guanxiang
 Version: $version
 Architecture: amd64
 Maintainer: Huxulm
 Installed-Size: $size
-Depends: libc6 (>= 2.35), libstdc++6, libgtk-3-0t64 | libgtk-3-0, libegl1
+Depends: libc6 (>= 2.35), libstdc++6, libgtk-3-0t64 | libgtk-3-0, libegl1, libgles2
 Recommends: libgl1-mesa-dri, geoclue-2.0
 Section: science
 Priority: optional
