@@ -1106,4 +1106,67 @@ class AppLocalizationsEn extends AppLocalizations {
   String allParametersCount(int count) {
     return 'All parameters ($count)';
   }
+
+  @override
+  String get shareImage => 'Share image';
+
+  @override
+  String get shareShowLocation => 'Show my location';
+
+  @override
+  String get shareShowLocationHint =>
+      'Rounded to 1° (about 100 km); your exact location is not shown';
+
+  @override
+  String get shareButton => 'Share';
+
+  @override
+  String get shareSave => 'Save image';
+
+  @override
+  String get shareSaved => 'Saved';
+
+  @override
+  String shareFailed(String error) {
+    return 'Could not share: $error';
+  }
+
+  @override
+  String posterSeenFrom(String place) {
+    return 'From $place';
+  }
+
+  @override
+  String get posterGreatest => 'Greatest';
+
+  @override
+  String get posterLocalMax => 'Local maximum';
+
+  @override
+  String get posterTotality => 'Totality';
+
+  @override
+  String get posterUmbral => 'Umbral phase';
+
+  @override
+  String get posterPenumbral => 'Penumbral phase';
+
+  @override
+  String get posterKind => 'Seen as';
+
+  @override
+  String get posterMagnitude => 'Magnitude';
+
+  @override
+  String get posterObscuration => 'Obscuration';
+
+  @override
+  String get posterSolarSafety =>
+      'Never look at the Sun without an ISO 12312-2 solar filter';
+
+  @override
+  String get posterAnnular => 'Annular phase';
+
+  @override
+  String get posterScan => 'Scan to get Guanxiang';
 }

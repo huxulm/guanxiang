@@ -1063,4 +1063,65 @@ class AppLocalizationsZh extends AppLocalizations {
   String allParametersCount(int count) {
     return '全部参数（$count 项）';
   }
+
+  @override
+  String get shareImage => '分享图片';
+
+  @override
+  String get shareShowLocation => '显示观测地';
+
+  @override
+  String get shareShowLocationHint => '经纬度取整到 1°（约 100 km），不显示精确位置';
+
+  @override
+  String get shareButton => '分享';
+
+  @override
+  String get shareSave => '保存图片';
+
+  @override
+  String get shareSaved => '已保存';
+
+  @override
+  String shareFailed(String error) {
+    return '没能分享：$error';
+  }
+
+  @override
+  String posterSeenFrom(String place) {
+    return '在 $place';
+  }
+
+  @override
+  String get posterGreatest => '食甚';
+
+  @override
+  String get posterLocalMax => '本地食甚';
+
+  @override
+  String get posterTotality => '全食时长';
+
+  @override
+  String get posterUmbral => '本影食时长';
+
+  @override
+  String get posterPenumbral => '半影食时长';
+
+  @override
+  String get posterKind => '本地类型';
+
+  @override
+  String get posterMagnitude => '食分';
+
+  @override
+  String get posterObscuration => '食面积';
+
+  @override
+  String get posterSolarSafety => '观测太阳务必使用 ISO 12312-2 滤光膜，切勿直视太阳';
+
+  @override
+  String get posterAnnular => '环食时长';
+
+  @override
+  String get posterScan => '扫码下载观象，查看更多天象';
 }

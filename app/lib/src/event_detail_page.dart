@@ -8,6 +8,7 @@ import 'layout.dart';
 import 'lunar_eclipse_detail.dart';
 import 'rust/api/guanxiang.dart';
 import 'settings.dart';
+import 'share_poster.dart';
 import 'solar_eclipse_detail.dart';
 import 'time_format.dart';
 
@@ -115,6 +116,20 @@ class EventDetailPage extends StatelessWidget {
       appBar: AppBar(
         title: Text(event.title),
         actions: [
+          if (lunar || solar)
+            IconButton(
+              icon: const Icon(Icons.ios_share),
+              tooltip: l.shareImage,
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => EclipseSharePage(
+                    engine: engine!,
+                    event: event,
+                    settings: settings,
+                  ),
+                ),
+              ),
+            ),
           if (sheet)
             IconButton(
               icon: const Icon(Icons.table_rows_outlined),

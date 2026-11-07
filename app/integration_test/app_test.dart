@@ -401,6 +401,8 @@ void main() {
     await tester.pump();
     expect(find.text('全食中'), findsOneWidget);
 
+    expect(find.byTooltip('分享图片'), findsOneWidget);
+
     // 原始参数收在底部抽屉里：页面上没有参数表，点按钮后才出现
     expect(find.text('γ（影轴离地心）'), findsNothing);
     await tester.tap(find.textContaining('全部参数（'));

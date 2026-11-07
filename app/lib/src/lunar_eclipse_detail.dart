@@ -776,6 +776,25 @@ class _SimulationCardState extends State<_SimulationCard> {
   }
 }
 
+/// 月面（分享图等处用）：[position] 为月心相对地影中心的位置（度）。
+class MoonFace extends StatelessWidget {
+  const MoonFace({super.key, required this.diagram, required this.position});
+
+  final LunarEclipseDiagram diagram;
+  final Offset position;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _MoonFacePainter(
+      diagram: diagram,
+      position: position,
+      accents: AstroAccents.of(context),
+      edge: Colors.transparent,
+    ),
+    size: Size.infinite,
+  );
+}
+
 /// 放大的月面：月心放在中间，地影按它与月心的相对位置画上去。
 class _MoonFacePainter extends CustomPainter {
   _MoonFacePainter({

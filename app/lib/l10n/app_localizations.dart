@@ -1903,6 +1903,120 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'全部参数（{count} 项）'**
   String allParametersCount(int count);
+
+  /// No description provided for @shareImage.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享图片'**
+  String get shareImage;
+
+  /// No description provided for @shareShowLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'显示观测地'**
+  String get shareShowLocation;
+
+  /// No description provided for @shareShowLocationHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'经纬度取整到 1°（约 100 km），不显示精确位置'**
+  String get shareShowLocationHint;
+
+  /// No description provided for @shareButton.
+  ///
+  /// In zh, this message translates to:
+  /// **'分享'**
+  String get shareButton;
+
+  /// No description provided for @shareSave.
+  ///
+  /// In zh, this message translates to:
+  /// **'保存图片'**
+  String get shareSave;
+
+  /// No description provided for @shareSaved.
+  ///
+  /// In zh, this message translates to:
+  /// **'已保存'**
+  String get shareSaved;
+
+  /// No description provided for @shareFailed.
+  ///
+  /// In zh, this message translates to:
+  /// **'没能分享：{error}'**
+  String shareFailed(String error);
+
+  /// No description provided for @posterSeenFrom.
+  ///
+  /// In zh, this message translates to:
+  /// **'在 {place}'**
+  String posterSeenFrom(String place);
+
+  /// No description provided for @posterGreatest.
+  ///
+  /// In zh, this message translates to:
+  /// **'食甚'**
+  String get posterGreatest;
+
+  /// No description provided for @posterLocalMax.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地食甚'**
+  String get posterLocalMax;
+
+  /// No description provided for @posterTotality.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食时长'**
+  String get posterTotality;
+
+  /// No description provided for @posterUmbral.
+  ///
+  /// In zh, this message translates to:
+  /// **'本影食时长'**
+  String get posterUmbral;
+
+  /// No description provided for @posterPenumbral.
+  ///
+  /// In zh, this message translates to:
+  /// **'半影食时长'**
+  String get posterPenumbral;
+
+  /// No description provided for @posterKind.
+  ///
+  /// In zh, this message translates to:
+  /// **'本地类型'**
+  String get posterKind;
+
+  /// No description provided for @posterMagnitude.
+  ///
+  /// In zh, this message translates to:
+  /// **'食分'**
+  String get posterMagnitude;
+
+  /// No description provided for @posterObscuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'食面积'**
+  String get posterObscuration;
+
+  /// No description provided for @posterSolarSafety.
+  ///
+  /// In zh, this message translates to:
+  /// **'观测太阳务必使用 ISO 12312-2 滤光膜，切勿直视太阳'**
+  String get posterSolarSafety;
+
+  /// No description provided for @posterAnnular.
+  ///
+  /// In zh, this message translates to:
+  /// **'环食时长'**
+  String get posterAnnular;
+
+  /// No description provided for @posterScan.
+  ///
+  /// In zh, this message translates to:
+  /// **'扫码下载观象，查看更多天象'**
+  String get posterScan;
 }
 
 class _AppLocalizationsDelegate

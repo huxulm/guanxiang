@@ -819,5 +819,38 @@
         "type": "int"
       }
     }
-  }
+  },
+  "shareImage": "分享图片",
+  "shareShowLocation": "显示观测地",
+  "shareShowLocationHint": "经纬度取整到 1°（约 100 km），不显示精确位置",
+  "shareButton": "分享",
+  "shareSave": "保存图片",
+  "shareSaved": "已保存",
+  "shareFailed": "没能分享：{error}",
+  "@shareFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "posterSeenFrom": "在 {place}",
+  "@posterSeenFrom": {
+    "placeholders": {
+      "place": {
+        "type": "String"
+      }
+    }
+  },
+  "posterGreatest": "食甚",
+  "posterLocalMax": "本地食甚",
+  "posterTotality": "全食时长",
+  "posterUmbral": "本影食时长",
+  "posterPenumbral": "半影食时长",
+  "posterKind": "本地类型",
+  "posterMagnitude": "食分",
+  "posterObscuration": "食面积",
+  "posterSolarSafety": "观测太阳务必使用 ISO 12312-2 滤光膜，切勿直视太阳",
+  "posterAnnular": "环食时长",
+  "posterScan": "扫码下载观象，查看更多天象"
 }

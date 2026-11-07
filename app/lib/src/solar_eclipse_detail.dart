@@ -698,6 +698,29 @@ class _SunSimulationCardState extends State<_SunSimulationCard> {
   }
 }
 
+/// 太阳面（分享图等处用）：没有圆形视场底色和天顶箭头，直接画在背景上。
+class SunFace extends StatelessWidget {
+  const SunFace({super.key, required this.point, required this.moon});
+
+  final SolarDiskPoint point;
+
+  /// 月面颜色（全食时一律为黑色）
+  final Color moon;
+
+  @override
+  Widget build(BuildContext context) => CustomPaint(
+    painter: _SunFacePainter(
+      point: point,
+      accents: AstroAccents.of(context),
+      sky: Colors.transparent,
+      moon: moon,
+      zenith: Colors.transparent,
+      field: false,
+    ),
+    size: Size.infinite,
+  );
+}
+
 /// 太阳面：天顶朝上；月亮圆面按此刻相对太阳的位置叠上去，全食时画日冕示意。
 class _SunFacePainter extends CustomPainter {
   _SunFacePainter({
@@ -706,6 +729,7 @@ class _SunFacePainter extends CustomPainter {
     required this.sky,
     required this.moon,
     required this.zenith,
+    this.field = true,
   });
 
   final SolarDiskPoint point;
@@ -713,6 +737,9 @@ class _SunFacePainter extends CustomPainter {
   final Color sky;
   final Color moon;
   final Color zenith;
+
+  /// 画圆形视场（底色、裁剪）和天顶箭头
+  final bool field;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -732,10 +759,12 @@ class _SunFacePainter extends CustomPainter {
     final totality = point.obscuration > 0.9999 && rm >= r;
 
     // 所有内容都裁剪在圆形视场内（C1、C4 前后月亮在日面外）
-    final field = Rect.fromCircle(center: c, radius: size.shortestSide / 2);
+    final view = Rect.fromCircle(center: c, radius: size.shortestSide / 2);
     canvas.save();
-    canvas.clipPath(Path()..addOval(field));
-    canvas.drawRect(field, Paint()..color = totality ? Colors.black : sky);
+    if (field) {
+      canvas.clipPath(Path()..addOval(view));
+      canvas.drawRect(view, Paint()..color = totality ? Colors.black : sky);
+    }
     if (totality) {
       // 日冕示意：从日面边缘向外淡出
       canvas.drawCircle(
@@ -769,6 +798,7 @@ class _SunFacePainter extends CustomPainter {
       Paint()..color = totality ? Colors.black : moon,
     );
     canvas.restore();
+    if (!field) return;
 
     // 天顶方向
     final tp = TextPainter(
