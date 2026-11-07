@@ -792,6 +792,10 @@ class _SunFacePainter extends CustomPainter {
           ],
         ).createShader(Rect.fromCircle(center: c, radius: r)),
     );
+    // 没有视场底色时（分享图），日面外的月亮和背景一样看不见，只画挡住日面的部分
+    if (!field && !totality) {
+      canvas.clipPath(Path()..addOval(Rect.fromCircle(center: c, radius: r)));
+    }
     canvas.drawCircle(
       moonAt,
       rm,

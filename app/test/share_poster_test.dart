@@ -14,10 +14,8 @@ void main() {
     expect(roundedPlace(0.4, -0.4), '0°N 0°W');
   });
 
-  test('日食图比月食图高，多出来的是全宽地图', () {
+  test('月食图固定 4:5', () {
     expect(posterSize.aspectRatio, closeTo(0.8, 1e-9));
-    expect(solarPosterSize.width, posterSize.width);
-    expect(solarPosterSize.height, greaterThan(posterSize.height));
   });
 
   testWidgets('分享图：打开“显示观测地”才写位置', (tester) async {
@@ -89,5 +87,107 @@ void main() {
     expect(find.text('在 40°N 116°E · 全程可见'), findsOneWidget);
     // 精确坐标不会出现在图上
     expect(find.textContaining('39.9'), findsNothing);
+  });
+  testWidgets('日食分享图：打开观测地、英文长文案时高度撑开，不溢出', (tester) async {
+    const event = EventItem(
+      kind: EventKind.solarEclipse,
+      title: 'Annular solar eclipse',
+      utc: '2030-06-01 06:28:00',
+      ttJd: 2462653.77,
+      summary: 'Magnitude 0.944',
+      details: [],
+      subtle: false,
+    );
+    // 一条从西到东的中心线，栅格里有一块偏食区
+    final grid = Float32List(90 * 180);
+    for (var r = 30; r < 45; r++) {
+      for (var c = 80; c < 120; c++) {
+        grid[r * 180 + c] = 0.5;
+      }
+    }
+    SolarDiskPoint pt(double s, double x) => SolarDiskPoint(
+      seconds: s,
+      xArcmin: x,
+      yArcmin: 0,
+      sunRadiusArcmin: 15.8,
+      moonRadiusArcmin: 15.0,
+      obscuration: 0.9,
+      sunAltitudeDeg: 5,
+      zenithAngleDeg: 0,
+    );
+    final detail = SolarEclipseDetail(
+      diagram: const SolarEclipseDiagram(
+        track: [],
+        greatest: DiagramPoint(
+          x: 0,
+          y: 0.5,
+          utc: '2030-06-01 06:28:00',
+          label: 'Max',
+        ),
+        penumbraRadius: 0.55,
+        umbraRadius: 0.02,
+        axisDeclinationDeg: 22,
+      ),
+      saros: '128 (34 of 73)',
+      centralLine: const [
+        GeoPoint(latitudeDeg: 30, longitudeDeg: 0),
+        GeoPoint(latitudeDeg: 45, longitudeDeg: 60),
+        GeoPoint(latitudeDeg: 50, longitudeDeg: 120),
+      ],
+      pathWidthKm: Float64List.fromList([250, 250, 250]),
+      greatestPoint: const GeoPoint(latitudeDeg: 45, longitudeDeg: 60),
+      gridStepDeg: 2,
+      gridRows: 90,
+      gridCols: 180,
+      grid: grid,
+      local: LocalSolarView(
+        verdict: SolarVisibility.sets,
+        kind: LocalEclipseKind.annular,
+        magnitude: 0.944,
+        obscuration: 0.89,
+        phases: const [
+          SolarPhase(
+            code: 'Max',
+            name: 'Maximum',
+            utc: '2030-06-01 06:28:00',
+            sun: SunPoint(altitudeDeg: 5, azimuthDeg: 300),
+          ),
+        ],
+        centralSeconds: 303,
+        trackStartUtc: '2030-06-01 06:00:00.000',
+        track: [pt(0, -20), pt(3600, 20)],
+      ),
+    );
+    tester.view.physicalSize = const Size(800, 2400);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('en'),
+        supportedLocales: const [Locale('en'), Locale('zh')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: Align(
+          alignment: Alignment.topCenter,
+          child: SizedBox(
+            width: posterSize.width,
+            height: posterHeightFor(detail),
+            child: EclipsePoster(
+              event: event,
+              detail: detail,
+              place: const Place(45.75, 126.65, 150),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.textContaining('From 46°N 127°E'), findsOneWidget);
+    expect(find.textContaining('ISO 12312-2'), findsOneWidget);
+    expect(find.text('Annular phase'), findsOneWidget);
+    expect(find.bySemanticsLabel(posterSiteUrl), findsOneWidget);
+    // 高度按内容撑开，比固定的月食图高
+    final h = tester.getSize(find.byType(EclipsePoster)).height;
+    expect(h, greaterThan(posterSize.height));
   });
 }

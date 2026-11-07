@@ -21,13 +21,13 @@ import 'solar_eclipse_detail.dart';
 import 'theme.dart';
 import 'time_format.dart';
 
-/// 分享图的逻辑尺寸，按 3 倍导出：月食 4:5（1080 × 1350）；日食多一张全宽的食带地图，
-/// 改为 9:14（1080 × 1680）。
+/// 分享图的逻辑尺寸，按 3 倍导出：月食固定 4:5（1080 × 1350）。日食多一张全宽的食带地图，
+/// 宽度相同、高度按内容撑开（约 1080 × 1650～1800）：观测地、结论文字、英文文案折行时不会溢出。
 const posterSize = Size(360, 450);
-const solarPosterSize = Size(360, 560);
 
-Size posterSizeFor(Object detail) =>
-    detail is SolarEclipseDetail ? solarPosterSize : posterSize;
+/// 分享图的高度；null 表示按内容撑开（日食）。
+double? posterHeightFor(Object detail) =>
+    detail is SolarEclipseDetail ? null : posterSize.height;
 const _posterPixelRatio = 3.0;
 
 /// 官网地址（分享文字里写它，分享图右下角是它的二维码）
@@ -190,8 +190,9 @@ class _EclipseSharePageState extends State<EclipseSharePage> {
           }
           final poster = RepaintBoundary(
             key: _boundary,
-            child: SizedBox.fromSize(
-              size: posterSizeFor(d),
+            child: SizedBox(
+              width: posterSize.width,
+              height: posterHeightFor(d),
               child: EclipsePoster(
                 event: widget.event,
                 detail: d,
@@ -477,8 +478,9 @@ class _PosterBody extends StatelessWidget {
         ),
       );
     } else {
-      // 日食：太阳面缩小放在标题右侧，下面是左右贴边的食带地图
+      // 日食：太阳面缩小放在标题右侧，下面是左右贴边的食带地图；高度按内容撑开
       content = Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Padding(
@@ -502,19 +504,18 @@ class _PosterBody extends StatelessWidget {
           ),
           const SizedBox(height: 14),
           SolarPathMap(detail: solarDetail, place: p),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(22, 12, 22, 16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  ?locationLine,
-                  const Spacer(),
-                  statsRow,
-                  const SizedBox(height: 12),
-                  footer,
-                ],
-              ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 14, 22, 16),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                ?locationLine,
+                const SizedBox(height: 4),
+                statsRow,
+                const SizedBox(height: 14),
+                footer,
+              ],
             ),
           ),
         ],
