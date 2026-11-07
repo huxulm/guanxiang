@@ -49,14 +49,16 @@ const en: Record<string, string> = {
   r5: 'Satellite approaches',
   r5d: '≤ 0.007 s',
   screensTitle: 'Screenshots',
-  capSearch: 'Pick an event type and years',
-  capResults: 'Results on their own page',
-  capSatellite: 'Space station passing the Sun',
-  capSettings: 'GPS or a manual location',
-  altSearch: 'Search screen',
+  capDashboard: 'Tonight and coming events',
+  capResults: 'Search results grouped by year',
+  capEclipse: 'Eclipse diagrams',
+  capSatellite: 'ISS and Tiangong transit predictions',
+  capNight: 'Red night mode keeps your dark adaptation',
+  altDashboard: 'Dashboard',
   altResults: 'Search results',
-  altSatellite: 'Satellite transit results',
-  altSettings: 'Settings screen',
+  altEclipse: 'Lunar eclipse diagram',
+  altSatellite: 'Satellite transit screen',
+  altNight: 'Dashboard in red night mode',
   downloadTitle: 'Download',
   dlAndroid: 'Android',
   dlAndroidText: 'Android 7.0 or later. Most phones need arm64-v8a.',
@@ -111,10 +113,11 @@ function apply(lang: Lang): void {
 }
 
 const zhAltText: Record<string, string> = {
-  altSearch: '搜索页',
+  altDashboard: '看板',
   altResults: '搜索结果',
-  altSatellite: '卫星凌日结果',
-  altSettings: '设置页',
+  altEclipse: '月食示意图',
+  altSatellite: '卫星凌日凌月页',
+  altNight: '夜间红光模式下的看板',
 };
 
 function setLinks(): void {

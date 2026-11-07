@@ -62,6 +62,8 @@ class GuanxiangApp extends StatelessWidget {
     }
 
     return MaterialApp(
+      // 调试版也不显示右上角的 DEBUG 角标（发布版本来就没有），截图时不用再处理
+      debugShowCheckedModeBanner: false,
       onGenerateTitle: (context) => AppLocalizations.of(context).appTitle,
       // 跟随系统语言；既不是中文也不是英文时用英文（列表第一项）
       supportedLocales: const [Locale('en'), Locale('zh')],

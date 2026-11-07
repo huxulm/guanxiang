@@ -70,7 +70,7 @@ html {
     @apply h-auto w-full rounded-[2rem] border-4 border-slate-700/80 shadow-2xl shadow-black/50;
   }
   .shot {
-    @apply w-52 shrink-0 snap-center md:w-auto;
+    @apply w-52 shrink-0 snap-center lg:w-auto;
   }
   .shot figcaption {
     @apply mt-3 text-center text-sm text-slate-400;
