@@ -902,4 +902,38 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lunarNeedsLocation =>
       'Set your location to see the Moon\'s altitude and direction at each phase, and whether the eclipse is visible from there';
+
+  @override
+  String get lunarStateBefore => 'Not started yet';
+
+  @override
+  String get lunarStatePenumbral => 'Penumbral phase';
+
+  @override
+  String get lunarStatePartial => 'Partial phase';
+
+  @override
+  String get lunarStateTotal => 'Totality';
+
+  @override
+  String get lunarStateAfter => 'Eclipse over';
+
+  @override
+  String lunarMoonAlt(int alt) {
+    return 'Moon altitude $alt°';
+  }
+
+  @override
+  String get lunarMoonDown => 'Moon below the horizon';
+
+  @override
+  String get lunarSliderLabel => 'Time';
+
+  @override
+  String get lunarDiagramCaption =>
+      'North up, east left (as seen in the sky). The outer circle is Earth\'s penumbra, the inner one the umbra. The small circles show the Moon at each contact (P1 penumbral begins, U1 partial begins, U2 total begins, U3 total ends, U4 partial ends, P4 penumbral ends); the arrow shows its motion. Drag the slider or tap a phase to see where the Moon is and how it looks at that moment.';
+
+  @override
+  String get lunarDanjonNote =>
+      'The simulated Moon is only a guide: how dark and how red the Moon looks during totality depends on clouds and volcanic dust in Earth\'s atmosphere and cannot be predicted (observers rate it on the Danjon scale, from L0, nearly invisible, to L4, bright copper-orange).';
 }

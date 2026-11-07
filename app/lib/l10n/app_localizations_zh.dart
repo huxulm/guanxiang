@@ -863,4 +863,38 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lunarNeedsLocation => '设置观测地后，这里显示每个食相时月亮的高度和方向，以及在你那里能不能看到';
+
+  @override
+  String get lunarStateBefore => '月食还没开始';
+
+  @override
+  String get lunarStatePenumbral => '半影食中';
+
+  @override
+  String get lunarStatePartial => '偏食中';
+
+  @override
+  String get lunarStateTotal => '全食中';
+
+  @override
+  String get lunarStateAfter => '月食已结束';
+
+  @override
+  String lunarMoonAlt(int alt) {
+    return '月亮高度 $alt°';
+  }
+
+  @override
+  String get lunarMoonDown => '月亮在地平线下';
+
+  @override
+  String get lunarSliderLabel => '时刻';
+
+  @override
+  String get lunarDiagramCaption =>
+      '北在上、东在左（抬头所见）。外圈是地球的半影，内圈是本影；小圆是月球在各接触时刻（P1 半影食始、U1 初亏、U2 食既、U3 生光、U4 复圆、P4 半影食终）的位置，箭头是月球运动的方向。拖动滑块或点下面的食相，看月球在那一刻的位置和样子。';
+
+  @override
+  String get lunarDanjonNote =>
+      '月面模拟只是示意：全食时月亮有多暗、偏红还是偏橙，取决于地球大气里的云和火山灰，没法预报（天文上用丹戎等级 L0–L4 记录，L0 几乎看不见，L4 是明亮的橙红色）。';
 }

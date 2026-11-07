@@ -1561,6 +1561,66 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'设置观测地后，这里显示每个食相时月亮的高度和方向，以及在你那里能不能看到'**
   String get lunarNeedsLocation;
+
+  /// No description provided for @lunarStateBefore.
+  ///
+  /// In zh, this message translates to:
+  /// **'月食还没开始'**
+  String get lunarStateBefore;
+
+  /// No description provided for @lunarStatePenumbral.
+  ///
+  /// In zh, this message translates to:
+  /// **'半影食中'**
+  String get lunarStatePenumbral;
+
+  /// No description provided for @lunarStatePartial.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏食中'**
+  String get lunarStatePartial;
+
+  /// No description provided for @lunarStateTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食中'**
+  String get lunarStateTotal;
+
+  /// No description provided for @lunarStateAfter.
+  ///
+  /// In zh, this message translates to:
+  /// **'月食已结束'**
+  String get lunarStateAfter;
+
+  /// No description provided for @lunarMoonAlt.
+  ///
+  /// In zh, this message translates to:
+  /// **'月亮高度 {alt}°'**
+  String lunarMoonAlt(int alt);
+
+  /// No description provided for @lunarMoonDown.
+  ///
+  /// In zh, this message translates to:
+  /// **'月亮在地平线下'**
+  String get lunarMoonDown;
+
+  /// No description provided for @lunarSliderLabel.
+  ///
+  /// In zh, this message translates to:
+  /// **'时刻'**
+  String get lunarSliderLabel;
+
+  /// No description provided for @lunarDiagramCaption.
+  ///
+  /// In zh, this message translates to:
+  /// **'北在上、东在左（抬头所见）。外圈是地球的半影，内圈是本影；小圆是月球在各接触时刻（P1 半影食始、U1 初亏、U2 食既、U3 生光、U4 复圆、P4 半影食终）的位置，箭头是月球运动的方向。拖动滑块或点下面的食相，看月球在那一刻的位置和样子。'**
+  String get lunarDiagramCaption;
+
+  /// No description provided for @lunarDanjonNote.
+  ///
+  /// In zh, this message translates to:
+  /// **'月面模拟只是示意：全食时月亮有多暗、偏红还是偏橙，取决于地球大气里的云和火山灰，没法预报（天文上用丹戎等级 L0–L4 记录，L0 几乎看不见，L4 是明亮的橙红色）。'**
+  String get lunarDanjonNote;
 }
 
 class _AppLocalizationsDelegate

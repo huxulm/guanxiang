@@ -48,4 +48,66 @@ void main() {
       expect(visibilityText(en, v), isNotEmpty);
     }
   });
+
+  const diagram = LunarEclipseDiagram(
+    penumbraDeg: 1.2,
+    umbraDeg: 0.7,
+    moonSemidiameterDeg: 0.25,
+    path: [
+      DiagramPoint(x: -1, y: 0.5, utc: '2025-09-07 16:00:00', label: ''),
+      DiagramPoint(x: 0, y: 0, utc: '2025-09-07 16:10:00', label: ''),
+      DiagramPoint(x: 1, y: -0.5, utc: '2025-09-07 16:20:00', label: ''),
+    ],
+    marks: [],
+  );
+
+  test('轨迹按时刻插值，两端截断', () {
+    final s = TrackSampler(diagram, [-10, 0, 20]);
+    DateTime at(int m, [int sec = 0]) => DateTime.utc(2025, 9, 7, 16, m, sec);
+    expect(s.start, at(0));
+    expect(s.end, at(20));
+    expect(s.positionAt(at(5)), const Offset(-0.5, 0.25));
+    expect(s.positionAt(at(15)), const Offset(0.5, -0.25));
+    expect(s.positionAt(DateTime.utc(2025, 9, 7, 15)), const Offset(-1, 0.5));
+    expect(s.positionAt(DateTime.utc(2025, 9, 7, 17)), const Offset(1, -0.5));
+    expect(s.altitudeAt(at(5)), -5);
+    expect(s.altitudeAt(at(12, 30)), 5);
+    expect(TrackSampler(diagram, null).altitudeAt(at(5)), isNull);
+    // 高度数组和轨迹长度不一致时不插值
+    expect(TrackSampler(diagram, [1, 2]).altitudeAt(at(5)), isNull);
+  });
+
+  test('此刻所处阶段，边界算在阶段内', () {
+    EclipsePhase ph(String code, String utc) => EclipsePhase(
+      code: code,
+      name: code,
+      utc: utc,
+      sublunar: const GeoPoint(latitudeDeg: 0, longitudeDeg: 0),
+    );
+    final phases = [
+      ph('P1', '2025-09-07 15:28:00'),
+      ph('U1', '2025-09-07 16:27:00'),
+      ph('U2', '2025-09-07 17:30:00'),
+      ph('Max', '2025-09-07 18:11:00'),
+      ph('U3', '2025-09-07 18:52:00'),
+      ph('U4', '2025-09-07 19:56:00'),
+      ph('P4', '2025-09-07 20:55:00'),
+    ];
+    String at(int h, int m) =>
+        lunarStateText(zh, phases, DateTime.utc(2025, 9, 7, h, m));
+    expect(at(15, 0), '月食还没开始');
+    expect(at(15, 28), '半影食中');
+    expect(at(16, 27), '偏食中');
+    expect(at(17, 30), '全食中');
+    expect(at(18, 52), '全食中');
+    expect(at(19, 0), '偏食中');
+    expect(at(20, 0), '半影食中');
+    expect(at(21, 0), '月食已结束');
+    // 半影月食只有 P1、P4
+    final penumbral = [phases.first, phases[3], phases.last];
+    expect(
+      lunarStateText(en, penumbral, DateTime.utc(2025, 9, 7, 18)),
+      'Penumbral phase',
+    );
+  });
 }

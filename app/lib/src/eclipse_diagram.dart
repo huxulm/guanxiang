@@ -208,17 +208,56 @@ class _LunarFigure extends StatelessWidget {
   final LunarEclipseDiagram diagram;
 
   @override
+  Widget build(BuildContext context) => LunarShadowFigure(diagram: diagram);
+}
+
+/// 月食示意图（地影和月球的经过）。给出 [current] 时，另画出此刻的月球，
+/// 月面按它在地影中的位置着色（见 [lunarShadowShader]）。
+class LunarShadowFigure extends StatelessWidget {
+  const LunarShadowFigure({super.key, required this.diagram, this.current});
+
+  final LunarEclipseDiagram diagram;
+
+  /// 此刻月心相对地影中心的位置（度，x 向东、y 向北）
+  final Offset? current;
+
+  @override
   Widget build(BuildContext context) => CustomPaint(
-    painter: _LunarPainter(diagram, _Palette(context)),
+    painter: _LunarPainter(
+      diagram,
+      _Palette(context),
+      current: current,
+      accents: AstroAccents.of(context),
+    ),
     size: Size.infinite,
   );
 }
 
+/// 月面着色：以地影中心为圆心的径向渐变。本影内是古铜红（越靠近中心越暗），
+/// 半影内由暗到亮，半影外是正常的月面。[center] 是地影中心，两个半径用同一坐标系。
+Shader lunarShadowShader(
+  Offset center,
+  double umbraRadius,
+  double penumbraRadius,
+  AstroAccents a,
+) {
+  final u = (umbraRadius / penumbraRadius).clamp(0.0, 1.0);
+  final deep = Color.lerp(a.bloodMoon, Colors.black, 0.55)!;
+  final rim = Color.lerp(a.bloodMoon, a.moonLit, 0.12)!;
+  final inner = Color.lerp(a.moonLit, Colors.black, 0.55)!;
+  return RadialGradient(
+    colors: [deep, a.bloodMoon, rim, inner, a.moonLit],
+    stops: [0, u * 0.7, u, math.min(1.0, u + 0.002), 1],
+  ).createShader(Rect.fromCircle(center: center, radius: penumbraRadius));
+}
+
 class _LunarPainter extends CustomPainter {
-  _LunarPainter(this.d, this.p);
+  _LunarPainter(this.d, this.p, {this.current, required this.accents});
 
   final LunarEclipseDiagram d;
   final _Palette p;
+  final Offset? current;
+  final AstroAccents accents;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -266,11 +305,12 @@ class _LunarPainter extends CustomPainter {
       );
     }
 
-    // 各接触点和食甚时的月球
+    // 各接触点和食甚时的月球（有当前时刻时，食甚也画成普通轮廓）
     final r = d.moonSemidiameterDeg * k;
+    final cur = current;
     for (final (i, m) in d.marks.indexed) {
       final o = at(m);
-      final greatest = i == d.marks.length - 1;
+      final greatest = cur == null && i == d.marks.length - 1;
       canvas.drawCircle(
         o,
         r,
@@ -300,6 +340,30 @@ class _LunarPainter extends CustomPainter {
         ),
       );
     }
+
+    // 此刻的月球
+    if (cur != null) {
+      final o = c + Offset(-cur.dx * k, -cur.dy * k);
+      canvas.drawCircle(
+        o,
+        r,
+        Paint()
+          ..shader = lunarShadowShader(
+            c,
+            d.umbraDeg * k,
+            d.penumbraDeg * k,
+            accents,
+          ),
+      );
+      canvas.drawCircle(
+        o,
+        r,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.6
+          ..color = p.accent,
+      );
+    }
     canvas.restore();
 
     // 方位
@@ -308,7 +372,8 @@ class _LunarPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_LunarPainter old) => old.d != d;
+  bool shouldRepaint(_LunarPainter old) =>
+      old.d != d || old.current != current || old.accents != accents;
 }
 
 // ---------------------------------------------------------------------------

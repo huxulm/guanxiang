@@ -104,7 +104,7 @@ class _LunarEclipseSectionsState extends State<LunarEclipseSections> {
                     ),
             ),
             const SizedBox(height: 16),
-            EclipseDiagramCard(engine: widget.engine, event: widget.event),
+            _SimulationCard(detail: d),
           ],
         );
       },
@@ -706,4 +706,310 @@ class _Verdict extends StatelessWidget {
       ],
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// 可拖动的示意图和月面模拟
+// ---------------------------------------------------------------------------
+
+/// 沿示意图轨迹按时刻插值：月心位置和（有观测地时）月亮高度。
+class TrackSampler {
+  TrackSampler(this.diagram, this.altitudes)
+    : _ms = [
+        for (final p in diagram.path)
+          parseUtc(p.utc)?.millisecondsSinceEpoch ?? 0,
+      ];
+
+  final LunarEclipseDiagram diagram;
+  final List<double>? altitudes;
+  final List<int> _ms;
+
+  DateTime get start =>
+      DateTime.fromMillisecondsSinceEpoch(_ms.first, isUtc: true);
+  DateTime get end =>
+      DateTime.fromMillisecondsSinceEpoch(_ms.last, isUtc: true);
+
+  /// 时刻 t 落在第 i、i+1 个取样点之间的位置：(i, 比例)
+  (int, double) _locate(DateTime t) {
+    final ms = t.millisecondsSinceEpoch;
+    if (ms <= _ms.first) return (0, 0);
+    if (ms >= _ms.last) return (_ms.length - 2, 1);
+    var lo = 0, hi = _ms.length - 1;
+    while (hi - lo > 1) {
+      final mid = (lo + hi) >> 1;
+      if (_ms[mid] <= ms) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    final span = _ms[hi] - _ms[lo];
+    return (lo, span == 0 ? 0 : (ms - _ms[lo]) / span);
+  }
+
+  /// 月心相对地影中心的位置（度）
+  Offset positionAt(DateTime t) {
+    final path = diagram.path;
+    if (path.length < 2) return Offset(path.first.x, path.first.y);
+    final (i, f) = _locate(t);
+    final a = path[i], b = path[i + 1];
+    return Offset(a.x + (b.x - a.x) * f, a.y + (b.y - a.y) * f);
+  }
+
+  /// 月亮视高度（度）；没有观测地时为 null
+  double? altitudeAt(DateTime t) {
+    final alt = altitudes;
+    if (alt == null || alt.length != _ms.length || alt.length < 2) return null;
+    final (i, f) = _locate(t);
+    return alt[i] + (alt[i + 1] - alt[i]) * f;
+  }
+}
+
+/// 此刻处在哪个阶段。
+String lunarStateText(
+  AppLocalizations l,
+  List<EclipsePhase> phases,
+  DateTime t,
+) {
+  DateTime? at(String code) {
+    for (final p in phases) {
+      if (p.code == code) return parseUtc(p.utc);
+    }
+    return null;
+  }
+
+  bool inside(String a, String b) {
+    final (x, y) = (at(a), at(b));
+    return x != null && y != null && !t.isBefore(x) && !t.isAfter(y);
+  }
+
+  if (inside('U2', 'U3')) return l.lunarStateTotal;
+  if (inside('U1', 'U4')) return l.lunarStatePartial;
+  if (inside('P1', 'P4')) return l.lunarStatePenumbral;
+  final p1 = at('P1');
+  return p1 != null && t.isBefore(p1) ? l.lunarStateBefore : l.lunarStateAfter;
+}
+
+class _SimulationCard extends StatefulWidget {
+  const _SimulationCard({required this.detail});
+
+  final LunarEclipseDetail detail;
+
+  @override
+  State<_SimulationCard> createState() => _SimulationCardState();
+}
+
+class _SimulationCardState extends State<_SimulationCard> {
+  late TrackSampler _track;
+  late DateTime _t;
+
+  @override
+  void initState() {
+    super.initState();
+    _reset();
+  }
+
+  @override
+  void didUpdateWidget(_SimulationCard old) {
+    super.didUpdateWidget(old);
+    if (old.detail != widget.detail) {
+      final keep = _t;
+      _reset();
+      if (!keep.isBefore(_track.start) && !keep.isAfter(_track.end)) _t = keep;
+    }
+  }
+
+  void _reset() {
+    final d = widget.detail;
+    _track = TrackSampler(d.diagram, d.local?.trackAltitudeDeg);
+    final max = d.phases.where((p) => p.code == 'Max').firstOrNull;
+    _t = (max == null ? null : parseUtc(max.utc)) ?? _track.start;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    final d = widget.detail;
+    final pos = _track.positionAt(_t);
+    final alt = _track.altitudeAt(_t);
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant,
+    );
+    final total = _track.end.difference(_track.start).inSeconds.toDouble();
+    final value = _t.difference(_track.start).inSeconds.toDouble();
+    final local = _t.toLocal();
+
+    final readout = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${localClock(local, local)} ${zoneLabel(local)}',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          lunarStateText(l, d.phases, _t),
+          style: theme.textTheme.bodyLarge?.copyWith(color: cs.primary),
+        ),
+        if (alt != null)
+          Text(
+            alt > 0 ? l.lunarMoonAlt(alt.round()) : l.lunarMoonDown,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: alt > 0 ? cs.onSurface : cs.onSurfaceVariant,
+            ),
+          ),
+      ],
+    );
+    final face = SizedBox.square(
+      dimension: 112,
+      child: CustomPaint(
+        painter: _MoonFacePainter(
+          diagram: d.diagram,
+          position: pos,
+          accents: AstroAccents.of(context),
+          edge: cs.outline,
+        ),
+      ),
+    );
+    final figure = ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 380),
+      child: AspectRatio(
+        aspectRatio: 1,
+        child: LunarShadowFigure(diagram: d.diagram, current: pos),
+      ),
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.diagramTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            LayoutBuilder(
+              builder: (context, c) => c.maxWidth >= 560
+                  ? Row(
+                      children: [
+                        Expanded(child: Center(child: figure)),
+                        const SizedBox(width: 16),
+                        SizedBox(
+                          width: 180,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              face,
+                              const SizedBox(height: 12),
+                              readout,
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : Column(
+                      children: [
+                        Center(child: figure),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            face,
+                            const SizedBox(width: 16),
+                            Expanded(child: readout),
+                          ],
+                        ),
+                      ],
+                    ),
+            ),
+            Slider(
+              key: const ValueKey('lunarSlider'),
+              value: value.clamp(0, total),
+              max: total,
+              label: localClock(local, local, seconds: false),
+              semanticFormatterCallback: (_) =>
+                  '${l.lunarSliderLabel} ${localClock(local, local)}',
+              onChanged: (v) => setState(
+                () => _t = _track.start.add(Duration(seconds: v.round())),
+              ),
+            ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final p in d.phases)
+                  if (parseUtc(p.utc) case final t?)
+                    ChoiceChip(
+                      label: Text(p.code == 'Max' ? p.name : p.code),
+                      selected: t.difference(_t).inSeconds.abs() < 30,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => setState(() => _t = t),
+                    ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(l.lunarDiagramCaption, style: muted),
+            const SizedBox(height: 6),
+            Text(l.lunarDanjonNote, style: muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 放大的月面：月心放在中间，地影按它与月心的相对位置画上去。
+class _MoonFacePainter extends CustomPainter {
+  _MoonFacePainter({
+    required this.diagram,
+    required this.position,
+    required this.accents,
+    required this.edge,
+  });
+
+  final LunarEclipseDiagram diagram;
+  final Offset position;
+  final AstroAccents accents;
+  final Color edge;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide / 2 - 1;
+    final k = r / diagram.moonSemidiameterDeg;
+    // 北在上、东在左：月心在 (-x, -y)·k 处，所以地影中心相对月心在 (+x, +y)·k
+    final shadow = c + Offset(position.dx * k, position.dy * k);
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..shader = lunarShadowShader(
+          shadow,
+          diagram.umbraDeg * k,
+          diagram.penumbraDeg * k,
+          accents,
+        ),
+    );
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1
+        ..color = edge,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MoonFacePainter old) =>
+      old.position != position ||
+      old.diagram != diagram ||
+      old.accents != accents;
 }
