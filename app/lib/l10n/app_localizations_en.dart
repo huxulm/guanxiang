@@ -974,4 +974,66 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lunarTipSolar =>
       'Note: solar eclipses are different and must be viewed through an ISO 12312-2 solar filter or eclipse glasses.';
+
+  @override
+  String get solarKindTotal => 'Total';
+
+  @override
+  String get solarKindAnnular => 'Annular';
+
+  @override
+  String get solarKindPartial => 'Partial';
+
+  @override
+  String get solarVisFull => 'Visible from start to end';
+
+  @override
+  String get solarVisRises => 'The Sun rises with the eclipse under way';
+
+  @override
+  String get solarVisSets => 'The Sun sets before the eclipse ends';
+
+  @override
+  String get solarVisRisesAndSets =>
+      'The Sun rises and sets during the eclipse; only part is visible';
+
+  @override
+  String get solarVisHidden => 'Not visible: the Sun is below the horizon';
+
+  @override
+  String get solarVisNone => 'This eclipse is not seen from here';
+
+  @override
+  String solarCentralDuration(String kind, String duration) {
+    return '$kind $duration';
+  }
+
+  @override
+  String solarMagnitude(String value) {
+    return 'Magnitude $value';
+  }
+
+  @override
+  String solarObscuration(String percent) {
+    return 'Obscuration $percent%';
+  }
+
+  @override
+  String durationMs(int minutes, int seconds) {
+    return '$minutes min $seconds s';
+  }
+
+  @override
+  String solarInsidePath(String kind, int km) {
+    return 'You are inside the path of the $kind eclipse, $km km from the centre line';
+  }
+
+  @override
+  String solarOutsidePath(String dir, int km) {
+    return 'The centre line is $km km away to the $dir';
+  }
+
+  @override
+  String get solarNeedsLocation =>
+      'Set your location to see the eclipse from there: its type, magnitude, phase times and the Sun\'s altitude and direction';
 }

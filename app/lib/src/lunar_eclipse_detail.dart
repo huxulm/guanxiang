@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import 'eclipse_diagram.dart';
+import 'eclipse_timeline.dart';
 import 'errors.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
@@ -208,7 +209,7 @@ class _PhasesCard extends StatelessWidget {
               runSpacing: 6,
               children: [
                 for (final (i, c) in chips.indexed)
-                  _Chip(text: c, strong: i == 0 && d.totalMinutes != null),
+                  DetailChip(text: c, strong: i == 0 && d.totalMinutes != null),
               ],
             ),
             if (d.saros.isNotEmpty || d.local != null) ...[
@@ -228,8 +229,9 @@ class _PhasesCard extends StatelessWidget {
   }
 }
 
-class _Chip extends StatelessWidget {
-  const _Chip({required this.text, this.strong = false});
+/// 详情页里的小标签（持续时间、食分等）。
+class DetailChip extends StatelessWidget {
+  const DetailChip({super.key, required this.text, this.strong = false});
 
   final String text;
   final bool strong;
@@ -255,7 +257,7 @@ class _Chip extends StatelessWidget {
   }
 }
 
-/// 横向时间轴：P1 到 P4 按时间比例分段（半影浅、本影深、全食古铜红），上面标食相、下面标本地时刻；
+/// 月食时间轴：P1 到 P4 按时间比例分段（半影浅、本影深、全食古铜红）；
 /// 有观测地时，月亮在地平线下的时段画斜线。
 class PhaseTimeline extends StatelessWidget {
   const PhaseTimeline({super.key, required this.detail});
@@ -268,229 +270,33 @@ class PhaseTimeline extends StatelessWidget {
     final cs = theme.colorScheme;
     final accents = AstroAccents.of(context);
     final dark = theme.brightness == Brightness.dark;
-    final label = (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11))
-        .copyWith(color: cs.onSurfaceVariant);
-    return SizedBox(
-      height: 84,
-      width: double.infinity,
-      child: CustomPaint(
-        painter: _TimelinePainter(
-          detail: detail,
-          penumbra: Color.alphaBlend(
-            cs.onSurface.withValues(alpha: dark ? 0.16 : 0.10),
-            cs.surface,
-          ),
-          umbra: Color.alphaBlend(
+    final local = detail.local;
+    final times = [
+      for (final p in detail.diagram.path) parseUtc(p.utc) ?? DateTime.utc(0),
+    ];
+    return EclipseTimeline(
+      phases: parsePhases(detail.phases.map((p) => (p.code, p.utc))),
+      base: Color.alphaBlend(
+        cs.onSurface.withValues(alpha: dark ? 0.16 : 0.10),
+        cs.surface,
+      ),
+      segments: [
+        TimelineSegment(
+          'U1',
+          'U4',
+          Color.alphaBlend(
             cs.onSurface.withValues(alpha: dark ? 0.42 : 0.38),
             cs.surface,
           ),
-          total: accents.bloodMoon,
-          greatest: accents.eclipse,
-          hatch: cs.surface,
-          label: label,
-          strongLabel: label.copyWith(
-            color: cs.onSurface,
-            fontWeight: FontWeight.w600,
-          ),
         ),
-      ),
+        TimelineSegment('U2', 'U3', accents.bloodMoon),
+      ],
+      greatest: accents.eclipse,
+      below: local == null
+          ? const []
+          : belowHorizonIntervals(times, local.trackAltitudeDeg),
     );
   }
-}
-
-class _TimelinePainter extends CustomPainter {
-  _TimelinePainter({
-    required this.detail,
-    required this.penumbra,
-    required this.umbra,
-    required this.total,
-    required this.greatest,
-    required this.hatch,
-    required this.label,
-    required this.strongLabel,
-  });
-
-  final LunarEclipseDetail detail;
-  final Color penumbra;
-  final Color umbra;
-  final Color total;
-  final Color greatest;
-  final Color hatch;
-  final TextStyle label;
-  final TextStyle strongLabel;
-
-  static const _barTop = 34.0;
-  static const _barHeight = 14.0;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final phases = [
-      for (final p in detail.phases)
-        if (parseUtc(p.utc) case final t?) (p.code, t),
-    ];
-    if (phases.length < 2) return;
-    final t0 = phases.first.$2;
-    final t1 = phases.last.$2;
-    final span = t1.difference(t0).inMilliseconds.toDouble();
-    if (span <= 0) return;
-    // 两端留出半个标签的宽度
-    const margin = 18.0;
-    final w = size.width - 2 * margin;
-    double x(DateTime t) => margin + w * t.difference(t0).inMilliseconds / span;
-    DateTime? at(String code) {
-      for (final p in phases) {
-        if (p.$1 == code) return p.$2;
-      }
-      return null;
-    }
-
-    final bar = Rect.fromLTWH(margin, _barTop, w, _barHeight);
-    final rr = RRect.fromRectAndRadius(bar, const Radius.circular(4));
-    canvas.save();
-    canvas.clipRRect(rr);
-    canvas.drawRect(bar, Paint()..color = penumbra);
-    void seg(DateTime? a, DateTime? b, Color c) {
-      if (a == null || b == null) return;
-      canvas.drawRect(
-        Rect.fromLTRB(x(a), _barTop, x(b), _barTop + _barHeight),
-        Paint()..color = c,
-      );
-    }
-
-    seg(at('U1'), at('U4'), umbra);
-    seg(at('U2'), at('U3'), total);
-    _hatchBelowHorizon(canvas, t0, t1, x);
-    canvas.restore();
-
-    // 食甚
-    final g = at('Max');
-    if (g != null) {
-      canvas.drawLine(
-        Offset(x(g), _barTop - 4),
-        Offset(x(g), _barTop + _barHeight + 4),
-        Paint()
-          ..color = greatest
-          ..strokeWidth = 2,
-      );
-    }
-
-    // 上面标食相代号，下面标本地时刻；挤在一起时换到第二行，两行都放不下就省略
-    final codeRows = [<Rect>[], <Rect>[]];
-    final timeRows = [<Rect>[], <Rect>[]];
-    for (final (code, t) in phases) {
-      final isMax = code == 'Max';
-      final cx = x(t);
-      _place(
-        canvas,
-        isMax ? '★' : code,
-        cx,
-        (row) => _barTop - 4 - row * 14,
-        Alignment.bottomCenter,
-        isMax ? strongLabel.copyWith(color: greatest) : label,
-        codeRows,
-        size.width,
-      );
-      _place(
-        canvas,
-        localClock(t.toLocal(), t.toLocal(), seconds: false),
-        cx,
-        (row) => _barTop + _barHeight + 4 + row * 14,
-        Alignment.topCenter,
-        isMax ? strongLabel : label,
-        timeRows,
-        size.width,
-      );
-    }
-  }
-
-  void _place(
-    Canvas canvas,
-    String text,
-    double cx,
-    double Function(int row) y,
-    Alignment align,
-    TextStyle style,
-    List<List<Rect>> rows,
-    double width,
-  ) {
-    final tp = TextPainter(
-      text: TextSpan(text: text, style: style),
-      textDirection: TextDirection.ltr,
-    )..layout();
-    for (var row = 0; row < rows.length; row++) {
-      final left = (cx - tp.width / 2).clamp(0.0, width - tp.width);
-      final top = align == Alignment.bottomCenter ? y(row) - tp.height : y(row);
-      final r = Rect.fromLTWH(left - 2, top, tp.width + 4, tp.height);
-      if (rows[row].any((o) => o.overlaps(r))) continue;
-      rows[row].add(r);
-      tp.paint(canvas, Offset(left, top));
-      return;
-    }
-  }
-
-  /// 月亮在地平线下的时段画斜线（高度在相邻取样点之间线性插值找零点）。
-  void _hatchBelowHorizon(
-    Canvas canvas,
-    DateTime t0,
-    DateTime t1,
-    double Function(DateTime) x,
-  ) {
-    final local = detail.local;
-    if (local == null) return;
-    final path = detail.diagram.path;
-    final alt = local.trackAltitudeDeg;
-    if (alt.length != path.length || path.isEmpty) return;
-    final times = [for (final p in path) parseUtc(p.utc)];
-    final below = <(DateTime, DateTime)>[];
-    DateTime? start;
-    for (var i = 0; i < path.length; i++) {
-      final t = times[i];
-      if (t == null) continue;
-      final down = alt[i] <= 0;
-      if (i > 0 && times[i - 1] != null && (alt[i - 1] <= 0) != down) {
-        final a = alt[i - 1], b = alt[i];
-        final f = a / (a - b);
-        final tc = times[i - 1]!.add(
-          Duration(
-            milliseconds: (t.difference(times[i - 1]!).inMilliseconds * f)
-                .round(),
-          ),
-        );
-        if (down) {
-          start = tc;
-        } else if (start != null) {
-          below.add((start, tc));
-          start = null;
-        }
-      } else if (i == 0 && down) {
-        start = t;
-      }
-    }
-    if (start != null) below.add((start, times.last ?? t1));
-
-    final paint = Paint()
-      ..color = hatch.withValues(alpha: 0.85)
-      ..strokeWidth = 1.6;
-    for (final (a, b) in below) {
-      final from = x(a.isBefore(t0) ? t0 : a);
-      final to = x(b.isAfter(t1) ? t1 : b);
-      if (to <= from) continue;
-      canvas.save();
-      canvas.clipRect(Rect.fromLTRB(from, _barTop, to, _barTop + _barHeight));
-      for (var sx = from - _barHeight; sx < to; sx += 5) {
-        canvas.drawLine(
-          Offset(sx, _barTop + _barHeight),
-          Offset(sx + _barHeight, _barTop),
-          paint,
-        );
-      }
-      canvas.restore();
-    }
-  }
-
-  @override
-  bool shouldRepaint(_TimelinePainter old) =>
-      old.detail != detail || old.total != total || old.label != label;
 }
 
 // ---------------------------------------------------------------------------

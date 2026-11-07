@@ -8,6 +8,7 @@ import 'layout.dart';
 import 'lunar_eclipse_detail.dart';
 import 'rust/api/guanxiang.dart';
 import 'settings.dart';
+import 'solar_eclipse_detail.dart';
 import 'time_format.dart';
 
 class EventDetailPage extends StatelessWidget {
@@ -47,6 +48,7 @@ class EventDetailPage extends StatelessWidget {
     final t = parseUtc(event.utc);
     final left = t == null ? null : countdown(l, t);
     final lunar = engine != null && event.kind == EventKind.lunarEclipse;
+    final solar = engine != null && event.kind == EventKind.solarEclipse;
     return Scaffold(
       appBar: AppBar(
         title: Text(event.title),
@@ -131,6 +133,14 @@ class EventDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
+          if (solar) ...[
+            SolarEclipseSections(
+              engine: engine!,
+              event: event,
+              settings: settings,
+            ),
+            const SizedBox(height: 16),
+          ],
           Card(
             child: Column(
               children: [
@@ -146,6 +156,7 @@ class EventDetailPage extends StatelessWidget {
             ),
           ),
           if (!lunar &&
+              !solar &&
               engine != null &&
               EclipseDiagramCard.supports(event.kind)) ...[
             const SizedBox(height: 16),

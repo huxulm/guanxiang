@@ -715,5 +715,75 @@
   "lunarTipEyes": "月食直接用眼睛看就很安全，不需要任何滤光片。双筒望远镜或小望远镜里，月面的颜色和明暗变化更明显。",
   "lunarTipPhoto": "拍摄参考：偏食阶段月亮的亮部仍然很亮，可以从 ISO 100、1/250 s、f/8 开始试；全食阶段暗很多，可以从 ISO 800–1600、1–4 s 开始，要用三脚架，焦距较长时最好用赤道仪跟踪，否则月亮会拖线。",
   "lunarTipBracket": "全食阶段的亮度没法预报，最好每隔几分钟换几档曝光多拍几张；初亏前先拍一张没被遮住的满月，方便对比。",
-  "lunarTipSolar": "注意：日食不一样，看日食必须用符合 ISO 12312-2 的滤光膜或日食眼镜。"
+  "lunarTipSolar": "注意：日食不一样，看日食必须用符合 ISO 12312-2 的滤光膜或日食眼镜。",
+  "solarKindTotal": "全食",
+  "solarKindAnnular": "环食",
+  "solarKindPartial": "偏食",
+  "solarVisFull": "全程可见",
+  "solarVisRises": "日出时日食已经开始",
+  "solarVisSets": "日落时日食还没结束",
+  "solarVisRisesAndSets": "食中太阳有升有落，只能看到一部分",
+  "solarVisHidden": "日食发生时太阳在地平线下，看不到",
+  "solarVisNone": "这里看不到这次日食",
+  "solarCentralDuration": "{kind} {duration}",
+  "@solarCentralDuration": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "solarMagnitude": "食分 {value}",
+  "@solarMagnitude": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "solarObscuration": "食面积 {percent}%",
+  "@solarObscuration": {
+    "placeholders": {
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "durationMs": "{minutes} 分 {seconds} 秒",
+  "@durationMs": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      },
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "solarInsidePath": "你在{kind}带内，离中心线 {km} km",
+  "@solarInsidePath": {
+    "placeholders": {
+      "kind": {
+        "type": "String"
+      },
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "solarOutsidePath": "中心线在你的{dir}方，最近 {km} km",
+  "@solarOutsidePath": {
+    "placeholders": {
+      "dir": {
+        "type": "String"
+      },
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "solarNeedsLocation": "设置观测地后，这里显示你那里看到的日食：类型、食分、各食相时刻，以及太阳的高度和方向"
 }

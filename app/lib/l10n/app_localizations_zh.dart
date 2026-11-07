@@ -933,4 +933,64 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get lunarTipSolar => '注意：日食不一样，看日食必须用符合 ISO 12312-2 的滤光膜或日食眼镜。';
+
+  @override
+  String get solarKindTotal => '全食';
+
+  @override
+  String get solarKindAnnular => '环食';
+
+  @override
+  String get solarKindPartial => '偏食';
+
+  @override
+  String get solarVisFull => '全程可见';
+
+  @override
+  String get solarVisRises => '日出时日食已经开始';
+
+  @override
+  String get solarVisSets => '日落时日食还没结束';
+
+  @override
+  String get solarVisRisesAndSets => '食中太阳有升有落，只能看到一部分';
+
+  @override
+  String get solarVisHidden => '日食发生时太阳在地平线下，看不到';
+
+  @override
+  String get solarVisNone => '这里看不到这次日食';
+
+  @override
+  String solarCentralDuration(String kind, String duration) {
+    return '$kind $duration';
+  }
+
+  @override
+  String solarMagnitude(String value) {
+    return '食分 $value';
+  }
+
+  @override
+  String solarObscuration(String percent) {
+    return '食面积 $percent%';
+  }
+
+  @override
+  String durationMs(int minutes, int seconds) {
+    return '$minutes 分 $seconds 秒';
+  }
+
+  @override
+  String solarInsidePath(String kind, int km) {
+    return '你在$kind带内，离中心线 $km km';
+  }
+
+  @override
+  String solarOutsidePath(String dir, int km) {
+    return '中心线在你的$dir方，最近 $km km';
+  }
+
+  @override
+  String get solarNeedsLocation => '设置观测地后，这里显示你那里看到的日食：类型、食分、各食相时刻，以及太阳的高度和方向';
 }

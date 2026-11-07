@@ -1687,6 +1687,102 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'注意：日食不一样，看日食必须用符合 ISO 12312-2 的滤光膜或日食眼镜。'**
   String get lunarTipSolar;
+
+  /// No description provided for @solarKindTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食'**
+  String get solarKindTotal;
+
+  /// No description provided for @solarKindAnnular.
+  ///
+  /// In zh, this message translates to:
+  /// **'环食'**
+  String get solarKindAnnular;
+
+  /// No description provided for @solarKindPartial.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏食'**
+  String get solarKindPartial;
+
+  /// No description provided for @solarVisFull.
+  ///
+  /// In zh, this message translates to:
+  /// **'全程可见'**
+  String get solarVisFull;
+
+  /// No description provided for @solarVisRises.
+  ///
+  /// In zh, this message translates to:
+  /// **'日出时日食已经开始'**
+  String get solarVisRises;
+
+  /// No description provided for @solarVisSets.
+  ///
+  /// In zh, this message translates to:
+  /// **'日落时日食还没结束'**
+  String get solarVisSets;
+
+  /// No description provided for @solarVisRisesAndSets.
+  ///
+  /// In zh, this message translates to:
+  /// **'食中太阳有升有落，只能看到一部分'**
+  String get solarVisRisesAndSets;
+
+  /// No description provided for @solarVisHidden.
+  ///
+  /// In zh, this message translates to:
+  /// **'日食发生时太阳在地平线下，看不到'**
+  String get solarVisHidden;
+
+  /// No description provided for @solarVisNone.
+  ///
+  /// In zh, this message translates to:
+  /// **'这里看不到这次日食'**
+  String get solarVisNone;
+
+  /// No description provided for @solarCentralDuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'{kind} {duration}'**
+  String solarCentralDuration(String kind, String duration);
+
+  /// No description provided for @solarMagnitude.
+  ///
+  /// In zh, this message translates to:
+  /// **'食分 {value}'**
+  String solarMagnitude(String value);
+
+  /// No description provided for @solarObscuration.
+  ///
+  /// In zh, this message translates to:
+  /// **'食面积 {percent}%'**
+  String solarObscuration(String percent);
+
+  /// No description provided for @durationMs.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分 {seconds} 秒'**
+  String durationMs(int minutes, int seconds);
+
+  /// No description provided for @solarInsidePath.
+  ///
+  /// In zh, this message translates to:
+  /// **'你在{kind}带内，离中心线 {km} km'**
+  String solarInsidePath(String kind, int km);
+
+  /// No description provided for @solarOutsidePath.
+  ///
+  /// In zh, this message translates to:
+  /// **'中心线在你的{dir}方，最近 {km} km'**
+  String solarOutsidePath(String dir, int km);
+
+  /// No description provided for @solarNeedsLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置观测地后，这里显示你那里看到的日食：类型、食分、各食相时刻，以及太阳的高度和方向'**
+  String get solarNeedsLocation;
 }
 
 class _AppLocalizationsDelegate
