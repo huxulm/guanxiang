@@ -940,9 +940,7 @@ class _WorldMapCardState extends State<_WorldMapCard> {
           final z = zones[r * cols + c];
           if (z == LunarZone.full) continue;
           final o = p.at(90 - (r + 0.5) * _step, -180 + (c + 0.5) * _step);
-          paths[z]!.addRect(
-            Rect.fromLTWH(o.dx - cell / 2, y, cell + 0.6, cell + 0.6),
-          );
+          paths[z]!.addRect(Rect.fromLTWH(o.dx - cell / 2, y, cell, cell));
         }
       }
       for (final MapEntry(key: z, value: path) in paths.entries) {

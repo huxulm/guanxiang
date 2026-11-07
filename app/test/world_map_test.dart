@@ -72,4 +72,32 @@ void main() {
       }
     }
   });
+  test('等值线：线性场的等值线是一条纬线', () {
+    // 值随纬度线性变化：v = 纬度 / 90
+    const step = 10.0;
+    const rows = 18, cols = 36;
+    final values = [
+      for (var r = 0; r < rows; r++)
+        for (var c = 0; c < cols; c++) (90 - (r + 0.5) * step) / 90,
+    ];
+    final segs = contourSegments(values, rows, cols, step, 0.5);
+    expect(segs, hasLength(cols)); // 每一列一段，首尾相接
+    for (final (a, b) in segs) {
+      expect(a.$1, closeTo(45, 1e-9));
+      expect(b.$1, closeTo(45, 1e-9));
+    }
+    expect(contourSegments(values, rows, cols, step, 2), isEmpty);
+  });
+
+  test('食带多边形：赤道上向东的中心线，两侧各偏半个宽度', () {
+    final band = pathBand(
+      [(0.0, 0.0), (0.0, 1.0), (0.0, 2.0)],
+      [222.4, 222.4, 222.4],
+    );
+    expect(band, hasLength(6));
+    // 左侧（北）在前，右侧（南）倒序在后；半宽 111.2 km ≈ 1°
+    expect(band.first.$1, closeTo(1, 1e-9));
+    expect(band.last.$1, closeTo(-1, 1e-9));
+    expect(band[2].$2, closeTo(2, 1e-9));
+  });
 }

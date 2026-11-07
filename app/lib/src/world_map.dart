@@ -258,3 +258,113 @@ double geocentricAltitude(
       math.cos(lat * r) * math.cos(subLat * r) * math.cos((lon - subLon) * r);
   return math.asin(s.clamp(-1.0, 1.0)) / r;
 }
+
+/// 栅格等值线（marching squares）：栅格第 r 行第 c 列的格子中心在
+/// (90 − (r + 0.5)·step, −180 + (c + 0.5)·step)，经度方向首尾相接。
+/// 返回线段列表，每段两个 (纬度, 经度) 端点；经度可能略超出 ±180°，画的时候折回。
+List<((double, double), (double, double))> contourSegments(
+  List<double> values,
+  int rows,
+  int cols,
+  double step,
+  double level,
+) {
+  final out = <((double, double), (double, double))>[];
+  double v(int r, int c) => values[r * cols + (c % cols)];
+  (double, double) pos(double r, double c) =>
+      (90 - (r + 0.5) * step, -180 + (c + 0.5) * step);
+  // 在边 (r0,c0)–(r1,c1) 上插值出等值点
+  (double, double) edge(int r0, int c0, int r1, int c1) {
+    final a = v(r0, c0), b = v(r1, c1);
+    final f = a == b ? 0.5 : (level - a) / (b - a);
+    return pos(r0 + (r1 - r0) * f, c0 + (c1 - c0) * f);
+  }
+
+  for (var r = 0; r < rows - 1; r++) {
+    for (var c = 0; c < cols; c++) {
+      // 角点：0 左上 (r,c)，1 右上 (r,c+1)，2 右下 (r+1,c+1)，3 左下 (r+1,c)
+      final idx =
+          (v(r, c) >= level ? 1 : 0) |
+          (v(r, c + 1) >= level ? 2 : 0) |
+          (v(r + 1, c + 1) >= level ? 4 : 0) |
+          (v(r + 1, c) >= level ? 8 : 0);
+      if (idx == 0 || idx == 15) continue;
+      final top = edge(r, c, r, c + 1);
+      final right = edge(r, c + 1, r + 1, c + 1);
+      final bottom = edge(r + 1, c, r + 1, c + 1);
+      final left = edge(r, c, r + 1, c);
+      void seg((double, double) a, (double, double) b) => out.add((a, b));
+      switch (idx) {
+        case 1 || 14:
+          seg(left, top);
+        case 2 || 13:
+          seg(top, right);
+        case 3 || 12:
+          seg(left, right);
+        case 4 || 11:
+          seg(right, bottom);
+        case 6 || 9:
+          seg(top, bottom);
+        case 7 || 8:
+          seg(left, bottom);
+        case 5:
+          seg(left, top);
+          seg(right, bottom);
+        case 10:
+          seg(top, right);
+          seg(left, bottom);
+      }
+    }
+  }
+  return out;
+}
+
+/// 把线段画成一条路径（不折回的坐标，配合 [MapProjection.drawWrapped] 使用）。
+Path segmentsPath(
+  MapProjection p,
+  Iterable<((double, double), (double, double))> segments,
+) {
+  final path = Path();
+  for (final (a, b) in segments) {
+    // 第一个端点放到中心经度 ±180° 内，第二个端点跟着第一个，线段就不会被拆到两边
+    var la = a.$2 - p.centerLon;
+    la -= 360 * (la / 360).round();
+    var db = b.$2 - a.$2;
+    db -= 360 * (db / 360).round();
+    final lonA = p.centerLon + la;
+    path.moveTo(p.rawX(lonA), p.y(a.$1));
+    path.lineTo(p.rawX(lonA + db), p.y(b.$1));
+  }
+  return path;
+}
+
+/// 中心线两侧各偏移半个食带宽，围成食带多边形（按 (纬度, 经度) 顺时针或逆时针）。
+List<(double, double)> pathBand(
+  List<(double, double)> centre,
+  List<double> widthKm,
+) {
+  const kmPerDeg = 111.2;
+  final n = centre.length;
+  if (n < 2) return const [];
+  final left = <(double, double)>[];
+  final right = <(double, double)>[];
+  for (var i = 0; i < n; i++) {
+    final a = centre[i == 0 ? 0 : i - 1];
+    final b = centre[i == n - 1 ? n - 1 : i + 1];
+    final (lat, lon) = centre[i];
+    final k = math.cos(lat * math.pi / 180);
+    var dlon = b.$2 - a.$2;
+    dlon -= 360 * (dlon / 360).round();
+    // 行进方向（东、北，km），法向取向左（北侧）
+    final e = dlon * k * kmPerDeg, nn = (b.$1 - a.$1) * kmPerDeg;
+    final len = math.sqrt(e * e + nn * nn);
+    if (len == 0) continue;
+    final (ux, uy) = (-nn / len, e / len);
+    final h = widthKm[i] / 2;
+    final dLat = uy * h / kmPerDeg;
+    final dLon = ux * h / (kmPerDeg * math.max(k, 0.05));
+    left.add((lat + dLat, lon + dLon));
+    right.add((lat - dLat, lon - dLon));
+  }
+  return [...left, ...right.reversed];
+}

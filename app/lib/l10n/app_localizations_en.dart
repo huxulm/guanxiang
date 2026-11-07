@@ -1066,4 +1066,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get solarSimCaption =>
       'Drawn with the zenith up, close to what you see when you look up. Drag the slider or tap a phase to see how much of the Sun is covered. Only during totality (C2 to C3) may you remove the filter to see the corona; at all other times, including the annular phase, keep the solar filter on.';
+
+  @override
+  String get solarMapTitle => 'Where it can be seen';
+
+  @override
+  String get solarMapMagnitude => 'Greatest magnitude';
+
+  @override
+  String get solarMapTotalPath => 'Path of totality';
+
+  @override
+  String get solarMapAnnularPath => 'Annular path';
+
+  @override
+  String get solarMapCaption =>
+      'Darker shading means a larger magnitude. Thin lines, from the outside in, are magnitude 0, 0.2, 0.5 and 0.8; the outermost (0) is the edge of the partial eclipse. The narrow band is the path of totality or annularity, ★ is the point of greatest eclipse, and the dot is your location. Computed on a 2° grid with the Sun above the horizon only, so boundaries may be off by about 1°.';
 }

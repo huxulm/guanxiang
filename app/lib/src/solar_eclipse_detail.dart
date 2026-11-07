@@ -13,6 +13,7 @@ import 'settings.dart';
 import 'settings_page.dart';
 import 'theme.dart';
 import 'time_format.dart';
+import 'world_map.dart';
 
 /// 日食详情页的增强部分：安全提示、本地情况（时间轴、各食相时刻）、示意图。
 class SolarEclipseSections extends StatefulWidget {
@@ -114,6 +115,8 @@ class _SolarEclipseSectionsState extends State<SolarEclipseSections> {
                   const SizedBox(height: 16),
                   _SunSimulationCard(view: v),
                 ],
+                const SizedBox(height: 16),
+                _SolarMapCard(detail: d, place: place),
                 const SizedBox(height: 16),
                 EclipseDiagramCard(engine: widget.engine, event: widget.event),
               ],
@@ -779,4 +782,210 @@ class _SunFacePainter extends CustomPainter {
   @override
   bool shouldRepaint(_SunFacePainter old) =>
       old.point != point || old.accents != accents || old.sky != sky;
+}
+
+// ---------------------------------------------------------------------------
+// 全球食况地图
+// ---------------------------------------------------------------------------
+
+class _SolarMapCard extends StatefulWidget {
+  const _SolarMapCard({required this.detail, this.place});
+
+  final SolarEclipseDetail detail;
+  final Place? place;
+
+  @override
+  State<_SolarMapCard> createState() => _SolarMapCardState();
+}
+
+class _SolarMapCardState extends State<_SolarMapCard> {
+  static const _levels = [0.001, 0.2, 0.5, 0.8];
+  late List<double> _values;
+  late Map<double, List<((double, double), (double, double))>> _contours;
+  late List<(double, double)> _band;
+  late double _center;
+
+  @override
+  void initState() {
+    super.initState();
+    _prepare();
+  }
+
+  @override
+  void didUpdateWidget(_SolarMapCard old) {
+    super.didUpdateWidget(old);
+    if (old.detail != widget.detail) _prepare();
+  }
+
+  void _prepare() {
+    final d = widget.detail;
+    final rows = d.gridRows, cols = d.gridCols;
+    _values = [for (final v in d.grid) v.toDouble()];
+    _contours = {
+      for (final lv in _levels)
+        lv: contourSegments(_values, rows, cols, d.gridStepDeg, lv),
+    };
+    _band = pathBand([
+      for (final p in d.centralLine) (p.latitudeDeg, p.longitudeDeg),
+    ], d.pathWidthKm);
+    // 地图以食甚点为中心；非中心食取食分最大的格子
+    final g = d.greatestPoint;
+    if (g != null) {
+      _center = g.longitudeDeg;
+    } else {
+      var best = 0;
+      for (var i = 1; i < _values.length; i++) {
+        if (_values[i] > _values[best]) best = i;
+      }
+      _center = -180 + (best % cols + 0.5) * d.gridStepDeg;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    final accents = AstroAccents.of(context);
+    final d = widget.detail;
+    final place = widget.place;
+    final annular = d.diagram.umbraRadius > 0;
+    final bandColor = annular
+        ? accents.eclipse
+        : (theme.brightness == Brightness.dark
+              ? Colors.black
+              : cs.onSurface.withValues(alpha: 0.85));
+    Color shade(double m) =>
+        accents.eclipse.withValues(alpha: 0.12 + 0.5 * m.clamp(0.0, 1.0));
+    final label = (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11))
+        .copyWith(color: cs.onSurface, fontWeight: FontWeight.w600);
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant,
+    );
+
+    void fill(Canvas canvas, MapProjection p) {
+      // 食分按 0.1 分档，同一档的格子并成一条路径
+      final rows = d.gridRows, cols = d.gridCols;
+      final step = d.gridStepDeg;
+      final cell = step * p.k;
+      final bands = List.generate(11, (_) => Path());
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          final m = _values[r * cols + c];
+          if (m <= 0) continue;
+          final o = p.at(90 - (r + 0.5) * step, -180 + (c + 0.5) * step);
+          bands[(m * 10).floor().clamp(0, 10)].addRect(
+            Rect.fromLTWH(o.dx - cell / 2, r * cell, cell, cell),
+          );
+        }
+      }
+      for (var i = 0; i < bands.length; i++) {
+        canvas.drawPath(
+          bands[i],
+          Paint()
+            ..color = shade((i + 0.5) / 10)
+            ..isAntiAlias = false,
+        );
+      }
+    }
+
+    void marks(Canvas canvas, MapProjection p) {
+      final line = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 0.9
+        ..color = cs.onSurface.withValues(alpha: 0.7);
+      for (final lv in _levels) {
+        final segs = _contours[lv]!;
+        if (segs.isEmpty) continue;
+        final path = segmentsPath(p, segs);
+        p.drawWrapped(canvas, (c) => c.drawPath(path, line));
+      }
+      if (_band.length >= 3) {
+        final band = p.polyline(_band)..close();
+        p.drawWrapped(
+          canvas,
+          (c) => c.drawPath(band, Paint()..color = bandColor),
+        );
+      }
+      final g = d.greatestPoint;
+      if (g != null) {
+        final o = p.at(g.latitudeDeg, g.longitudeDeg);
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '★',
+            style: label.copyWith(color: accents.eclipse, fontSize: 16),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, o - Offset(tp.width / 2, tp.height / 2));
+      }
+      if (place != null) {
+        final o = p.at(place.lat, place.lon);
+        canvas.drawCircle(o, 4.5, Paint()..color = cs.surface);
+        canvas.drawCircle(o, 3.2, Paint()..color = cs.primary);
+      }
+    }
+
+    Widget legend(Color c, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: c,
+            border: Border.all(color: cs.outline),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(text, style: theme.textTheme.bodySmall),
+      ],
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.solarMapTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: WorldMap(centerLon: _center, fill: fill, marks: marks),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (final m in [0.1, 0.4, 0.7, 1.0])
+                      Container(width: 14, height: 14, color: shade(m)),
+                    const SizedBox(width: 6),
+                    Text(l.solarMapMagnitude, style: theme.textTheme.bodySmall),
+                  ],
+                ),
+                if (_band.isNotEmpty)
+                  legend(
+                    bandColor,
+                    annular ? l.solarMapAnnularPath : l.solarMapTotalPath,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l.solarMapCaption, style: muted),
+          ],
+        ),
+      ),
+    );
+  }
 }
