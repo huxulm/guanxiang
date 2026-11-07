@@ -1783,6 +1783,60 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'设置观测地后，这里显示你那里看到的日食：类型、食分、各食相时刻，以及太阳的高度和方向'**
   String get solarNeedsLocation;
+
+  /// No description provided for @solarSimTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'太阳面模拟'**
+  String get solarSimTitle;
+
+  /// No description provided for @solarStateBefore.
+  ///
+  /// In zh, this message translates to:
+  /// **'日食还没开始'**
+  String get solarStateBefore;
+
+  /// No description provided for @solarStatePartial.
+  ///
+  /// In zh, this message translates to:
+  /// **'偏食中'**
+  String get solarStatePartial;
+
+  /// No description provided for @solarStateTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食中'**
+  String get solarStateTotal;
+
+  /// No description provided for @solarStateAnnular.
+  ///
+  /// In zh, this message translates to:
+  /// **'环食中'**
+  String get solarStateAnnular;
+
+  /// No description provided for @solarStateAfter.
+  ///
+  /// In zh, this message translates to:
+  /// **'日食已结束'**
+  String get solarStateAfter;
+
+  /// No description provided for @solarSunAlt.
+  ///
+  /// In zh, this message translates to:
+  /// **'太阳高度 {alt}°'**
+  String solarSunAlt(int alt);
+
+  /// No description provided for @solarSunDown.
+  ///
+  /// In zh, this message translates to:
+  /// **'太阳在地平线下'**
+  String get solarSunDown;
+
+  /// No description provided for @solarSimCaption.
+  ///
+  /// In zh, this message translates to:
+  /// **'天顶朝上，接近你抬头看到的样子。拖动滑块或点下面的食相，看那一刻月亮遮住了多少。只有全食阶段（食既到生光）可以摘下滤光片直接看日冕，其余时间（包括环食）都必须用滤光膜。'**
+  String get solarSimCaption;
 }
 
 class _AppLocalizationsDelegate

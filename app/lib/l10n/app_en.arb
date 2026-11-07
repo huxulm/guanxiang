@@ -280,5 +280,14 @@
   "durationMs": "{minutes} min {seconds} s",
   "solarInsidePath": "You are inside the path of the {kind} eclipse, {km} km from the centre line",
   "solarOutsidePath": "The centre line is {km} km away to the {dir}",
-  "solarNeedsLocation": "Set your location to see the eclipse from there: its type, magnitude, phase times and the Sun's altitude and direction"
+  "solarNeedsLocation": "Set your location to see the eclipse from there: its type, magnitude, phase times and the Sun's altitude and direction",
+  "solarSimTitle": "Simulated view",
+  "solarStateBefore": "Not started yet",
+  "solarStatePartial": "Partial phase",
+  "solarStateTotal": "Totality",
+  "solarStateAnnular": "Annular phase",
+  "solarStateAfter": "Eclipse over",
+  "solarSunAlt": "Sun altitude {alt}°",
+  "solarSunDown": "Sun below the horizon",
+  "solarSimCaption": "Drawn with the zenith up, close to what you see when you look up. Drag the slider or tap a phase to see how much of the Sun is covered. Only during totality (C2 to C3) may you remove the filter to see the corona; at all other times, including the annular phase, keep the solar filter on."
 }

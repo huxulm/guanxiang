@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
@@ -108,6 +110,10 @@ class _SolarEclipseSectionsState extends State<SolarEclipseSections> {
                           ),
                         ),
                 ),
+                if (d.local case final v? when v.track.length >= 2) ...[
+                  const SizedBox(height: 16),
+                  _SunSimulationCard(view: v),
+                ],
                 const SizedBox(height: 16),
                 EclipseDiagramCard(engine: widget.engine, event: widget.event),
               ],
@@ -453,4 +459,324 @@ class _PhaseTable extends StatelessWidget {
       ],
     );
   }
+}
+
+// ---------------------------------------------------------------------------
+// 太阳面模拟
+// ---------------------------------------------------------------------------
+
+/// 太阳面模拟轨迹按时刻插值。
+class SolarTrackSampler {
+  SolarTrackSampler(this.view);
+
+  final LocalSolarView view;
+
+  List<SolarDiskPoint> get _t => view.track;
+
+  DateTime get start => trackTime(view, _t.first);
+  DateTime get end => trackTime(view, _t.last);
+
+  /// 时刻 t 处的取样值（相邻两点线性插值，两端截断）。
+  SolarDiskPoint at(DateTime t) {
+    final pts = _t;
+    final s = t.difference(start).inMilliseconds / 1000 + pts.first.seconds;
+    if (s <= pts.first.seconds) return pts.first;
+    if (s >= pts.last.seconds) return pts.last;
+    var lo = 0, hi = pts.length - 1;
+    while (hi - lo > 1) {
+      final mid = (lo + hi) >> 1;
+      if (pts[mid].seconds <= s) {
+        lo = mid;
+      } else {
+        hi = mid;
+      }
+    }
+    final a = pts[lo], b = pts[hi];
+    final f = (s - a.seconds) / (b.seconds - a.seconds);
+    double mix(double x, double y) => x + (y - x) * f;
+    // 天顶位置角跨 ±180° 时按近的一侧插值
+    var dz = b.zenithAngleDeg - a.zenithAngleDeg;
+    dz -= 360 * (dz / 360).round();
+    return SolarDiskPoint(
+      seconds: s,
+      xArcmin: mix(a.xArcmin, b.xArcmin),
+      yArcmin: mix(a.yArcmin, b.yArcmin),
+      sunRadiusArcmin: mix(a.sunRadiusArcmin, b.sunRadiusArcmin),
+      moonRadiusArcmin: mix(a.moonRadiusArcmin, b.moonRadiusArcmin),
+      obscuration: mix(a.obscuration, b.obscuration),
+      sunAltitudeDeg: mix(a.sunAltitudeDeg, b.sunAltitudeDeg),
+      zenithAngleDeg: a.zenithAngleDeg + dz * f,
+    );
+  }
+}
+
+/// 此刻处在哪个阶段。
+String solarStateText(AppLocalizations l, LocalSolarView v, DateTime t) {
+  DateTime? at(String code) {
+    for (final p in v.phases) {
+      if (p.code == code) return parseUtc(p.utc);
+    }
+    return null;
+  }
+
+  bool inside(String a, String b) {
+    final (x, y) = (at(a), at(b));
+    return x != null && y != null && !t.isBefore(x) && !t.isAfter(y);
+  }
+
+  if (inside('C2', 'C3')) {
+    return v.kind == LocalEclipseKind.annular
+        ? l.solarStateAnnular
+        : l.solarStateTotal;
+  }
+  if (inside('C1', 'C4')) return l.solarStatePartial;
+  final c1 = at('C1');
+  return c1 != null && t.isBefore(c1) ? l.solarStateBefore : l.solarStateAfter;
+}
+
+class _SunSimulationCard extends StatefulWidget {
+  const _SunSimulationCard({required this.view});
+
+  final LocalSolarView view;
+
+  @override
+  State<_SunSimulationCard> createState() => _SunSimulationCardState();
+}
+
+class _SunSimulationCardState extends State<_SunSimulationCard> {
+  late SolarTrackSampler _track;
+  late DateTime _t;
+
+  @override
+  void initState() {
+    super.initState();
+    _reset();
+  }
+
+  @override
+  void didUpdateWidget(_SunSimulationCard old) {
+    super.didUpdateWidget(old);
+    if (old.view != widget.view) _reset();
+  }
+
+  void _reset() {
+    _track = SolarTrackSampler(widget.view);
+    final max = widget.view.phases.where((p) => p.code == 'Max').firstOrNull;
+    _t = (max == null ? null : parseUtc(max.utc)) ?? _track.start;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    final v = widget.view;
+    final p = _track.at(_t);
+    final local = _t.toLocal();
+    final total = _track.end.difference(_track.start).inSeconds.toDouble();
+    final value = _t.difference(_track.start).inSeconds.toDouble();
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant,
+    );
+    final ob = p.obscuration.clamp(0.0, 1.0);
+
+    final readout = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '${localClock(local, local)} ${zoneLabel(local)}',
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        Text(
+          solarStateText(l, v, _t),
+          style: theme.textTheme.bodyLarge?.copyWith(color: cs.primary),
+        ),
+        Text(
+          l.solarObscuration((ob * 100).toStringAsFixed(ob > 0.9999 ? 0 : 1)),
+          style: theme.textTheme.bodyMedium,
+        ),
+        Text(
+          p.sunAltitudeDeg > 0
+              ? l.solarSunAlt(p.sunAltitudeDeg.round())
+              : l.solarSunDown,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: p.sunAltitudeDeg > 0 ? cs.onSurface : cs.onSurfaceVariant,
+          ),
+        ),
+      ],
+    );
+    final face = SizedBox.square(
+      dimension: 200,
+      child: CustomPaint(
+        painter: _SunFacePainter(
+          point: p,
+          accents: AstroAccents.of(context),
+          sky: cs.surfaceContainerHigh,
+          moon: theme.brightness == Brightness.dark
+              ? Colors.black
+              : Color.alphaBlend(
+                  cs.onSurface.withValues(alpha: 0.85),
+                  cs.surface,
+                ),
+          zenith: muted?.color ?? cs.onSurfaceVariant,
+        ),
+      ),
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.solarSimTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            LayoutBuilder(
+              builder: (context, c) => c.maxWidth >= 420
+                  ? Row(
+                      children: [
+                        face,
+                        const SizedBox(width: 20),
+                        Expanded(child: readout),
+                      ],
+                    )
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Center(child: face),
+                        const SizedBox(height: 8),
+                        readout,
+                      ],
+                    ),
+            ),
+            Slider(
+              key: const ValueKey('solarSlider'),
+              value: value.clamp(0, total),
+              max: total,
+              label: localClock(local, local, seconds: false),
+              semanticFormatterCallback: (_) =>
+                  '${l.lunarSliderLabel} ${localClock(local, local)}',
+              onChanged: (x) => setState(
+                () => _t = _track.start.add(
+                  Duration(milliseconds: (x * 1000).round()),
+                ),
+              ),
+            ),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: [
+                for (final ph in v.phases)
+                  if (parseUtc(ph.utc) case final t?)
+                    ChoiceChip(
+                      label: Text(ph.code == 'Max' ? ph.name : ph.code),
+                      selected: t.difference(_t).inMilliseconds.abs() < 1500,
+                      visualDensity: VisualDensity.compact,
+                      onSelected: (_) => setState(() => _t = t),
+                    ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(l.solarSimCaption, style: muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 太阳面：天顶朝上；月亮圆面按此刻相对太阳的位置叠上去，全食时画日冕示意。
+class _SunFacePainter extends CustomPainter {
+  _SunFacePainter({
+    required this.point,
+    required this.accents,
+    required this.sky,
+    required this.moon,
+    required this.zenith,
+  });
+
+  final SolarDiskPoint point;
+  final AstroAccents accents;
+  final Color sky;
+  final Color moon;
+  final Color zenith;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = size.center(Offset.zero);
+    final r = size.shortestSide * 0.3;
+    final k = r / point.sunRadiusArcmin;
+    final rm = point.moonRadiusArcmin * k;
+    // 北在上、东在左时，月心在 (−x, −y)·k；再顺时针转天顶位置角，让天顶朝上
+    final q = point.zenithAngleDeg * math.pi / 180;
+    final rel = Offset(-point.xArcmin * k, -point.yArcmin * k);
+    final moonAt =
+        c +
+        Offset(
+          rel.dx * math.cos(q) - rel.dy * math.sin(q),
+          rel.dx * math.sin(q) + rel.dy * math.cos(q),
+        );
+    final totality = point.obscuration > 0.9999 && rm >= r;
+
+    // 所有内容都裁剪在圆形视场内（C1、C4 前后月亮在日面外）
+    final field = Rect.fromCircle(center: c, radius: size.shortestSide / 2);
+    canvas.save();
+    canvas.clipPath(Path()..addOval(field));
+    canvas.drawRect(field, Paint()..color = totality ? Colors.black : sky);
+    if (totality) {
+      // 日冕示意：从日面边缘向外淡出
+      canvas.drawCircle(
+        c,
+        r * 2.4,
+        Paint()
+          ..shader = RadialGradient(
+            colors: [
+              accents.moonLit.withValues(alpha: 0.9),
+              accents.moonLit.withValues(alpha: 0.35),
+              accents.moonLit.withValues(alpha: 0),
+            ],
+            stops: const [0.4, 0.55, 1],
+          ).createShader(Rect.fromCircle(center: c, radius: r * 2.4)),
+      );
+    }
+    canvas.drawCircle(
+      c,
+      r,
+      Paint()
+        ..shader = RadialGradient(
+          colors: [
+            Color.lerp(accents.eclipse, Colors.white, 0.45)!,
+            accents.eclipse,
+          ],
+        ).createShader(Rect.fromCircle(center: c, radius: r)),
+    );
+    canvas.drawCircle(
+      moonAt,
+      rm,
+      Paint()..color = totality ? Colors.black : moon,
+    );
+    canvas.restore();
+
+    // 天顶方向
+    final tp = TextPainter(
+      text: TextSpan(
+        text: '↑',
+        style: TextStyle(color: zenith, fontSize: 14),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    tp.paint(canvas, Offset(c.dx - tp.width / 2, 2));
+  }
+
+  @override
+  bool shouldRepaint(_SunFacePainter old) =>
+      old.point != point || old.accents != accents || old.sky != sky;
 }

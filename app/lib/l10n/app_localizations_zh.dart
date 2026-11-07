@@ -993,4 +993,34 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get solarNeedsLocation => '设置观测地后，这里显示你那里看到的日食：类型、食分、各食相时刻，以及太阳的高度和方向';
+
+  @override
+  String get solarSimTitle => '太阳面模拟';
+
+  @override
+  String get solarStateBefore => '日食还没开始';
+
+  @override
+  String get solarStatePartial => '偏食中';
+
+  @override
+  String get solarStateTotal => '全食中';
+
+  @override
+  String get solarStateAnnular => '环食中';
+
+  @override
+  String get solarStateAfter => '日食已结束';
+
+  @override
+  String solarSunAlt(int alt) {
+    return '太阳高度 $alt°';
+  }
+
+  @override
+  String get solarSunDown => '太阳在地平线下';
+
+  @override
+  String get solarSimCaption =>
+      '天顶朝上，接近你抬头看到的样子。拖动滑块或点下面的食相，看那一刻月亮遮住了多少。只有全食阶段（食既到生光）可以摘下滤光片直接看日冕，其余时间（包括环食）都必须用滤光膜。';
 }

@@ -1036,4 +1036,34 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get solarNeedsLocation =>
       'Set your location to see the eclipse from there: its type, magnitude, phase times and the Sun\'s altitude and direction';
+
+  @override
+  String get solarSimTitle => 'Simulated view';
+
+  @override
+  String get solarStateBefore => 'Not started yet';
+
+  @override
+  String get solarStatePartial => 'Partial phase';
+
+  @override
+  String get solarStateTotal => 'Totality';
+
+  @override
+  String get solarStateAnnular => 'Annular phase';
+
+  @override
+  String get solarStateAfter => 'Eclipse over';
+
+  @override
+  String solarSunAlt(int alt) {
+    return 'Sun altitude $alt°';
+  }
+
+  @override
+  String get solarSunDown => 'Sun below the horizon';
+
+  @override
+  String get solarSimCaption =>
+      'Drawn with the zenith up, close to what you see when you look up. Drag the slider or tap a phase to see how much of the Sun is covered. Only during totality (C2 to C3) may you remove the filter to see the corona; at all other times, including the annular phase, keep the solar filter on.';
 }
