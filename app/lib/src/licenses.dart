@@ -99,7 +99,7 @@ void registerLicenses() {
 }
 
 /// 应用版本，与 pubspec.yaml 一致。
-const appVersion = '0.1.10';
+const appVersion = '0.1.11';
 
 /// 打开“关于 / 许可”页。
 void showAbout(BuildContext context) {
