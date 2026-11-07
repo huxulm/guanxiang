@@ -1867,6 +1867,30 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'填色越深，能看到的食分越大；细线从外到内是食分 0、0.2、0.5、0.8 的等值线，最外圈（0）就是能看到偏食的边界。窄带是全食带或环食带，★ 是食甚点，圆点是你的观测地。按 2° 网格计算，只计太阳在地平线以上的时刻，边界附近约差 1°。'**
   String get solarMapCaption;
+
+  /// No description provided for @solarTipFilter.
+  ///
+  /// In zh, this message translates to:
+  /// **'必须用符合 ISO 12312-2 的日食眼镜或太阳滤光膜。墨镜、多层胶片、烟熏玻璃、电焊面罩以外的深色玻璃都不安全。'**
+  String get solarTipFilter;
+
+  /// No description provided for @solarTipPinhole.
+  ///
+  /// In zh, this message translates to:
+  /// **'没有滤光膜时可以用针孔投影：在卡片上扎一个小孔，把太阳的像投到另一张白纸上看；树叶缝隙下的光斑在偏食时也会变成月牙形。'**
+  String get solarTipPinhole;
+
+  /// No description provided for @solarTipCamera.
+  ///
+  /// In zh, this message translates to:
+  /// **'相机、望远镜、双筒镜前都要装专用的太阳滤光膜（装在物镜前，不要装在目镜端）；取景时同样不能对着没加滤光的太阳。'**
+  String get solarTipCamera;
+
+  /// No description provided for @solarTipTotality.
+  ///
+  /// In zh, this message translates to:
+  /// **'只有全食阶段（食既到生光）可以摘下滤光片直接看日冕；看到生光前的“钻石环”就要马上戴回去。环食哪怕只剩一圈亮环，也必须全程用滤光膜。'**
+  String get solarTipTotality;
 }
 
 class _AppLocalizationsDelegate

@@ -402,4 +402,58 @@ void main() {
     expect(find.text('全食中'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
+  testWidgets('日食详情：本地全食、太阳面模拟和地图', (tester) async {
+    final updates = await search(
+      engine: engine,
+      request: const SearchRequest(
+        kind: EventKind.solarEclipse,
+        bodyA: '',
+        bodyB: '',
+        fromYear: 2027,
+        toYear: 2028,
+        maxSeparationDeg: 0,
+        lang: Lang.zh,
+      ),
+      token: CancelToken(),
+    ).toList();
+    final event = updates
+        .where((u) => u.kind == UpdateKind.found)
+        .map((u) => u.item!)
+        .firstWhere((e) => e.utc.startsWith('2027-08-02'));
+    final settings = Settings.inMemory();
+    await settings.setMode(LocationMode.manual);
+    await settings.setManual(const Place(25.6872, 32.6396, 80)); // 卢克索
+
+    tester.view.physicalSize = const Size(900, 7000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('zh'),
+        supportedLocales: const [Locale('en'), Locale('zh')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: EventDetailPage(event: event, engine: engine, settings: settings),
+      ),
+    );
+    final verdict = find.text('全程可见');
+    for (var i = 0; i < 300 && verdict.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(verdict, findsOneWidget, reason: '卢克索应全程可见');
+    expect(find.textContaining('全食 6 分'), findsOneWidget);
+    expect(find.textContaining('沙罗序列 136'), findsWidgets);
+    expect(find.textContaining('ISO 12312-2'), findsWidgets);
+    expect(find.text('全球食况'), findsOneWidget);
+
+    // 默认停在本地食甚（全食）；点 C1 后是偏食开始，食面积 0
+    expect(find.text('全食中'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'C1'));
+    await tester.pump();
+    expect(find.text('偏食中'), findsOneWidget);
+    expect(find.text('食面积 0.0%'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'C2'));
+    await tester.pump();
+    expect(find.text('全食中'), findsOneWidget);
+    await tester.pumpWidget(const SizedBox());
+  });
 }

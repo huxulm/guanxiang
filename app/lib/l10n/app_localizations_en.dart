@@ -1082,4 +1082,20 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get solarMapCaption =>
       'Darker shading means a larger magnitude. Thin lines, from the outside in, are magnitude 0, 0.2, 0.5 and 0.8; the outermost (0) is the edge of the partial eclipse. The narrow band is the path of totality or annularity, ★ is the point of greatest eclipse, and the dot is your location. Computed on a 2° grid with the Sun above the horizon only, so boundaries may be off by about 1°.';
+
+  @override
+  String get solarTipFilter =>
+      'Use eclipse glasses or a solar filter that meets ISO 12312-2. Sunglasses, stacked film, smoked glass and other dark glass are not safe.';
+
+  @override
+  String get solarTipPinhole =>
+      'Without a filter, use pinhole projection: poke a small hole in a card and project the Sun\'s image onto a sheet of white paper. During the partial phases, sunlight through leaves also makes crescent-shaped spots.';
+
+  @override
+  String get solarTipCamera =>
+      'Cameras, telescopes and binoculars need a proper solar filter over the front lens (never at the eyepiece end); never aim an unfiltered instrument at the Sun, even to frame a shot.';
+
+  @override
+  String get solarTipTotality =>
+      'Only during totality (C2 to C3) may you remove the filter to see the corona; put it back as soon as the diamond ring appears before C3. During an annular eclipse, keep the filter on the whole time, even when only a thin ring is left.';
 }

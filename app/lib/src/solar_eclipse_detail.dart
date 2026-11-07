@@ -119,6 +119,8 @@ class _SolarEclipseSectionsState extends State<SolarEclipseSections> {
                 _SolarMapCard(detail: d, place: place),
                 const SizedBox(height: 16),
                 EclipseDiagramCard(engine: widget.engine, event: widget.event),
+                const SizedBox(height: 16),
+                const _SolarTips(),
               ],
             );
           },
@@ -983,6 +985,57 @@ class _SolarMapCardState extends State<_SolarMapCard> {
             ),
             const SizedBox(height: 8),
             Text(l.solarMapCaption, style: muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 观测与拍摄提示
+// ---------------------------------------------------------------------------
+
+class _SolarTips extends StatelessWidget {
+  const _SolarTips();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    Widget tip(IconData icon, String text, {Color? color}) => Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: color ?? cs.onSurfaceVariant),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.lunarTipsTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            tip(Icons.shield_outlined, l.solarTipFilter, color: cs.error),
+            tip(Icons.radio_button_checked, l.solarTipPinhole),
+            tip(Icons.photo_camera_outlined, l.solarTipCamera),
+            tip(Icons.brightness_3_outlined, l.solarTipTotality),
           ],
         ),
       ),
