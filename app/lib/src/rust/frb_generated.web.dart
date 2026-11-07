@@ -136,6 +136,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SatelliteInfo> dco_decode_list_satellite_info(dynamic raw);
 
   @protected
+  List<SkyEventItem> dco_decode_list_sky_event_item(dynamic raw);
+
+  @protected
+  MoonInfo dco_decode_moon_info(dynamic raw);
+
+  @protected
   ObserverInput dco_decode_observer_input(dynamic raw);
 
   @protected
@@ -161,6 +167,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SearchUpdate dco_decode_search_update(dynamic raw);
+
+  @protected
+  SkyEventItem dco_decode_sky_event_item(dynamic raw);
+
+  @protected
+  SkyKind dco_decode_sky_kind(dynamic raw);
+
+  @protected
+  Tonight dco_decode_tonight(dynamic raw);
 
   @protected
   int dco_decode_u_32(dynamic raw);
@@ -293,6 +308,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<SkyEventItem> sse_decode_list_sky_event_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  MoonInfo sse_decode_moon_info(SseDeserializer deserializer);
+
+  @protected
   ObserverInput sse_decode_observer_input(SseDeserializer deserializer);
 
   @protected
@@ -322,6 +345,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SearchUpdate sse_decode_search_update(SseDeserializer deserializer);
+
+  @protected
+  SkyEventItem sse_decode_sky_event_item(SseDeserializer deserializer);
+
+  @protected
+  SkyKind sse_decode_sky_kind(SseDeserializer deserializer);
+
+  @protected
+  Tonight sse_decode_tonight(SseDeserializer deserializer);
 
   @protected
   int sse_decode_u_32(SseDeserializer deserializer);
@@ -477,6 +509,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_sky_event_item(
+    List<SkyEventItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_moon_info(MoonInfo self, SseSerializer serializer);
+
+  @protected
   void sse_encode_observer_input(ObserverInput self, SseSerializer serializer);
 
   @protected
@@ -511,6 +552,15 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_search_update(SearchUpdate self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sky_event_item(SkyEventItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_sky_kind(SkyKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_tonight(Tonight self, SseSerializer serializer);
 
   @protected
   void sse_encode_u_32(int self, SseSerializer serializer);

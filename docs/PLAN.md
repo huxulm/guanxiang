@@ -28,6 +28,7 @@
 | GitLab CI | gitlab.xao.ac.cn/xulingming/guanxiang，fmt、clippy、android-deps、test 全部通过。runner 无外网，de440s 由本项目 Generic Package Registry 提供 |
 | M4 日月食 | 全球与本地情况、1900–2100 星表、CLI `eclipse`、App 支持已完成；与 NASA 21 世纪星表逐条一致 |
 | M6 卫星凌月 | 已完成（除外部对比）：计算核心、CLI、App 卫星页（CelesTrak 下载缓存、频率限制、新旧预报比较、地图中心线、太阳安全提示、Android 后台刷新）；69 次接近与 Skyfield 相差 ≤ 0.007 秒。transit-finder 对比、实测核对未做 |
+| 日月出没、晨昏、月相 | 计算核心 `events::almanac`、看板“今晚”卡片已完成；1045 个出没和晨昏事件与 Skyfield 相差 ≤ 0.03 秒，月相照亮比例差 ≤ 0.0001 |
 | M5 月掩星 | 月掩行星和 550 颗亮星、本地掩始掩终、CLI `occultation`、App 支持已完成；92 次事件与 Skyfield 相差 ≤ 0.003 秒 |
 | Flutter 应用（M3） | `app/` 已创建并接入 flutter_rust_bridge 2.13；搜索、进度、取消、详情页可用。**Android 模拟器**（Android 15，16 KB 页）上集成测试全部通过；**Windows 桌面**待开启开发者模式；**Linux 桌面**待准备 Linux 工具链；**Android 真机**未测 |
 
@@ -293,6 +294,16 @@ guanxiang/
 
 **验收：** 三个平台的安装包都在干净环境中完成安装和完整流程测试。
 
+### 看板“今晚”：日月出没、晨昏、月相
+
+**记录：**
+
+- 定义与 USNO、Skyfield `almanac` 相同：日月出没是上边缘与地平线相切，用站心几何高度判断，阈值为 −(34′ + 视半径)（太阳半径 695 700 km、月球 1 737.4 km，月球用站心距离，即含视差）；民用、航海、天文晨昏是太阳中心几何高度 −6°、−12°、−18°。每 10 分钟取样，Brent 法精修到 0.1 秒；10 分钟内先升后落（高纬度擦过地平线）的情形会漏掉。
+- 对照（`tools/skyfield/gen_almanac.py`，Skyfield 1.55，同一份 de440s，按相同定义用 `find_discrete` 求解，ΔT 取 Skyfield 的值）：北京、悉尼、基多（海拔 2850 m）、雷克雅未克、特罗姆瑟（北极圈内，有极昼极夜）5 地，2026 年每月 1 日和 15 日各 24 小时，共 1045 个事件。每个窗口的事件数完全一致（包括极昼、极夜时整天没有某类晨昏），时刻差最大 0.026 秒，主要是精修容差。
+- 应用里用内置 ΔT 模型，2026 年与 Skyfield 的 ΔT 相差不到 0.15 秒，出没时刻随之相差同样的量。
+- 月相：照亮比例 k = (1 + cos i)/2，相位角 i 由地心视位置的日月角距和距离求出（Meeus 48.2、48.3）；盈亏看真黄道视黄经差。与 Skyfield `fraction_illuminated`、`moon_phase` 比较（2026 年 48 个时刻）：照亮比例差 0.00006，黄经差 0.0001″。下次朔、望用已有的合冲搜索（月球与太阳的合、冲）。
+- 应用里，“今晚”取本地中午到次日中午（凌晨 6 点前取前一天中午起），日落、天文晨昏结束、天文晨光开始、日出，以及这段时间里的月出月落；整晚都没有某类晨昏时显示“—”，并说明极昼或白夜。
+
 **v0.1.0（2026-11-06）**：只发布 Android（arm64-v8a、x86_64 两个 APK），附在 GitLab Release `v0.1.0`，文件存放在项目的 Generic Package Registry（`guanxiang/0.1.0/`）。已在 Android 15（16 KB 页）模拟器上验证；真机尚未测试。
 
 ## 6. 验证方法
@@ -304,6 +315,7 @@ guanxiang/
 | 坐标和时间尺度 | SOFA 官方测试值，`../SuperNOVAS` 可作为另一份参考 |
 | 事件完整性 | NASA 日月食和凌日星表 |
 | 月掩星 | Skyfield（同一星表参数，独立求解） |
+| 日月出没、晨昏、月相 | Skyfield（相同定义，独立求解） |
 | 卫星凌月 | transit-finder、实际观测 |
 
 - 对照数据固定保存在测试夹具中，CI 不依赖外部网络。de440s 存放在本项目的 Generic Package Registry（`ephemeris/de440/de440s.bsp`），CI 用 job token 下载并校验 SHA-256；CI 中星历测试不允许被跳过。

@@ -9,6 +9,7 @@ use std::sync::Arc;
 use std::time::Instant;
 
 use flutter_rust_bridge::frb;
+use guanxiang_core::events::almanac::{self, SkyEventKind};
 use guanxiang_core::events::local_eclipse::{self, LocalSolarKind};
 use guanxiang_core::events::longitude::{self, Aspect};
 use guanxiang_core::events::lunar_eclipse::{self, LunarEclipseKind, ShadowModel};
@@ -962,6 +963,130 @@ pub fn sun_safety_notice(lang: Lang) -> String {
     .to_string()
 }
 
+/// 出没、晨昏事件的类型（与 core 的 `SkyEventKind` 一一对应）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SkyKind {
+    AstronomicalDawn,
+    NauticalDawn,
+    CivilDawn,
+    Sunrise,
+    Sunset,
+    CivilDusk,
+    NauticalDusk,
+    AstronomicalDusk,
+    Moonrise,
+    Moonset,
+}
+
+impl From<SkyEventKind> for SkyKind {
+    fn from(k: SkyEventKind) -> Self {
+        match k {
+            SkyEventKind::AstronomicalDawn => SkyKind::AstronomicalDawn,
+            SkyEventKind::NauticalDawn => SkyKind::NauticalDawn,
+            SkyEventKind::CivilDawn => SkyKind::CivilDawn,
+            SkyEventKind::Sunrise => SkyKind::Sunrise,
+            SkyEventKind::Sunset => SkyKind::Sunset,
+            SkyEventKind::CivilDusk => SkyKind::CivilDusk,
+            SkyEventKind::NauticalDusk => SkyKind::NauticalDusk,
+            SkyEventKind::AstronomicalDusk => SkyKind::AstronomicalDusk,
+            SkyEventKind::Moonrise => SkyKind::Moonrise,
+            SkyEventKind::Moonset => SkyKind::Moonset,
+        }
+    }
+}
+
+/// 一次出没或晨昏，时刻为 UTC（"2026-11-07 09:12:34"）。
+#[derive(Debug, Clone)]
+pub struct SkyEventItem {
+    pub kind: SkyKind,
+    pub utc: String,
+}
+
+/// 月相。
+#[derive(Debug, Clone)]
+pub struct MoonInfo {
+    /// 照亮比例 0–1
+    pub illuminated_fraction: f64,
+    /// 上半月（新月到满月）
+    pub waxing: bool,
+    /// 月相名称：新月、娥眉月、上弦月、盈凸月、满月、亏凸月、下弦月、残月
+    pub phase_name: String,
+    /// 下次朔、望（UTC），找不到时为空字符串
+    pub next_new_utc: String,
+    pub next_full_utc: String,
+}
+
+/// 看板“今晚”卡片的数据。
+#[derive(Debug, Clone)]
+pub struct Tonight {
+    /// 时间窗口内的出没和晨昏，按时间排序
+    pub events: Vec<SkyEventItem>,
+    /// 窗口开始时的太阳中心高度（度）。窗口内没有日出日落时，用它区分极昼（> 0）和极夜
+    pub sun_altitude_deg: f64,
+    /// 窗口开始时的月相
+    pub moon: MoonInfo,
+}
+
+/// 月相名称（按日月视黄经差分八段）。
+fn moon_phase_name(lon_diff_deg: f64, lang: Lang) -> &'static str {
+    let names = [
+        ("新月", "New moon"),
+        ("娥眉月", "Waxing crescent"),
+        ("上弦月", "First quarter"),
+        ("盈凸月", "Waxing gibbous"),
+        ("满月", "Full moon"),
+        ("亏凸月", "Waning gibbous"),
+        ("下弦月", "Last quarter"),
+        ("残月", "Waning crescent"),
+    ];
+    let i = (((lon_diff_deg + 22.5).rem_euclid(360.0)) / 45.0) as usize % 8;
+    lang.s(names[i].0, names[i].1)
+}
+
+/// 某地在 `[start_utc, start_utc + hours]` 内的日月出没、晨昏，以及开始时刻的月相。
+///
+/// `start_utc` 形如 "2026-11-07T04:00:00"。界面传本地中午对应的 UTC、`hours` = 24，得到“今晚”。
+pub fn tonight(
+    engine: &Engine,
+    latitude_deg: f64,
+    longitude_deg: f64,
+    height_m: f64,
+    start_utc: String,
+    hours: f64,
+    lang: Lang,
+) -> anyhow::Result<Tonight> {
+    anyhow::ensure!(hours > 0.0 && hours <= 72.0, "hours = {hours}");
+    let obs = Observer::from_degrees(latitude_deg, longitude_deg, height_m)?;
+    let start = Time::from_utc(&start_utc.trim().parse::<DateTime>()?)?;
+    let span = Span::new(start, start.add_seconds(hours * 3600.0))?;
+    let eph = &engine.eph;
+
+    let events = almanac::rise_set_twilight(eph, &obs, span, None)?
+        .into_iter()
+        .map(|e| SkyEventItem {
+            kind: e.kind.into(),
+            utc: utc(&e.time),
+        })
+        .collect();
+    let phase = almanac::moon_phase(eph, &start)?;
+    let next = |aspect| -> anyhow::Result<String> {
+        Ok(almanac::next_lunar_phase(eph, &start, aspect)?
+            .map(|t| utc(&t))
+            .unwrap_or_default())
+    };
+    Ok(Tonight {
+        events,
+        sun_altitude_deg: almanac::sun_altitude(eph, &obs, &start)?.to_degrees(),
+        moon: MoonInfo {
+            illuminated_fraction: phase.illuminated_fraction,
+            waxing: phase.waxing(),
+            phase_name: moon_phase_name(phase.longitude_difference.to_degrees(), lang).to_string(),
+            next_new_utc: next(Aspect::Conjunction)?,
+            next_full_utc: next(Aspect::Opposition)?,
+        },
+    })
+}
+
 /// 范围搜索时，按这个最低卫星距离（km）把半径换算成角距门槛：地面上相距 R 的两点看卫星，
 /// 视差约为 R / 距离，距离不会小于卫星高度。取偏低的值，宁可多找候选再按中心线距离筛掉。
 const RADIUS_MIN_RANGE_KM: f64 = 300.0;
@@ -1282,6 +1407,63 @@ mod tests {
             return None;
         }
         Some(Engine::from_bytes(std::fs::read(path).unwrap()).unwrap())
+    }
+
+    #[test]
+    fn moon_phase_names() {
+        assert_eq!(moon_phase_name(0.0, Lang::Zh), "新月");
+        assert_eq!(moon_phase_name(350.0, Lang::Zh), "新月");
+        assert_eq!(moon_phase_name(90.0, Lang::Zh), "上弦月");
+        assert_eq!(moon_phase_name(180.0, Lang::En), "Full moon");
+        assert_eq!(moon_phase_name(270.0, Lang::Zh), "下弦月");
+        assert_eq!(moon_phase_name(330.0, Lang::Zh), "残月");
+    }
+
+    /// 北京一晚（本地中午起 24 小时）：日落、晨昏、日出按顺序各出现一次，月相数据齐全。
+    #[test]
+    fn tonight_in_beijing() {
+        let Some(engine) = test_engine() else { return };
+        // 2026-11-07 12:00 北京时间 = 04:00 UTC
+        let t = tonight(
+            &engine,
+            39.9042,
+            116.4074,
+            44.0,
+            "2026-11-07T04:00:00".into(),
+            24.0,
+            Lang::Zh,
+        )
+        .unwrap();
+        let suns: Vec<SkyKind> = t
+            .events
+            .iter()
+            .map(|e| e.kind)
+            .filter(|k| !matches!(k, SkyKind::Moonrise | SkyKind::Moonset))
+            .collect();
+        assert_eq!(
+            suns,
+            [
+                SkyKind::Sunset,
+                SkyKind::CivilDusk,
+                SkyKind::NauticalDusk,
+                SkyKind::AstronomicalDusk,
+                SkyKind::AstronomicalDawn,
+                SkyKind::NauticalDawn,
+                SkyKind::CivilDawn,
+                SkyKind::Sunrise,
+            ]
+        );
+        // 北京 11 月上旬日落约 17:04（09:04 UTC）
+        let sunset = &t
+            .events
+            .iter()
+            .find(|e| e.kind == SkyKind::Sunset)
+            .unwrap()
+            .utc;
+        assert!(sunset.starts_with("2026-11-07 09:0"), "{sunset}");
+        assert!(t.sun_altitude_deg > 0.0);
+        assert!((0.0..=1.0).contains(&t.moon.illuminated_fraction));
+        assert!(!t.moon.next_new_utc.is_empty() && !t.moon.next_full_utc.is_empty());
     }
 
     #[test]

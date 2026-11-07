@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `lat_lon`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `lat_lon`, `moon_phase_name`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// 支持的天体，供界面列出：label = 英文键名（传回 Rust 用），value = 显示名。
 List<Detail> bodyNames({required Lang lang}) =>
@@ -32,6 +32,27 @@ List<SatelliteInfo> parseOmm({required String json}) =>
 /// 观测太阳的安全提示，所有涉及太阳的结果都附带，卫星页也显示。
 String sunSafetyNotice({required Lang lang}) =>
     RustLib.instance.api.crateApiGuanxiangSunSafetyNotice(lang: lang);
+
+/// 某地在 `[start_utc, start_utc + hours]` 内的日月出没、晨昏，以及开始时刻的月相。
+///
+/// `start_utc` 形如 "2026-11-07T04:00:00"。界面传本地中午对应的 UTC、`hours` = 24，得到“今晚”。
+Future<Tonight> tonight({
+  required Engine engine,
+  required double latitudeDeg,
+  required double longitudeDeg,
+  required double heightM,
+  required String startUtc,
+  required double hours,
+  required Lang lang,
+}) => RustLib.instance.api.crateApiGuanxiangTonight(
+  engine: engine,
+  latitudeDeg: latitudeDeg,
+  longitudeDeg: longitudeDeg,
+  heightM: heightM,
+  startUtc: startUtc,
+  hours: hours,
+  lang: lang,
+);
 
 /// 搜索卫星凌日、凌月。
 ///
@@ -179,6 +200,49 @@ class GeoPoint {
 
 /// 显示语言。
 enum Lang { zh, en }
+
+/// 月相。
+class MoonInfo {
+  /// 照亮比例 0–1
+  final double illuminatedFraction;
+
+  /// 上半月（新月到满月）
+  final bool waxing;
+
+  /// 月相名称：新月、娥眉月、上弦月、盈凸月、满月、亏凸月、下弦月、残月
+  final String phaseName;
+
+  /// 下次朔、望（UTC），找不到时为空字符串
+  final String nextNewUtc;
+  final String nextFullUtc;
+
+  const MoonInfo({
+    required this.illuminatedFraction,
+    required this.waxing,
+    required this.phaseName,
+    required this.nextNewUtc,
+    required this.nextFullUtc,
+  });
+
+  @override
+  int get hashCode =>
+      illuminatedFraction.hashCode ^
+      waxing.hashCode ^
+      phaseName.hashCode ^
+      nextNewUtc.hashCode ^
+      nextFullUtc.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MoonInfo &&
+          runtimeType == other.runtimeType &&
+          illuminatedFraction == other.illuminatedFraction &&
+          waxing == other.waxing &&
+          phaseName == other.phaseName &&
+          nextNewUtc == other.nextNewUtc &&
+          nextFullUtc == other.nextFullUtc;
+}
 
 /// 测站与可见性条件。
 class ObserverInput {
@@ -448,6 +512,69 @@ class SearchUpdate {
           count == other.count &&
           cancelled == other.cancelled &&
           elapsedMs == other.elapsedMs;
+}
+
+/// 一次出没或晨昏，时刻为 UTC（"2026-11-07 09:12:34"）。
+class SkyEventItem {
+  final SkyKind kind;
+  final String utc;
+
+  const SkyEventItem({required this.kind, required this.utc});
+
+  @override
+  int get hashCode => kind.hashCode ^ utc.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SkyEventItem &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          utc == other.utc;
+}
+
+/// 出没、晨昏事件的类型（与 core 的 `SkyEventKind` 一一对应）。
+enum SkyKind {
+  astronomicalDawn,
+  nauticalDawn,
+  civilDawn,
+  sunrise,
+  sunset,
+  civilDusk,
+  nauticalDusk,
+  astronomicalDusk,
+  moonrise,
+  moonset,
+}
+
+/// 看板“今晚”卡片的数据。
+class Tonight {
+  /// 时间窗口内的出没和晨昏，按时间排序
+  final List<SkyEventItem> events;
+
+  /// 窗口开始时的太阳中心高度（度）。窗口内没有日出日落时，用它区分极昼（> 0）和极夜
+  final double sunAltitudeDeg;
+
+  /// 窗口开始时的月相
+  final MoonInfo moon;
+
+  const Tonight({
+    required this.events,
+    required this.sunAltitudeDeg,
+    required this.moon,
+  });
+
+  @override
+  int get hashCode => events.hashCode ^ sunAltitudeDeg.hashCode ^ moon.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Tonight &&
+          runtimeType == other.runtimeType &&
+          events == other.events &&
+          sunAltitudeDeg == other.sunAltitudeDeg &&
+          moon == other.moon;
 }
 
 enum UpdateKind { progress, found, finished }

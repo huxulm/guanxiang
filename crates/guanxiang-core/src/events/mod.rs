@@ -9,6 +9,7 @@
 //!
 //! 所有事件都是**地心**的；本地是否可见由 [`visibility`] 另行判断。
 
+pub mod almanac;
 pub mod catalog;
 pub mod local_eclipse;
 pub mod longitude;

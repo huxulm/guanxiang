@@ -36,7 +36,7 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 - **语言**：注释、文档、提交信息、界面文案都用中文。界面文字一律走 ARB（`app/lib/l10n/app_zh.arb` 是模板，`app_en.arb` 是英文），两个文件的键必须一致（有测试检查），改完运行 `flutter gen-l10n`，生成的文件要提交。Rust 输出的文字按 `Lang { Zh, En }` 区分。
 - **界面配色与布局**：不要写死颜色。通用颜色用 `Theme.of(context).colorScheme`，各类天象的强调色用 `AstroAccents.of(context)`（`app/lib/src/theme.dart`，三套主题共用一个构建函数，各自只给一组色值）。红光模式里所有颜色都必须以红色分量为主（有测试检查），实心按钮用暗红底。页面主体用 `ContentListView`（`app/lib/src/layout.dart`），宽屏时内容最宽 960、居中。
 - **Rust**：edition 2024，工作区禁止 `unsafe`，clippy 警告视为错误。`guanxiang-core` 必须保持纯 Rust：不能引入 TLS、OpenSSL、`cc`、`cmake`、`bindgen`（CI 的 `android-deps` 任务会检查）。依赖统一写在根 `Cargo.toml` 的 `[workspace.dependencies]`。
-- **精度**：改动计算逻辑时，要用 `tools/` 下的独立来源（Skyfield、JPL Horizons、NASA 星表）重新对照，并在 `docs/PLAN.md` 写明差别。现有基准：视位置 ≤ 0.0004″，合冲 ≤ 0.002 s，日月食 ≤ 2.3 s，月掩星 ≤ 0.003 s，卫星 ≤ 0.007 s。
+- **精度**：改动计算逻辑时，要用 `tools/` 下的独立来源（Skyfield、JPL Horizons、NASA 星表）重新对照，并在 `docs/PLAN.md` 写明差别。现有基准：视位置 ≤ 0.0004″，合冲 ≤ 0.002 s，日月食 ≤ 2.3 s，月掩星 ≤ 0.003 s，卫星 ≤ 0.007 s，日月出没与晨昏 ≤ 0.03 s。
 - **星历**：App 打包的是 `de440s` 裁剪到 1899-12 至 2101-02 的版本，必须能复现（SHA-256 `1b7ff150…74afaa`，CI 会重新生成并校验）。测试里的 `GUANXIANG_EPHEM` 要用绝对路径。
 - **提交**：中文摘要一行，空行后用列表写要点。小步提交，每次提交都要保证 CI 能过。
 

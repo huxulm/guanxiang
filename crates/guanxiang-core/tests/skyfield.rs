@@ -215,3 +215,98 @@ fn separation_minima_match_skyfield() {
     assert!(table.max("时刻差 s") <= 5.0);
     assert!(table.max("角距差″") <= 0.01);
 }
+
+/// 日月出没、晨昏蒙影：按相同定义（34′ 折射 + 视半径；−6°/−12°/−18°）与 Skyfield 对比。
+/// 对照数据由 `tools/skyfield/gen_almanac.py` 生成，使用 Skyfield 的 ΔT。
+#[test]
+fn rise_set_twilight_match_skyfield() {
+    use guanxiang_core::events::Span;
+    use guanxiang_core::events::almanac::{self, SkyEventKind};
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("skyfield", "almanac_events.csv");
+    assert!(rows.len() > 1000);
+
+    let kind = |s: &str| match s {
+        "sunrise" => SkyEventKind::Sunrise,
+        "sunset" => SkyEventKind::Sunset,
+        "civil_dawn" => SkyEventKind::CivilDawn,
+        "civil_dusk" => SkyEventKind::CivilDusk,
+        "nautical_dawn" => SkyEventKind::NauticalDawn,
+        "nautical_dusk" => SkyEventKind::NauticalDusk,
+        "astronomical_dawn" => SkyEventKind::AstronomicalDawn,
+        "astronomical_dusk" => SkyEventKind::AstronomicalDusk,
+        "moonrise" => SkyEventKind::Moonrise,
+        "moonset" => SkyEventKind::Moonset,
+        _ => panic!("未知事件 {s}"),
+    };
+
+    // 按（地点, 窗口）分组
+    let mut windows: Vec<(&[String], Vec<&Vec<String>>)> = Vec::new();
+    for r in &rows {
+        match windows.last_mut() {
+            Some((k, v)) if k[0] == r[0] && k[4] == r[4] => v.push(r),
+            _ => windows.push((&r[..], vec![r])),
+        }
+    }
+
+    let mut table = MaxTable::new(&["时刻差s"]);
+    let mut count = 0;
+    for (k, expected) in &windows {
+        let obs = Observer::from_degrees(num(&k[1]), num(&k[2]), num(&k[3])).unwrap();
+        let dt = num(&k[6]);
+        let span = Span::new(
+            Time::from_tt_jd(num(&k[4])).with_delta_t(dt),
+            Time::from_tt_jd(num(&k[5])).with_delta_t(dt),
+        )
+        .unwrap();
+        let found = almanac::rise_set_twilight(&eph, &obs, span, Some(dt)).unwrap();
+        for r in expected {
+            let jd = num(&r[8]);
+            let want = kind(&r[7]);
+            let best = found
+                .iter()
+                .filter(|e| e.kind == want)
+                .map(|e| (e.time.tt_jd() - jd) * 86_400.0)
+                .min_by(|a, b| a.abs().total_cmp(&b.abs()))
+                .unwrap_or_else(|| panic!("{} {} {jd} 没有找到", k[0], r[7]));
+            table.add(&format!("{:<10} {}", k[0], r[7]), &[best]);
+            count += 1;
+        }
+        // 不能多出 Skyfield 没有的事件
+        assert_eq!(
+            found.len(),
+            expected.len(),
+            "{} 窗口 {}：事件数不同",
+            k[0],
+            k[4]
+        );
+    }
+    table.print(&format!(
+        "日月出没与晨昏，对比 Skyfield（2026 年，{count} 个事件）"
+    ));
+    assert!(
+        table.max("时刻差s") <= 0.1,
+        "时刻差 {:.3} s",
+        table.max("时刻差s")
+    );
+}
+
+/// 月相：照亮比例、日月视黄经差与 Skyfield 的 `fraction_illuminated`、`moon_phase` 对比。
+#[test]
+fn moon_phase_matches_skyfield() {
+    use guanxiang_core::events::almanac;
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("skyfield", "moon_phase.csv");
+    let mut table = MaxTable::new(&["照亮比例", "黄经差″"]);
+    for r in &rows {
+        let p = almanac::moon_phase(&eph, &Time::from_tt_jd(num(&r[0]))).unwrap();
+        let mut dl = p.longitude_difference.to_degrees() - num(&r[2]);
+        dl -= 360.0 * (dl / 360.0).round();
+        table.add("moon", &[p.illuminated_fraction - num(&r[1]), dl * 3600.0]);
+    }
+    table.print("月相，对比 Skyfield（2026 年）");
+    assert!(table.max("照亮比例") <= 1e-4);
+    assert!(table.max("黄经差″") <= 0.1);
+}

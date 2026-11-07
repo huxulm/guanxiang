@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1647486291;
+  int get rustContentHash => 1487924222;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -116,6 +116,16 @@ abstract class RustLibApi extends BaseApi {
   });
 
   String crateApiGuanxiangSunSafetyNotice({required Lang lang});
+
+  Future<Tonight> crateApiGuanxiangTonight({
+    required Engine engine,
+    required double latitudeDeg,
+    required double longitudeDeg,
+    required double heightM,
+    required String startUtc,
+    required double hours,
+    required Lang lang,
+  });
 
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_CancelToken;
@@ -470,6 +480,69 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiGuanxiangSunSafetyNoticeConstMeta =>
       const TaskConstMeta(debugName: "sun_safety_notice", argNames: ["lang"]);
 
+  @override
+  Future<Tonight> crateApiGuanxiangTonight({
+    required Engine engine,
+    required double latitudeDeg,
+    required double longitudeDeg,
+    required double heightM,
+    required String startUtc,
+    required double hours,
+    required Lang lang,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEngine(
+            engine,
+            serializer,
+          );
+          sse_encode_f_64(latitudeDeg, serializer);
+          sse_encode_f_64(longitudeDeg, serializer);
+          sse_encode_f_64(heightM, serializer);
+          sse_encode_String(startUtc, serializer);
+          sse_encode_f_64(hours, serializer);
+          sse_encode_lang(lang, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_tonight,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangTonightConstMeta,
+        argValues: [
+          engine,
+          latitudeDeg,
+          longitudeDeg,
+          heightM,
+          startUtc,
+          hours,
+          lang,
+        ],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangTonightConstMeta => const TaskConstMeta(
+    debugName: "tonight",
+    argNames: [
+      "engine",
+      "latitudeDeg",
+      "longitudeDeg",
+      "heightM",
+      "startUtc",
+      "hours",
+      "lang",
+    ],
+  );
+
   RustArcIncrementStrongCountFnType
   get rust_arc_increment_strong_count_CancelToken => wire
       .rust_arc_increment_strong_count_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerCancelToken;
@@ -698,6 +771,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SkyEventItem> dco_decode_list_sky_event_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_sky_event_item).toList();
+  }
+
+  @protected
+  MoonInfo dco_decode_moon_info(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return MoonInfo(
+      illuminatedFraction: dco_decode_f_64(arr[0]),
+      waxing: dco_decode_bool(arr[1]),
+      phaseName: dco_decode_String(arr[2]),
+      nextNewUtc: dco_decode_String(arr[3]),
+      nextFullUtc: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
   ObserverInput dco_decode_observer_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -808,6 +902,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       count: dco_decode_u_32(arr[3]),
       cancelled: dco_decode_bool(arr[4]),
       elapsedMs: dco_decode_u_64(arr[5]),
+    );
+  }
+
+  @protected
+  SkyEventItem dco_decode_sky_event_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return SkyEventItem(
+      kind: dco_decode_sky_kind(arr[0]),
+      utc: dco_decode_String(arr[1]),
+    );
+  }
+
+  @protected
+  SkyKind dco_decode_sky_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SkyKind.values[raw as int];
+  }
+
+  @protected
+  Tonight dco_decode_tonight(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Tonight(
+      events: dco_decode_list_sky_event_item(arr[0]),
+      sunAltitudeDeg: dco_decode_f_64(arr[1]),
+      moon: dco_decode_moon_info(arr[2]),
     );
   }
 
@@ -1115,6 +1240,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SkyEventItem> sse_decode_list_sky_event_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SkyEventItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_sky_event_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  MoonInfo sse_decode_moon_info(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_illuminatedFraction = sse_decode_f_64(deserializer);
+    var var_waxing = sse_decode_bool(deserializer);
+    var var_phaseName = sse_decode_String(deserializer);
+    var var_nextNewUtc = sse_decode_String(deserializer);
+    var var_nextFullUtc = sse_decode_String(deserializer);
+    return MoonInfo(
+      illuminatedFraction: var_illuminatedFraction,
+      waxing: var_waxing,
+      phaseName: var_phaseName,
+      nextNewUtc: var_nextNewUtc,
+      nextFullUtc: var_nextFullUtc,
+    );
+  }
+
+  @protected
   ObserverInput sse_decode_observer_input(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_latitudeDeg = sse_decode_f_64(deserializer);
@@ -1274,6 +1430,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       count: var_count,
       cancelled: var_cancelled,
       elapsedMs: var_elapsedMs,
+    );
+  }
+
+  @protected
+  SkyEventItem sse_decode_sky_event_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_kind = sse_decode_sky_kind(deserializer);
+    var var_utc = sse_decode_String(deserializer);
+    return SkyEventItem(kind: var_kind, utc: var_utc);
+  }
+
+  @protected
+  SkyKind sse_decode_sky_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SkyKind.values[inner];
+  }
+
+  @protected
+  Tonight sse_decode_tonight(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_events = sse_decode_list_sky_event_item(deserializer);
+    var var_sunAltitudeDeg = sse_decode_f_64(deserializer);
+    var var_moon = sse_decode_moon_info(deserializer);
+    return Tonight(
+      events: var_events,
+      sunAltitudeDeg: var_sunAltitudeDeg,
+      moon: var_moon,
     );
   }
 
@@ -1590,6 +1774,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_sky_event_item(
+    List<SkyEventItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_sky_event_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_moon_info(MoonInfo self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.illuminatedFraction, serializer);
+    sse_encode_bool(self.waxing, serializer);
+    sse_encode_String(self.phaseName, serializer);
+    sse_encode_String(self.nextNewUtc, serializer);
+    sse_encode_String(self.nextFullUtc, serializer);
+  }
+
+  @protected
   void sse_encode_observer_input(ObserverInput self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_64(self.latitudeDeg, serializer);
@@ -1701,6 +1907,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_32(self.count, serializer);
     sse_encode_bool(self.cancelled, serializer);
     sse_encode_u_64(self.elapsedMs, serializer);
+  }
+
+  @protected
+  void sse_encode_sky_event_item(SkyEventItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_sky_kind(self.kind, serializer);
+    sse_encode_String(self.utc, serializer);
+  }
+
+  @protected
+  void sse_encode_sky_kind(SkyKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_tonight(Tonight self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_sky_event_item(self.events, serializer);
+    sse_encode_f_64(self.sunAltitudeDeg, serializer);
+    sse_encode_moon_info(self.moon, serializer);
   }
 
   @protected
