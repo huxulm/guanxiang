@@ -1,272 +1,384 @@
 import 'package:flutter/material.dart';
 
-/// 观象（Guanxiang）设计系统与主题配置。
+/// 观象的三套外观，共用一个构建函数，各自只给一组色值（[_Palette]）：
+/// 1. [AstroTheme.deepSpaceTheme]：深空暗夜，近黑底色加星空蓝；
+/// 2. [AstroTheme.astroRedTheme]：夜间红光，户外观星用。只用暗红色、不用大块实心亮色，
+///    避免破坏暗适应；
+/// 3. [AstroTheme.lightTheme]：明亮浅色。
 ///
-/// 包含三种外观：
-/// 1. [deepSpaceTheme]：深空暗夜模式（OLED 纯黑与冷色调星空蓝，适合暗光环境沉浸式探索）；
-/// 2. [astroRedTheme]：天文夜间红光模式（专为户外实地观星暗适应设计，单色红光避免视紫红质被漂白）；
-/// 3. [lightTheme]：明亮浅色模式（现代极简星空蓝调）。
+/// 界面代码不要写死颜色：通用颜色用 `colorScheme`，事件类型的强调色用 [AstroAccents]。
 class AstroTheme {
   AstroTheme._();
 
-  // ---------------------------------------------------------------------------
-  // 1. 深空暗夜主题 (Deep Space Dark)
-  // ---------------------------------------------------------------------------
-  static ThemeData get deepSpaceTheme {
-    const scaffoldBg = Color(0xFF0B0E14);
-    const surface = Color(0xFF131924);
-    const surfaceContainer = Color(0xFF1B2332);
-    const surfaceContainerHigh = Color(0xFF242E40);
-    const primary = Color(0xFF569AFF);
-    const secondary = Color(0xFFFFAA00);
-    const outline = Color(0xFF263246);
+  static ThemeData get deepSpaceTheme => _build(_deepSpace);
+  static ThemeData get astroRedTheme => _build(_astroRed);
+  static ThemeData get lightTheme => _build(_light);
 
-    final colorScheme = ColorScheme.dark(
-      primary: primary,
-      onPrimary: Colors.white,
-      primaryContainer: const Color(0xFF1A3358),
-      onPrimaryContainer: const Color(0xFFD3E4FF),
-      secondary: secondary,
-      onSecondary: Colors.black,
-      secondaryContainer: const Color(0xFF4E3500),
-      onSecondaryContainer: const Color(0xFFFFDF9E),
-      surface: surface,
-      onSurface: const Color(0xFFE2E6EE),
-      onSurfaceVariant: const Color(0xFFA6B0C2),
-      surfaceContainer: surfaceContainer,
-      surfaceContainerHigh: surfaceContainerHigh,
-      outline: outline,
-      outlineVariant: const Color(0xFF1C2534),
-      error: const Color(0xFFFF5449),
-      errorContainer: const Color(0xFF4D120E),
-      onErrorContainer: const Color(0xFFFFDAD6),
+  static const _deepSpace = _Palette(
+    brightness: Brightness.dark,
+    background: Color(0xFF0B0E14),
+    surface: Color(0xFF131924),
+    surfaceContainer: Color(0xFF1B2332),
+    surfaceContainerHigh: Color(0xFF242E40),
+    navBar: Color(0xFF0F141E),
+    outline: Color(0xFF263246),
+    outlineVariant: Color(0xFF1C2534),
+    onSurface: Color(0xFFE2E6EE),
+    onSurfaceVariant: Color(0xFFA6B0C2),
+    navUnselected: Color(0xFF8E9CAD),
+    primary: Color(0xFF569AFF),
+    onPrimary: Color(0xFF00214D),
+    primaryContainer: Color(0xFF1A3358),
+    onPrimaryContainer: Color(0xFFD3E4FF),
+    // 次要色与主色同为蓝色系：分段按钮、tonal 按钮、进度条底色都用它
+    secondary: Color(0xFF9DB8E0),
+    secondaryContainer: Color(0xFF1F3556),
+    onSecondaryContainer: Color(0xFFD3E4FF),
+    // 琥珀色只做点缀（标题图标）
+    tertiary: Color(0xFFFFB74D),
+    error: Color(0xFFFF6B5E),
+    errorContainer: Color(0xFF4D120E),
+    onErrorContainer: Color(0xFFFFDAD6),
+    accents: AstroAccents(
+      eclipse: Color(0xFFFFB74D),
+      conjunction: Color(0xFF6EA8FF),
+      transit: Color(0xFFFF8A65),
+      satellite: Color(0xFF4DB6AC),
+    ),
+  );
+
+  /// 红光：所有颜色都只有红色分量占主导，亮度压低；实心按钮用暗红底。
+  static const _astroRed = _Palette(
+    brightness: Brightness.dark,
+    background: Color(0xFF0A0101),
+    surface: Color(0xFF140303),
+    surfaceContainer: Color(0xFF1D0505),
+    surfaceContainerHigh: Color(0xFF280707),
+    navBar: Color(0xFF0F0202),
+    outline: Color(0xFF3D0C0C),
+    outlineVariant: Color(0xFF2A0707),
+    onSurface: Color(0xFFD95050),
+    onSurfaceVariant: Color(0xFFA33E3E),
+    navUnselected: Color(0xFF8A3030),
+    primary: Color(0xFFD03030),
+    onPrimary: Color(0xFF1A0000),
+    primaryContainer: Color(0xFF4A0C0C),
+    onPrimaryContainer: Color(0xFFE05050),
+    secondary: Color(0xFFB03838),
+    secondaryContainer: Color(0xFF3A0909),
+    onSecondaryContainer: Color(0xFFD84C4C),
+    tertiary: Color(0xFFC04040),
+    error: Color(0xFFE84040),
+    errorContainer: Color(0xFF330808),
+    onErrorContainer: Color(0xFFDD5555),
+    accents: AstroAccents(
+      eclipse: Color(0xFFD03030),
+      conjunction: Color(0xFFD03030),
+      transit: Color(0xFFD03030),
+      satellite: Color(0xFFD03030),
+    ),
+    dimFilledButtons: true,
+  );
+
+  static const _light = _Palette(
+    brightness: Brightness.light,
+    background: Color(0xFFF7F9FC),
+    surface: Color(0xFFFFFFFF),
+    surfaceContainer: Color(0xFFEFF3F8),
+    surfaceContainerHigh: Color(0xFFE6ECF4),
+    navBar: Color(0xFFFFFFFF),
+    outline: Color(0xFFD5DDE8),
+    outlineVariant: Color(0xFFE2E8F0),
+    onSurface: Color(0xFF161C26),
+    onSurfaceVariant: Color(0xFF4F5B6D),
+    navUnselected: Color(0xFF5E6A7C),
+    primary: Color(0xFF2558A8),
+    onPrimary: Color(0xFFFFFFFF),
+    primaryContainer: Color(0xFFDCE7FA),
+    onPrimaryContainer: Color(0xFF0F2A55),
+    secondary: Color(0xFF51617A),
+    secondaryContainer: Color(0xFFDCE7FA),
+    onSecondaryContainer: Color(0xFF0F2A55),
+    tertiary: Color(0xFFB26A00),
+    error: Color(0xFFBA1A1A),
+    errorContainer: Color(0xFFFFE4E0),
+    onErrorContainer: Color(0xFF5C0F0A),
+    accents: AstroAccents(
+      eclipse: Color(0xFFB26A00),
+      conjunction: Color(0xFF2558A8),
+      transit: Color(0xFFD84315),
+      satellite: Color(0xFF00796B),
+    ),
+  );
+
+  static ThemeData _build(_Palette p) {
+    final scheme = ColorScheme(
+      brightness: p.brightness,
+      primary: p.primary,
+      onPrimary: p.onPrimary,
+      primaryContainer: p.primaryContainer,
+      onPrimaryContainer: p.onPrimaryContainer,
+      secondary: p.secondary,
+      onSecondary: p.onPrimary,
+      secondaryContainer: p.secondaryContainer,
+      onSecondaryContainer: p.onSecondaryContainer,
+      tertiary: p.tertiary,
+      onTertiary: p.onPrimary,
+      tertiaryContainer: p.secondaryContainer,
+      onTertiaryContainer: p.onSecondaryContainer,
+      error: p.error,
+      onError: p.onPrimary,
+      errorContainer: p.errorContainer,
+      onErrorContainer: p.onErrorContainer,
+      surface: p.surface,
+      onSurface: p.onSurface,
+      onSurfaceVariant: p.onSurfaceVariant,
+      surfaceContainerLowest: p.background,
+      surfaceContainerLow: p.surface,
+      surfaceContainer: p.surfaceContainer,
+      surfaceContainerHigh: p.surfaceContainerHigh,
+      surfaceContainerHighest: p.surfaceContainerHigh,
+      outline: p.outline,
+      outlineVariant: p.outlineVariant,
+      inverseSurface: p.onSurface,
+      onInverseSurface: p.surface,
+      inversePrimary: p.primaryContainer,
+      shadow: Colors.black,
+      scrim: Colors.black,
+      surfaceTint: Colors.transparent,
     );
-
-    return ThemeData(
+    final base = ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: scaffoldBg,
-      colorScheme: colorScheme,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: scaffoldBg,
+      brightness: p.brightness,
+      colorScheme: scheme,
+    );
+    WidgetStateProperty<T> selected<T>(T on, T off) =>
+        WidgetStateProperty.resolveWith(
+          (s) => s.contains(WidgetState.selected) ? on : off,
+        );
+    return base.copyWith(
+      scaffoldBackgroundColor: p.background,
+      canvasColor: p.background,
+      textTheme: _tabular(base.textTheme),
+      extensions: [p.accents],
+      appBarTheme: AppBarTheme(
+        backgroundColor: p.background,
+        foregroundColor: p.onSurface,
         surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 1,
         centerTitle: false,
         titleTextStyle: TextStyle(
-          color: Color(0xFFE2E6EE),
+          color: p.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
       ),
       cardTheme: CardThemeData(
-        color: surface,
+        color: p.surface,
         elevation: 0,
         margin: EdgeInsets.zero,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: outline, width: 0.8),
+          side: BorderSide(color: p.outline, width: 0.8),
         ),
       ),
-      dividerTheme: const DividerThemeData(
-        color: Color(0xFF1B2433),
+      dividerTheme: DividerThemeData(
+        color: p.outlineVariant,
         thickness: 0.8,
         space: 1,
       ),
       navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: const Color(0xFF0F141E),
+        backgroundColor: p.navBar,
         surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFF1F3556),
+        indicatorColor: p.secondaryContainer,
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: primary,
-            );
-          }
-          return const TextStyle(
+        labelTextStyle: selected(
+          TextStyle(
             fontSize: 12,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF8E9CAD),
-          );
-        }),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primary, size: 24);
-          }
-          return const IconThemeData(color: Color(0xFF8E9CAD), size: 24);
-        }),
+            fontWeight: FontWeight.w600,
+            color: p.primary,
+          ),
+          TextStyle(fontSize: 12, color: p.navUnselected),
+        ),
+        iconTheme: selected(
+          IconThemeData(color: p.primary, size: 24),
+          IconThemeData(color: p.navUnselected, size: 24),
+        ),
       ),
       navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: const Color(0xFF0F141E),
-        indicatorColor: const Color(0xFF1F3556),
-        selectedIconTheme: const IconThemeData(color: primary),
-        unselectedIconTheme: const IconThemeData(color: Color(0xFF8E9CAD)),
-        selectedLabelTextStyle: const TextStyle(
-          color: primary,
+        backgroundColor: p.navBar,
+        indicatorColor: p.secondaryContainer,
+        selectedIconTheme: IconThemeData(color: p.primary),
+        unselectedIconTheme: IconThemeData(color: p.navUnselected),
+        selectedLabelTextStyle: TextStyle(
+          color: p.primary,
           fontWeight: FontWeight.w600,
           fontSize: 12,
         ),
-        unselectedLabelTextStyle: const TextStyle(
-          color: Color(0xFF8E9CAD),
+        unselectedLabelTextStyle: TextStyle(
+          color: p.navUnselected,
           fontSize: 12,
         ),
       ),
       chipTheme: ChipThemeData(
-        backgroundColor: surfaceContainer,
-        selectedColor: const Color(0xFF1F3556),
-        side: const BorderSide(color: outline, width: 0.8),
+        backgroundColor: p.surfaceContainer,
+        selectedColor: p.secondaryContainer,
+        side: BorderSide(color: p.outline, width: 0.8),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFFE2E6EE)),
+        labelStyle: TextStyle(fontSize: 13, color: p.onSurface),
+        iconTheme: IconThemeData(color: p.primary, size: 18),
+      ),
+      filledButtonTheme: p.dimFilledButtons
+          ? FilledButtonThemeData(
+              style: FilledButton.styleFrom(
+                backgroundColor: p.primaryContainer,
+                foregroundColor: p.onPrimaryContainer,
+              ),
+            )
+          : null,
+      // M3 默认未选中时圆点用 outline 色，而这里的 outline 是很暗的卡片边框色，会看不见
+      switchTheme: SwitchThemeData(
+        trackColor: selected(
+          p.dimFilledButtons ? p.primaryContainer : p.primary,
+          p.surfaceContainerHigh,
+        ),
+        thumbColor: selected(
+          p.dimFilledButtons ? p.primary : p.onPrimary,
+          p.navUnselected,
+        ),
+        trackOutlineColor: selected(Colors.transparent, p.navUnselected),
       ),
     );
   }
 
-  // ---------------------------------------------------------------------------
-  // 2. 天文夜间红光主题 (Astro Red Night Vision)
-  // ---------------------------------------------------------------------------
-  static ThemeData get astroRedTheme {
-    const scaffoldBg = Color(0xFF0A0202);
-    const surface = Color(0xFF160404);
-    const surfaceContainer = Color(0xFF220808);
-    const surfaceContainerHigh = Color(0xFF330C0C);
-    const primary = Color(0xFFFF3B30);
-    const outline = Color(0xFF481010);
-
-    final colorScheme = ColorScheme.dark(
-      primary: primary,
-      onPrimary: Colors.black,
-      primaryContainer: const Color(0xFF500F0F),
-      onPrimaryContainer: const Color(0xFFFFB4AB),
-      secondary: const Color(0xFFFF6961),
-      onSecondary: Colors.black,
-      surface: surface,
-      onSurface: const Color(0xFFFF9494),
-      onSurfaceVariant: const Color(0xFFD67373),
-      surfaceContainer: surfaceContainer,
-      surfaceContainerHigh: surfaceContainerHigh,
-      outline: outline,
-      outlineVariant: const Color(0xFF2F0A0A),
-      error: const Color(0xFFFF2222),
-    );
-
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: scaffoldBg,
-      colorScheme: colorScheme,
-      appBarTheme: const AppBarTheme(
-        backgroundColor: scaffoldBg,
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        centerTitle: false,
-        titleTextStyle: TextStyle(
-          color: Color(0xFFFF9494),
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: surface,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: outline, width: 0.8),
-        ),
-      ),
-      dividerTheme: const DividerThemeData(
-        color: Color(0xFF2F0A0A),
-        thickness: 0.8,
-        space: 1,
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: const Color(0xFF100303),
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFF4D1010),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-        labelTextStyle: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: primary,
-            );
-          }
-          return const TextStyle(fontSize: 12, color: Color(0xFFB05555));
-        }),
-        iconTheme: WidgetStateProperty.resolveWith((states) {
-          if (states.contains(WidgetState.selected)) {
-            return const IconThemeData(color: primary, size: 24);
-          }
-          return const IconThemeData(color: Color(0xFFB05555), size: 24);
-        }),
-      ),
-      navigationRailTheme: NavigationRailThemeData(
-        backgroundColor: const Color(0xFF100303),
-        indicatorColor: const Color(0xFF4D1010),
-        selectedIconTheme: const IconThemeData(color: primary),
-        unselectedIconTheme: const IconThemeData(color: Color(0xFFB05555)),
-        selectedLabelTextStyle: const TextStyle(
-          color: primary,
-          fontWeight: FontWeight.w600,
-          fontSize: 12,
-        ),
-        unselectedLabelTextStyle: const TextStyle(
-          color: Color(0xFFB05555),
-          fontSize: 12,
-        ),
-      ),
-      chipTheme: ChipThemeData(
-        backgroundColor: surfaceContainer,
-        selectedColor: const Color(0xFF4D1010),
-        side: const BorderSide(color: outline, width: 0.8),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        labelStyle: const TextStyle(fontSize: 13, color: Color(0xFFFF9494)),
-      ),
+  /// 数字等宽，时间和数值在列表里能上下对齐。
+  static TextTheme _tabular(TextTheme t) {
+    const f = [FontFeature.tabularFigures()];
+    TextStyle? tab(TextStyle? s) => s?.copyWith(fontFeatures: f);
+    return t.copyWith(
+      displayLarge: tab(t.displayLarge),
+      displayMedium: tab(t.displayMedium),
+      displaySmall: tab(t.displaySmall),
+      headlineLarge: tab(t.headlineLarge),
+      headlineMedium: tab(t.headlineMedium),
+      headlineSmall: tab(t.headlineSmall),
+      titleLarge: tab(t.titleLarge),
+      titleMedium: tab(t.titleMedium),
+      titleSmall: tab(t.titleSmall),
+      bodyLarge: tab(t.bodyLarge),
+      bodyMedium: tab(t.bodyMedium),
+      bodySmall: tab(t.bodySmall),
+      labelLarge: tab(t.labelLarge),
+      labelMedium: tab(t.labelMedium),
+      labelSmall: tab(t.labelSmall),
     );
   }
+}
 
-  // ---------------------------------------------------------------------------
-  // 3. 明亮浅色主题 (Clean Light)
-  // ---------------------------------------------------------------------------
-  static ThemeData get lightTheme {
-    const primary = Color(0xFF1F3A68);
-    final colorScheme = ColorScheme.fromSeed(
-      seedColor: primary,
-      brightness: Brightness.light,
-    );
+/// 一套外观的全部色值。
+class _Palette {
+  const _Palette({
+    required this.brightness,
+    required this.background,
+    required this.surface,
+    required this.surfaceContainer,
+    required this.surfaceContainerHigh,
+    required this.navBar,
+    required this.outline,
+    required this.outlineVariant,
+    required this.onSurface,
+    required this.onSurfaceVariant,
+    required this.navUnselected,
+    required this.primary,
+    required this.onPrimary,
+    required this.primaryContainer,
+    required this.onPrimaryContainer,
+    required this.secondary,
+    required this.secondaryContainer,
+    required this.onSecondaryContainer,
+    required this.tertiary,
+    required this.error,
+    required this.errorContainer,
+    required this.onErrorContainer,
+    required this.accents,
+    this.dimFilledButtons = false,
+  });
 
-    return ThemeData(
-      useMaterial3: true,
-      brightness: Brightness.light,
-      colorScheme: colorScheme,
-      scaffoldBackgroundColor: const Color(0xFFF7F9FC),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: Color(0xFFF7F9FC),
-        surfaceTintColor: Colors.transparent,
-        elevation: 0,
-        scrolledUnderElevation: 1,
-        centerTitle: false,
-      ),
-      cardTheme: CardThemeData(
-        color: Colors.white,
-        elevation: 0,
-        margin: EdgeInsets.zero,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: Color(0xFFE2E8F0), width: 0.8),
-        ),
-      ),
-      navigationBarTheme: NavigationBarThemeData(
-        backgroundColor: Colors.white,
-        surfaceTintColor: Colors.transparent,
-        indicatorColor: const Color(0xFFE2ECFA),
-        labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      ),
+  final Brightness brightness;
+  final Color background;
+  final Color surface;
+  final Color surfaceContainer;
+  final Color surfaceContainerHigh;
+  final Color navBar;
+  final Color outline;
+  final Color outlineVariant;
+  final Color onSurface;
+  final Color onSurfaceVariant;
+  final Color navUnselected;
+  final Color primary;
+  final Color onPrimary;
+  final Color primaryContainer;
+  final Color onPrimaryContainer;
+  final Color secondary;
+  final Color secondaryContainer;
+  final Color onSecondaryContainer;
+  final Color tertiary;
+  final Color error;
+  final Color errorContainer;
+  final Color onErrorContainer;
+  final AstroAccents accents;
+
+  /// 实心按钮、开关用暗色底（红光模式）
+  final bool dimFilledButtons;
+}
+
+/// 各类天象的强调色（图标底色等）。红光模式下全部是暗红。
+@immutable
+class AstroAccents extends ThemeExtension<AstroAccents> {
+  const AstroAccents({
+    required this.eclipse,
+    required this.conjunction,
+    required this.transit,
+    required this.satellite,
+  });
+
+  final Color eclipse;
+  final Color conjunction;
+  final Color transit;
+  final Color satellite;
+
+  static AstroAccents of(BuildContext context) =>
+      Theme.of(context).extension<AstroAccents>() ?? _fallback;
+
+  static const _fallback = AstroAccents(
+    eclipse: Color(0xFFFFB74D),
+    conjunction: Color(0xFF6EA8FF),
+    transit: Color(0xFFFF8A65),
+    satellite: Color(0xFF4DB6AC),
+  );
+
+  @override
+  AstroAccents copyWith({
+    Color? eclipse,
+    Color? conjunction,
+    Color? transit,
+    Color? satellite,
+  }) => AstroAccents(
+    eclipse: eclipse ?? this.eclipse,
+    conjunction: conjunction ?? this.conjunction,
+    transit: transit ?? this.transit,
+    satellite: satellite ?? this.satellite,
+  );
+
+  @override
+  AstroAccents lerp(AstroAccents? other, double t) {
+    if (other == null) return this;
+    return AstroAccents(
+      eclipse: Color.lerp(eclipse, other.eclipse, t)!,
+      conjunction: Color.lerp(conjunction, other.conjunction, t)!,
+      transit: Color.lerp(transit, other.transit, t)!,
+      satellite: Color.lerp(satellite, other.satellite, t)!,
     );
   }
 }

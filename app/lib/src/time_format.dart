@@ -4,6 +4,8 @@
 /// （卫星凌日凌月往往不到 1 秒，不能省掉秒）。
 library;
 
+import '../l10n/app_localizations.dart';
+
 /// 解析形如 "2026-03-03 11:33:45" 或 "2026-03-03T11:33:45" 的 UTC 字符串。
 DateTime? parseUtc(String utcStr) {
   final clean = utcStr.trim().replaceFirst(' ', 'T');
@@ -44,4 +46,26 @@ String formatAstroTime(String utcStr, {bool showUtc = true}) {
       '${zoneLabel(local)}';
   if (!showUtc) return localStr;
   return '$localStr · ${_hms(dt)} UTC';
+}
+
+/// 只写 UTC（带日期）："2027-02-06 15:59:38 UTC"。本地就是 UTC 时返回 null（不必重复）。
+String? formatUtcLine(String utcStr) {
+  final dt = parseUtc(utcStr);
+  if (dt == null || dt.toLocal().timeZoneOffset == Duration.zero) return null;
+  return '${dt.year}-${_two(dt.month)}-${_two(dt.day)} ${_hms(dt)} UTC';
+}
+
+/// “刚刚 / 12 分钟前 / 13 小时前 / 3 天前”。
+String timeAgo(AppLocalizations l, Duration d) {
+  final m = d.inMinutes;
+  if (m < 1) return l.justNow;
+  if (m < 60) return l.minutesAgo(m);
+  if (m < 48 * 60) return l.hoursAgo(d.inHours);
+  return l.daysAgo(d.inDays);
+}
+
+/// 根数历元 "2026-11-05T20:28:36.809184" 只留到分钟："2026-11-05 20:28"。
+String shortEpoch(String epoch) {
+  final s = epoch.replaceFirst('T', ' ');
+  return s.length >= 16 ? s.substring(0, 16) : s;
 }

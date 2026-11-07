@@ -122,11 +122,11 @@ abstract class AppLocalizations {
   /// **'星历加载失败：{error}'**
   String ephemerisLoadFailed(String error);
 
-  /// No description provided for @ephemerisLoaded.
+  /// No description provided for @searchIdle.
   ///
   /// In zh, this message translates to:
-  /// **'星历加载 {ms} ms'**
-  String ephemerisLoaded(int ms);
+  /// **'选好条件后点“搜索”'**
+  String get searchIdle;
 
   /// No description provided for @kindTransit.
   ///
@@ -461,8 +461,32 @@ abstract class AppLocalizations {
   /// No description provided for @downloadedAgo.
   ///
   /// In zh, this message translates to:
-  /// **'，{minutes} 分钟前下载'**
-  String downloadedAgo(int minutes);
+  /// **'，{ago}下载'**
+  String downloadedAgo(String ago);
+
+  /// No description provided for @justNow.
+  ///
+  /// In zh, this message translates to:
+  /// **'刚刚'**
+  String get justNow;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In zh, this message translates to:
+  /// **'{n} 分钟前'**
+  String minutesAgo(int n);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In zh, this message translates to:
+  /// **'{n} 小时前'**
+  String hoursAgo(int n);
+
+  /// No description provided for @daysAgo.
+  ///
+  /// In zh, this message translates to:
+  /// **'{n} 天前'**
+  String daysAgo(int n);
 
   /// No description provided for @hasPrevious.
   ///

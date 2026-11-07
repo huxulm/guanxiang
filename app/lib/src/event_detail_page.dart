@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import 'layout.dart';
 import 'rust/api/guanxiang.dart';
 import 'time_format.dart';
 
@@ -12,16 +13,24 @@ class EventDetailPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final utcLine = formatUtcLine(event.utc);
     return Scaffold(
       appBar: AppBar(title: Text(event.title)),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
+      body: ContentListView(
         children: [
+          // 本地时间一行，UTC 另起一行（手机上放在一行会断开）
           Text(
-            formatAstroTime(event.utc),
+            formatAstroTime(event.utc, showUtc: false),
             style: theme.textTheme.headlineSmall,
           ),
-          const SizedBox(height: 4),
+          if (utcLine != null)
+            Text(
+              utcLine,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+          const SizedBox(height: 8),
           Text(event.summary, style: theme.textTheme.bodyLarge),
           const SizedBox(height: 16),
           Card(

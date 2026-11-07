@@ -4,6 +4,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../l10n/app_localizations.dart';
 import 'amap_support.dart';
+import 'layout.dart';
 import 'licenses.dart';
 import 'settings.dart';
 
@@ -159,8 +160,7 @@ class _SettingsPageState extends State<SettingsPage> {
           listenable: widget.settings,
           builder: (context, _) {
             final s = widget.settings;
-            return ListView(
-              padding: const EdgeInsets.all(16),
+            return ContentListView(
               children: [
                 Text(l.locationSection, style: theme.textTheme.titleMedium),
                 const SizedBox(height: 8),
@@ -224,11 +224,7 @@ class _SettingsPageState extends State<SettingsPage> {
                       onSelected: (_) => s.setThemeMode(AppThemeMode.deepSpace),
                     ),
                     ChoiceChip(
-                      avatar: const Icon(
-                        Icons.nightlight,
-                        size: 18,
-                        color: Color(0xFFFF4444),
-                      ),
+                      avatar: const Icon(Icons.nightlight, size: 18),
                       label: Text(l.themeAstroRed),
                       selected: s.themeMode == AppThemeMode.astroRed,
                       onSelected: (_) => s.setThemeMode(AppThemeMode.astroRed),

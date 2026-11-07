@@ -42,10 +42,39 @@ void main() {
     expect(dark.scaffoldBackgroundColor, const Color(0xFF0B0E14));
     expect(dark.colorScheme.primary, const Color(0xFF569AFF));
 
+    // 红光模式保护暗适应：所有颜色都必须以红色分量为主（绿、蓝不超过红的 40%），
+    // 包括 Material 组件会用到的容器色和各类天象的强调色
     final red = AstroTheme.astroRedTheme;
     expect(red.brightness, Brightness.dark);
-    expect(red.scaffoldBackgroundColor, const Color(0xFF0A0202));
-    expect(red.colorScheme.primary, const Color(0xFFFF3B30));
+    final cs = red.colorScheme;
+    final accents = red.extension<AstroAccents>()!;
+    final colors = <String, Color>{
+      'background': red.scaffoldBackgroundColor,
+      'primary': cs.primary,
+      'primaryContainer': cs.primaryContainer,
+      'onPrimaryContainer': cs.onPrimaryContainer,
+      'secondary': cs.secondary,
+      'secondaryContainer': cs.secondaryContainer,
+      'onSecondaryContainer': cs.onSecondaryContainer,
+      'tertiary': cs.tertiary,
+      'error': cs.error,
+      'errorContainer': cs.errorContainer,
+      'onErrorContainer': cs.onErrorContainer,
+      'surface': cs.surface,
+      'surfaceContainer': cs.surfaceContainer,
+      'surfaceContainerHigh': cs.surfaceContainerHigh,
+      'onSurface': cs.onSurface,
+      'onSurfaceVariant': cs.onSurfaceVariant,
+      'outline': cs.outline,
+      'eclipse': accents.eclipse,
+      'conjunction': accents.conjunction,
+      'transit': accents.transit,
+      'satellite': accents.satellite,
+    };
+    colors.forEach((name, c) {
+      expect(c.g, lessThanOrEqualTo(c.r * 0.4), reason: name);
+      expect(c.b, lessThanOrEqualTo(c.r * 0.4), reason: name);
+    });
 
     final light = AstroTheme.lightTheme;
     expect(light.brightness, Brightness.light);

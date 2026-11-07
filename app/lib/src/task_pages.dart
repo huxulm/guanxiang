@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
+import 'layout.dart';
 import 'rust/api/guanxiang.dart';
 import 'sat_transit_page.dart';
 import 'settings.dart';
@@ -168,8 +169,7 @@ class _SubmitTaskPageState extends State<SubmitTaskPage> {
     return Scaffold(
       appBar: AppBar(title: Text(l.newTask)),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: ContentListView(
           children: [
             SegmentedButton<TaskKind>(
               segments: [
@@ -284,59 +284,63 @@ class _TaskListPageState extends State<TaskListPage> {
       body: SafeArea(
         child: _tasks.isEmpty
             ? Center(child: Text(l.noTasks))
-            : ListView.separated(
-                itemCount: _tasks.length,
-                separatorBuilder: (_, _) => const Divider(height: 1),
-                itemBuilder: (context, i) {
-                  final t = _tasks[i];
-                  return ListTile(
-                    leading: Icon(
-                      t.kind == TaskKind.watch
-                          ? Icons.radar
-                          : Icons.manage_search,
-                    ),
-                    title: Text(taskName(l, t)),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          '${statusText(l, t)} · '
-                          '${l.taskDoneBody(t.hits.length, t.items.length)}',
-                        ),
-                        if (t.active) ...[
-                          const SizedBox(height: 4),
-                          LinearProgressIndicator(value: t.progress(now)),
-                        ],
-                      ],
-                    ),
-                    trailing: PopupMenuButton<String>(
-                      onSelected: (v) async {
-                        if (v == 'cancel') await _store!.cancel(t.id);
-                        if (v == 'delete') await _store!.delete(t.id);
-                        await _reload();
-                      },
-                      itemBuilder: (_) => [
-                        if (t.active)
-                          PopupMenuItem(
-                            value: 'cancel',
-                            child: Text(l.cancelTask),
+            : ContentInsets(
+                min: 0,
+                builder: (context, side) => ListView.separated(
+                  padding: EdgeInsets.symmetric(horizontal: side),
+                  itemCount: _tasks.length,
+                  separatorBuilder: (_, _) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final t = _tasks[i];
+                    return ListTile(
+                      leading: Icon(
+                        t.kind == TaskKind.watch
+                            ? Icons.radar
+                            : Icons.manage_search,
+                      ),
+                      title: Text(taskName(l, t)),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '${statusText(l, t)} · '
+                            '${l.taskDoneBody(t.hits.length, t.items.length)}',
                           ),
-                        PopupMenuItem(
-                          value: 'delete',
-                          child: Text(l.deleteTask),
-                        ),
-                      ],
-                    ),
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => TaskReportPage(
-                          taskId: t.id,
-                          settings: widget.settings,
+                          if (t.active) ...[
+                            const SizedBox(height: 4),
+                            LinearProgressIndicator(value: t.progress(now)),
+                          ],
+                        ],
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        onSelected: (v) async {
+                          if (v == 'cancel') await _store!.cancel(t.id);
+                          if (v == 'delete') await _store!.delete(t.id);
+                          await _reload();
+                        },
+                        itemBuilder: (_) => [
+                          if (t.active)
+                            PopupMenuItem(
+                              value: 'cancel',
+                              child: Text(l.cancelTask),
+                            ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Text(l.deleteTask),
+                          ),
+                        ],
+                      ),
+                      onTap: () => Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => TaskReportPage(
+                            taskId: t.id,
+                            settings: widget.settings,
+                          ),
                         ),
                       ),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
       ),
     );
@@ -435,8 +439,7 @@ class _TaskReportPageState extends State<TaskReportPage> {
     return Scaffold(
       appBar: AppBar(title: Text(taskName(l, t))),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: ContentListView(
           children: [
             Text(statusText(l, t), style: theme.textTheme.titleMedium),
             if (t.active) ...[

@@ -20,16 +20,10 @@ import 'settings_page.dart';
 /// 窄屏（手机）采用底部 [NavigationBar]；宽屏（平板/桌面）采用侧边 [NavigationRail]。
 /// 使用 [IndexedStack] 保留每个页面的状态与计算进度，切换 Tab 不会丢弃任何状态。
 class MainScaffold extends StatefulWidget {
-  const MainScaffold({
-    super.key,
-    required this.engine,
-    required this.settings,
-    this.loadMs = 0,
-  });
+  const MainScaffold({super.key, required this.engine, required this.settings});
 
   final Engine engine;
   final Settings settings;
-  final int loadMs;
 
   @override
   State<MainScaffold> createState() => _MainScaffoldState();
@@ -68,7 +62,6 @@ class _MainScaffoldState extends State<MainScaffold> {
       SearchPage(
         key: _searchKey,
         engine: widget.engine,
-        loadMs: widget.loadMs,
         settings: widget.settings,
         isEmbedded: true,
       ),

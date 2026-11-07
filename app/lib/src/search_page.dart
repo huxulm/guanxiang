@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import 'errors.dart';
+import 'layout.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'satellite_page.dart';
@@ -42,14 +43,12 @@ class SearchPage extends StatefulWidget {
   const SearchPage({
     super.key,
     required this.engine,
-    this.loadMs = 0,
     required this.settings,
     this.isEmbedded = false,
   });
 
   final Engine engine;
   final Settings settings;
-  final int loadMs;
   final bool isEmbedded;
 
   @override
@@ -86,7 +85,7 @@ class SearchPageState extends State<SearchPage> {
     final year = DateTime.now().year.clamp(_years.from, _years.toExclusive - 1);
     _fromCtrl.text = '$year';
     _toCtrl.text = '${(year + 30).clamp(year + 1, _years.toExclusive)}';
-    _idleStatus = (l) => l.ephemerisLoaded(widget.loadMs);
+    _idleStatus = (l) => l.searchIdle;
   }
 
   @override
@@ -342,6 +341,7 @@ class SearchPageState extends State<SearchPage> {
                 _locating || _session == null
                     ? _idleStatus(l)
                     : _session!.status(l),
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),
@@ -433,9 +433,11 @@ class SearchPageState extends State<SearchPage> {
               )
             : Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
-                    child: _form(l),
+                  ContentInsets(
+                    builder: (context, side) => Padding(
+                      padding: EdgeInsets.fromLTRB(side, 8, side, 8),
+                      child: _form(l),
+                    ),
                   ),
                   const Divider(height: 1),
                   Expanded(child: EventResultsList(session: session)),

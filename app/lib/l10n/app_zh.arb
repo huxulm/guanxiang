@@ -11,14 +11,7 @@
       }
     }
   },
-  "ephemerisLoaded": "星历加载 {ms} ms",
-  "@ephemerisLoaded": {
-    "placeholders": {
-      "ms": {
-        "type": "int"
-      }
-    }
-  },
+  "searchIdle": "选好条件后点“搜索”",
   "kindTransit": "凌日",
   "kindConjunction": "合",
   "kindOpposition": "冲",
@@ -145,10 +138,35 @@
       }
     }
   },
-  "downloadedAgo": "，{minutes} 分钟前下载",
+  "downloadedAgo": "，{ago}下载",
   "@downloadedAgo": {
     "placeholders": {
-      "minutes": {
+      "ago": {
+        "type": "String"
+      }
+    }
+  },
+  "justNow": "刚刚",
+  "minutesAgo": "{n} 分钟前",
+  "@minutesAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "hoursAgo": "{n} 小时前",
+  "@hoursAgo": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "daysAgo": "{n} 天前",
+  "@daysAgo": {
+    "placeholders": {
+      "n": {
         "type": "int"
       }
     }

@@ -95,17 +95,14 @@ class _LoadingPageState extends State<LoadingPage> {
 
   Future<void> _load() async {
     try {
-      final watch = Stopwatch()..start();
       final engine = await loadEngine();
-      final ms = watch.elapsedMilliseconds;
       final settings = widget.settings ?? await Settings.open();
       // 非 Android 平台在应用打开期间执行后台任务
       ForegroundTaskScheduler.instance.start(engine);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
-          builder: (_) =>
-              MainScaffold(engine: engine, loadMs: ms, settings: settings),
+          builder: (_) => MainScaffold(engine: engine, settings: settings),
         ),
       );
     } catch (e) {

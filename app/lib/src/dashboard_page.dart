@@ -6,9 +6,11 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'errors.dart';
 import 'event_detail_page.dart';
+import 'layout.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'settings.dart';
+import 'theme.dart';
 import 'time_format.dart';
 
 /// 首页“观象 · 近期看点”看板。
@@ -40,19 +42,11 @@ class DashboardPage extends StatelessWidget {
     final l = AppLocalizations.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.dashboardTitle),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.tune_outlined),
-            tooltip: l.navSettings,
-            onPressed: () => onSelectTab?.call(3),
-          ),
-        ],
-      ),
+      appBar: AppBar(title: Text(l.dashboardTitle)),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        child: ContentListView(
+          top: 8,
+          bottom: 24,
           children: [
             // -----------------------------------------------------------------
             // 1. 今日时刻与测站状态卡片 (Hero Card)
@@ -99,7 +93,11 @@ class DashboardPage extends StatelessWidget {
             // -----------------------------------------------------------------
             Row(
               children: [
-                Icon(Icons.explore, size: 20, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.grid_view_rounded,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Text(
                   l.quickExplore,
@@ -121,7 +119,7 @@ class DashboardPage extends StatelessWidget {
                 Icon(
                   Icons.auto_awesome,
                   size: 20,
-                  color: theme.colorScheme.secondary,
+                  color: theme.colorScheme.tertiary,
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -145,57 +143,77 @@ class DashboardPage extends StatelessWidget {
     AppLocalizations l,
     ThemeData theme,
   ) {
-    return Column(
-      children: [
-        _quickTile(
-          context: context,
-          theme: theme,
-          icon: Icons.nightlight_outlined,
-          iconColor: const Color(0xFFFFAA00),
-          title: l.quickEclipses,
-          desc: l.quickEclipsesDesc,
-          onTap: () {
-            onPresetSearch?.call(EventKind.solarEclipse);
-            onSelectTab?.call(1);
-          },
-        ),
-        const SizedBox(height: 8),
-        _quickTile(
-          context: context,
-          theme: theme,
-          icon: Icons.brightness_medium,
-          iconColor: const Color(0xFF569AFF),
-          title: l.quickConjunctions,
-          desc: l.quickConjunctionsDesc,
-          onTap: () {
-            onPresetSearch?.call(EventKind.conjunction);
-            onSelectTab?.call(1);
-          },
-        ),
-        const SizedBox(height: 8),
-        _quickTile(
-          context: context,
-          theme: theme,
-          icon: Icons.wb_sunny_outlined,
-          iconColor: const Color(0xFFFF7043),
-          title: l.quickTransits,
-          desc: l.quickTransitsDesc,
-          onTap: () {
-            onPresetSearch?.call(EventKind.transit);
-            onSelectTab?.call(1);
-          },
-        ),
-        const SizedBox(height: 8),
-        _quickTile(
-          context: context,
-          theme: theme,
-          icon: Icons.satellite_alt_outlined,
-          iconColor: const Color(0xFF26A69A),
-          title: l.quickSpaceStation,
-          desc: l.quickSpaceStationDesc,
-          onTap: () => onSelectTab?.call(2),
-        ),
-      ],
+    final accents = AstroAccents.of(context);
+    final tiles = [
+      _quickTile(
+        context: context,
+        theme: theme,
+        icon: Icons.nightlight_outlined,
+        iconColor: accents.eclipse,
+        title: l.quickEclipses,
+        desc: l.quickEclipsesDesc,
+        onTap: () {
+          onPresetSearch?.call(EventKind.solarEclipse);
+          onSelectTab?.call(1);
+        },
+      ),
+      _quickTile(
+        context: context,
+        theme: theme,
+        icon: Icons.brightness_medium,
+        iconColor: accents.conjunction,
+        title: l.quickConjunctions,
+        desc: l.quickConjunctionsDesc,
+        onTap: () {
+          onPresetSearch?.call(EventKind.conjunction);
+          onSelectTab?.call(1);
+        },
+      ),
+      _quickTile(
+        context: context,
+        theme: theme,
+        icon: Icons.wb_sunny_outlined,
+        iconColor: accents.transit,
+        title: l.quickTransits,
+        desc: l.quickTransitsDesc,
+        onTap: () {
+          onPresetSearch?.call(EventKind.transit);
+          onSelectTab?.call(1);
+        },
+      ),
+      _quickTile(
+        context: context,
+        theme: theme,
+        icon: Icons.satellite_alt_outlined,
+        iconColor: accents.satellite,
+        title: l.quickSpaceStation,
+        desc: l.quickSpaceStationDesc,
+        onTap: () => onSelectTab?.call(2),
+      ),
+    ];
+    // 宽屏两列，窄屏一列
+    return LayoutBuilder(
+      builder: (context, box) {
+        final cols = box.maxWidth >= 640 ? 2 : 1;
+        return Column(
+          children: [
+            for (var i = 0; i < tiles.length; i += cols) ...[
+              if (i > 0) const SizedBox(height: 8),
+              IntrinsicHeight(
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    for (var j = i; j < i + cols && j < tiles.length; j++) ...[
+                      if (j > i) const SizedBox(width: 8),
+                      Expanded(child: tiles[j]),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ],
+        );
+      },
     );
   }
 
@@ -334,7 +352,6 @@ class _HeroCardState extends State<_HeroCard> {
                     utcTimeStr,
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
-                      fontFamily: 'monospace',
                     ),
                   ),
                 ),
@@ -499,6 +516,12 @@ class _UpcomingEventsState extends State<_UpcomingEvents> {
     return out.take(_maxItems).toList();
   }
 
+  static Color _iconColor(AstroAccents a, EventKind k) => switch (k) {
+    EventKind.solarEclipse || EventKind.lunarEclipse => a.eclipse,
+    EventKind.transit => a.transit,
+    _ => a.conjunction,
+  };
+
   static IconData _icon(EventKind k) => switch (k) {
     EventKind.solarEclipse => Icons.wb_sunny_outlined,
     EventKind.lunarEclipse => Icons.nightlight_outlined,
@@ -559,7 +582,7 @@ class _UpcomingEventsState extends State<_UpcomingEvents> {
                     child: ListTile(
                       leading: Icon(
                         _icon(e.kind),
-                        color: theme.colorScheme.primary,
+                        color: _iconColor(AstroAccents.of(context), e.kind),
                       ),
                       title: Text(e.title),
                       subtitle: Text(

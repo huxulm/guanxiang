@@ -24,9 +24,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String ephemerisLoaded(int ms) {
-    return '星历加载 $ms ms';
-  }
+  String get searchIdle => '选好条件后点“搜索”';
 
   @override
   String get kindTransit => '凌日';
@@ -210,8 +208,26 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String downloadedAgo(int minutes) {
-    return '，$minutes 分钟前下载';
+  String downloadedAgo(String ago) {
+    return '，$ago下载';
+  }
+
+  @override
+  String get justNow => '刚刚';
+
+  @override
+  String minutesAgo(int n) {
+    return '$n 分钟前';
+  }
+
+  @override
+  String hoursAgo(int n) {
+    return '$n 小时前';
+  }
+
+  @override
+  String daysAgo(int n) {
+    return '$n 天前';
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'errors.dart';
 import 'event_detail_page.dart';
+import 'layout.dart';
 import 'rust/api/guanxiang.dart';
 import 'time_format.dart';
 
@@ -96,20 +97,24 @@ class EventResultsList extends StatelessWidget {
         if (s.results.isEmpty) {
           return Center(child: Text(s.running ? '' : l.noResults));
         }
-        return ListView.separated(
-          itemCount: s.results.length,
-          separatorBuilder: (_, _) => const Divider(height: 1),
-          itemBuilder: (context, i) {
-            final e = s.results[i];
-            return ListTile(
-              title: Text(e.title),
-              subtitle: Text('${formatAstroTime(e.utc)} · ${e.summary}'),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => EventDetailPage(event: e)),
-              ),
-            );
-          },
+        return ContentInsets(
+          min: 0,
+          builder: (context, side) => ListView.separated(
+            padding: EdgeInsets.symmetric(horizontal: side),
+            itemCount: s.results.length,
+            separatorBuilder: (_, _) => const Divider(height: 1),
+            itemBuilder: (context, i) {
+              final e = s.results[i];
+              return ListTile(
+                title: Text(e.title),
+                subtitle: Text('${formatAstroTime(e.utc)} · ${e.summary}'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => Navigator.of(context).push(
+                  MaterialPageRoute(builder: (_) => EventDetailPage(event: e)),
+                ),
+              );
+            },
+          ),
         );
       },
     );

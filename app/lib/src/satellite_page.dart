@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'celestrak.dart';
 import 'errors.dart';
+import 'layout.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
 import 'sat_transit_page.dart';
@@ -354,9 +355,9 @@ class _SatellitePageState extends State<SatellitePage> {
     final age = c.fetchedAt == null
         ? ''
         : l.downloadedAgo(
-            DateTime.now().toUtc().difference(c.fetchedAt!).inMinutes,
+            timeAgo(l, DateTime.now().toUtc().difference(c.fetchedAt!)),
           );
-    return l.cacheEpoch(c.epoch ?? '?') +
+    return l.cacheEpoch(c.epoch == null ? '?' : shortEpoch(c.epoch!)) +
         age +
         (c.previousJson != null ? l.hasPrevious : '');
   }
@@ -383,8 +384,7 @@ class _SatellitePageState extends State<SatellitePage> {
         ],
       ),
       body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16),
+        child: ContentListView(
           children: [
             Card(
               color: theme.colorScheme.errorContainer,

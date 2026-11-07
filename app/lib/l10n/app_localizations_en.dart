@@ -24,9 +24,7 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String ephemerisLoaded(int ms) {
-    return 'Ready ($ms ms)';
-  }
+  String get searchIdle => 'Choose, then tap Search';
 
   @override
   String get kindTransit => 'Transit';
@@ -212,8 +210,38 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String downloadedAgo(int minutes) {
-    return ', downloaded $minutes min ago';
+  String downloadedAgo(String ago) {
+    return ', downloaded $ago';
+  }
+
+  @override
+  String get justNow => 'just now';
+
+  @override
+  String minutesAgo(int n) {
+    return '$n min ago';
+  }
+
+  @override
+  String hoursAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n hours ago',
+      one: '1 hour ago',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String daysAgo(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: '$n days ago',
+      one: '1 day ago',
+    );
+    return '$_temp0';
   }
 
   @override
