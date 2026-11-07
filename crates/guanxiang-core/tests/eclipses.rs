@@ -309,3 +309,56 @@ fn eclipse_diagrams_are_consistent() {
         s.l2
     );
 }
+
+#[test]
+fn lunar_saros_and_durations_match_nasa() {
+    use guanxiang_core::events::saros;
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("nasa", "lunar_2001_2100.csv");
+    let found = lunar_eclipse::search(&eph, century21(), ShadowModel::Danjon).unwrap();
+
+    let mut table = MaxTable::new(&["半影食 min", "本影食 min", "全食 min"]);
+    for r in &rows {
+        let t = tt(&r[0], &r[1]);
+        let e = found
+            .iter()
+            .find(|e| (e.greatest.tt_seconds() - t.tt_seconds()).abs() < 3.0 * 3600.0)
+            .unwrap();
+        assert_eq!(
+            saros::full_moon_lunation(&e.greatest),
+            num(&r[7]) as i32,
+            "{}",
+            r[0]
+        );
+        let s = saros::lunar_saros(&e.greatest).unwrap_or_else(|| panic!("{} 没有沙罗序列", r[0]));
+        assert_eq!(f64::from(s.series), num(&r[8]), "{}", r[0]);
+
+        // 持续时间（分钟）：P1–P4、U1–U4、U2–U3；NASA 没有的留空
+        let span = |a: usize, b: usize| match (e.contacts[a], e.contacts[b]) {
+            (Some(x), Some(y)) => Some((y.tt_seconds() - x.tt_seconds()) / 60.0),
+            _ => None,
+        };
+        let mut diffs = [0.0; 3];
+        for (i, (ours, nasa)) in [span(0, 5), span(1, 4), span(2, 3)]
+            .into_iter()
+            .zip(&r[9..12])
+            .enumerate()
+        {
+            match (ours, nasa.is_empty()) {
+                (Some(m), false) => diffs[i] = m - num(nasa),
+                (None, true) => {}
+                _ => panic!(
+                    "{} 第 {i} 段持续时间有无不一致：本库 {ours:?}，NASA {nasa:?}",
+                    r[0]
+                ),
+            }
+        }
+        table.add(&r[3][..1], &diffs);
+    }
+    table.print("月食持续时间，对比 NASA（Danjon）");
+    // NASA 的持续时间保留 0.1 分钟；全食很短时接触角度掠射，时刻对模型差异更敏感（最大约 0.33 分钟）
+    for c in ["半影食 min", "本影食 min", "全食 min"] {
+        assert!(table.max(c) <= 0.5, "{c}");
+    }
+}

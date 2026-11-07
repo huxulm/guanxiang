@@ -310,3 +310,26 @@ fn moon_phase_matches_skyfield() {
     assert!(table.max("照亮比例") <= 1e-4);
     assert!(table.max("黄经差″") <= 0.1);
 }
+
+#[test]
+fn sublunar_point_matches_skyfield() {
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("skyfield", "sublunar.csv");
+    let mut table = MaxTable::new(&["纬度″", "经度×cos纬度″"]);
+    for r in &rows {
+        let t = Time::from_tt_jd(num(&r[0])).with_delta_t(num(&r[1]));
+        let (lat, lon) = astrometry::sub_body_point(&eph, Body::Moon, &t).unwrap();
+        let mut dlon = lon.to_degrees() - num(&r[3]);
+        dlon -= 360.0 * (dlon / 360.0).round();
+        table.add(
+            "moon",
+            &[
+                (lat.to_degrees() - num(&r[2])) * 3600.0,
+                dlon * lat.cos() * 3600.0,
+            ],
+        );
+    }
+    table.print("月下点，对比 Skyfield");
+    assert!(table.max("纬度″") <= 0.01);
+    assert!(table.max("经度×cos纬度″") <= 0.01);
+}

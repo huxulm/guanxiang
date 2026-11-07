@@ -116,6 +116,17 @@ pub fn topocentric(
     })
 }
 
+/// 天体的地下点：地心视方向在地球上的投影，返回（纬度，经度），弧度，经度东正、`(-π, π]`。
+/// 地球按球体处理（纬度是地心纬度，即 CIRS 赤纬），忽略极移。月食可见区域图用它。
+pub fn sub_body_point(eph: &dyn Ephemeris, body: Body, t: &Time) -> Result<(f64, f64)> {
+    let p = place(eph, body, t, Vec3::ZERO, Vec3::ZERO)?;
+    let mut cirs = [0.0; 3];
+    rxp(&c2i_matrix(t), &p.apparent_gcrs.into(), &mut cirs);
+    let (ra_cirs, dec) = c2s(&cirs);
+    let (uta, utb) = t.ut1_jd_parts();
+    Ok((dec, sofars::vm::anpm(ra_cirs - era00(uta, utb))))
+}
+
 /// GCRS → CIRS 矩阵（IAU 2006/2000A）。几小时内变化在毫角秒量级，同一事件内可复用。
 pub fn c2i_matrix(t: &Time) -> [[f64; 3]; 3] {
     let (tta, ttb) = t.tt_jd_parts();
