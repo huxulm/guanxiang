@@ -161,6 +161,78 @@ pub fn local_solar(
     }))
 }
 
+/// 某地某时刻看到的日月圆面（日食模拟用）。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct SolarDiskView {
+    pub time: Time,
+    /// 月心相对日心的偏移（弧度，天球切平面）：x 向东、y 向北（真赤道）。抬头看时东在左
+    pub x: f64,
+    pub y: f64,
+    /// 太阳和月球的视半径（弧度；月球用 k₁，与 C1、C4 一致）
+    pub sun_radius: f64,
+    pub moon_radius: f64,
+    /// 太阳圆面被遮的面积比例
+    pub obscuration: f64,
+    /// 太阳视高度（含折射，度）
+    pub sun_altitude_deg: f64,
+    /// 太阳处天顶方向的位置角（弧度，从北向东量）：把画面转成“天顶朝上”时用
+    pub zenith_angle: f64,
+}
+
+/// 各时刻在观测地看到的日月圆面（站心视方向，转到 CIRS 定方位）。
+pub fn solar_disk_views(
+    eph: &dyn Ephemeris,
+    obs: &Observer,
+    times: &[Time],
+) -> Result<Vec<SolarDiskView>> {
+    let Some(first) = times.first() else {
+        return Ok(Vec::new());
+    };
+    // GCRS → CIRS 矩阵在几小时内变化可以忽略
+    let rc2i = c2i_matrix(first);
+    let to_cirs = |v: crate::geometry::Vec3| {
+        let mut out = [0.0; 3];
+        sofars::vm::rxp(&rc2i, &v.into(), &mut out);
+        crate::geometry::Vec3::from(out)
+    };
+    times
+        .iter()
+        .map(|t| {
+            let (pos, vel) = observer_gcrs(t, obs, &rc2i);
+            let (sun, moon) =
+                astrometry::direction_pair_from(eph, Body::Sun, Body::Moon, t, pos, vel)?;
+            let s = to_cirs(sun.apparent);
+            let m = to_cirs(moon.apparent);
+            // 太阳处的切平面基：东 = 极 × 太阳方向，北 = 太阳方向 × 东
+            let pole = crate::geometry::Vec3::new(0.0, 0.0, 1.0);
+            let east = pole.cross(s).unit();
+            let north = s.cross(east);
+            let w = m.dot(s);
+            let (x, y) = (m.dot(east) / w, m.dot(north) / w);
+            let sun_r = (SUN_RADIUS_KM / sun.distance_km).asin();
+            let moon_r = (K_PENUMBRA * EARTH_RADIUS_KM / moon.distance_km).asin();
+            // 天顶位置角（视差角）：tan q = sin H / (tan φ cos δ − sin δ cos H)
+            let (uta, utb) = t.ut1_jd_parts();
+            let ra = s.y.atan2(s.x);
+            let dec = s.z.clamp(-1.0, 1.0).asin();
+            let h = sofars::erst::era00(uta, utb) + obs.longitude - ra;
+            let q = h
+                .sin()
+                .atan2(obs.latitude.tan() * dec.cos() - dec.sin() * h.cos());
+            Ok(SolarDiskView {
+                time: *t,
+                x: x.atan(),
+                y: y.atan(),
+                sun_radius: sun_r,
+                moon_radius: moon_r,
+                obscuration: overlap_fraction(sun_r, moon_r, sun.apparent.angle_to(moon.apparent)),
+                sun_altitude_deg: apparent_altitude(eph, Body::Sun, t, obs)?.to_degrees(),
+                zenith_angle: q,
+            })
+        })
+        .collect()
+}
+
 /// 两个圆（半径 r1 为太阳、r2 为月球，圆心距 d）的重叠面积占太阳面积的比例。
 pub fn overlap_fraction(r1: f64, r2: f64, d: f64) -> f64 {
     use std::f64::consts::PI;

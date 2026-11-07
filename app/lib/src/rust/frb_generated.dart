@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 439089841;
+  int get rustContentHash => -1800511835;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -126,6 +126,13 @@ abstract class RustLibApi extends BaseApi {
     required Engine engine,
     required SearchRequest request,
     required CancelToken token,
+  });
+
+  Future<SolarEclipseDetail> crateApiGuanxiangSolarEclipseDetail({
+    required Engine engine,
+    required double ttJd,
+    Site? site,
+    required Lang lang,
   });
 
   Future<SolarEclipseDiagram> crateApiGuanxiangSolarEclipseDiagram({
@@ -559,6 +566,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
+  Future<SolarEclipseDetail> crateApiGuanxiangSolarEclipseDetail({
+    required Engine engine,
+    required double ttJd,
+    Site? site,
+    required Lang lang,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEngine(
+            engine,
+            serializer,
+          );
+          sse_encode_f_64(ttJd, serializer);
+          sse_encode_opt_box_autoadd_site(site, serializer);
+          sse_encode_lang(lang, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_solar_eclipse_detail,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangSolarEclipseDetailConstMeta,
+        argValues: [engine, ttJd, site, lang],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangSolarEclipseDetailConstMeta =>
+      const TaskConstMeta(
+        debugName: "solar_eclipse_detail",
+        argNames: ["engine", "ttJd", "site", "lang"],
+      );
+
+  @override
   Future<SolarEclipseDiagram> crateApiGuanxiangSolarEclipseDiagram({
     required Engine engine,
     required double ttJd,
@@ -577,7 +626,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 13,
             port: port_,
           );
         },
@@ -605,7 +654,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_lang(lang, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -648,7 +697,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 15,
             port: port_,
           );
         },
@@ -793,15 +842,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GeoPoint dco_decode_box_autoadd_geo_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_geo_point(raw);
+  }
+
+  @protected
   HorizonPoint dco_decode_box_autoadd_horizon_point(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_horizon_point(raw);
   }
 
   @protected
+  LocalEclipseKind dco_decode_box_autoadd_local_eclipse_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_local_eclipse_kind(raw);
+  }
+
+  @protected
   LocalLunarView dco_decode_box_autoadd_local_lunar_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_local_lunar_view(raw);
+  }
+
+  @protected
+  LocalSolarView dco_decode_box_autoadd_local_solar_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_local_solar_view(raw);
   }
 
   @protected
@@ -887,6 +954,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  double dco_decode_f_32(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as double;
+  }
+
+  @protected
   double dco_decode_f_64(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as double;
@@ -954,6 +1027,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Float32List dco_decode_list_prim_f_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Float32List;
+  }
+
+  @protected
   Float64List dco_decode_list_prim_f_64_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Float64List;
@@ -996,6 +1075,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SolarDiskPoint> dco_decode_list_solar_disk_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_solar_disk_point).toList();
+  }
+
+  @protected
+  List<SolarPhase> dco_decode_list_solar_phase(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_solar_phase).toList();
+  }
+
+  @protected
+  LocalEclipseKind dco_decode_local_eclipse_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LocalEclipseKind.values[raw as int];
+  }
+
+  @protected
   LocalLunarView dco_decode_local_lunar_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1006,6 +1103,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       totalityVisible: dco_decode_bool(arr[1]),
       trackAltitudeDeg: dco_decode_list_prim_f_64_strict(arr[2]),
       moonEvents: dco_decode_list_sky_event_item(arr[3]),
+    );
+  }
+
+  @protected
+  LocalSolarView dco_decode_local_solar_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return LocalSolarView(
+      verdict: dco_decode_solar_visibility(arr[0]),
+      kind: dco_decode_opt_box_autoadd_local_eclipse_kind(arr[1]),
+      magnitude: dco_decode_f_64(arr[2]),
+      obscuration: dco_decode_f_64(arr[3]),
+      phases: dco_decode_list_solar_phase(arr[4]),
+      centralSeconds: dco_decode_opt_box_autoadd_f_64(arr[5]),
+      centerlineDistanceKm: dco_decode_opt_box_autoadd_f_64(arr[6]),
+      centerlineBearingDeg: dco_decode_opt_box_autoadd_f_64(arr[7]),
+      trackStartUtc: dco_decode_String(arr[8]),
+      track: dco_decode_list_solar_disk_point(arr[9]),
     );
   }
 
@@ -1096,15 +1213,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GeoPoint? dco_decode_opt_box_autoadd_geo_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_geo_point(raw);
+  }
+
+  @protected
   HorizonPoint? dco_decode_opt_box_autoadd_horizon_point(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_horizon_point(raw);
   }
 
   @protected
+  LocalEclipseKind? dco_decode_opt_box_autoadd_local_eclipse_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_local_eclipse_kind(raw);
+  }
+
+  @protected
   LocalLunarView? dco_decode_opt_box_autoadd_local_lunar_view(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_local_lunar_view(raw);
+  }
+
+  @protected
+  LocalSolarView? dco_decode_opt_box_autoadd_local_solar_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_local_solar_view(raw);
   }
 
   @protected
@@ -1226,6 +1361,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SolarDiskPoint dco_decode_solar_disk_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 8)
+      throw Exception('unexpected arr length: expect 8 but see ${arr.length}');
+    return SolarDiskPoint(
+      seconds: dco_decode_f_64(arr[0]),
+      xArcmin: dco_decode_f_64(arr[1]),
+      yArcmin: dco_decode_f_64(arr[2]),
+      sunRadiusArcmin: dco_decode_f_64(arr[3]),
+      moonRadiusArcmin: dco_decode_f_64(arr[4]),
+      obscuration: dco_decode_f_64(arr[5]),
+      sunAltitudeDeg: dco_decode_f_64(arr[6]),
+      zenithAngleDeg: dco_decode_f_64(arr[7]),
+    );
+  }
+
+  @protected
+  SolarEclipseDetail dco_decode_solar_eclipse_detail(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 10)
+      throw Exception('unexpected arr length: expect 10 but see ${arr.length}');
+    return SolarEclipseDetail(
+      diagram: dco_decode_solar_eclipse_diagram(arr[0]),
+      saros: dco_decode_String(arr[1]),
+      centralLine: dco_decode_list_geo_point(arr[2]),
+      pathWidthKm: dco_decode_list_prim_f_64_strict(arr[3]),
+      greatestPoint: dco_decode_opt_box_autoadd_geo_point(arr[4]),
+      gridStepDeg: dco_decode_f_64(arr[5]),
+      gridRows: dco_decode_u_32(arr[6]),
+      gridCols: dco_decode_u_32(arr[7]),
+      grid: dco_decode_list_prim_f_32_strict(arr[8]),
+      local: dco_decode_opt_box_autoadd_local_solar_view(arr[9]),
+    );
+  }
+
+  @protected
   SolarEclipseDiagram dco_decode_solar_eclipse_diagram(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1237,6 +1410,38 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       penumbraRadius: dco_decode_f_64(arr[2]),
       umbraRadius: dco_decode_f_64(arr[3]),
       axisDeclinationDeg: dco_decode_f_64(arr[4]),
+    );
+  }
+
+  @protected
+  SolarPhase dco_decode_solar_phase(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SolarPhase(
+      code: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      utc: dco_decode_String(arr[2]),
+      sun: dco_decode_sun_point(arr[3]),
+    );
+  }
+
+  @protected
+  SolarVisibility dco_decode_solar_visibility(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SolarVisibility.values[raw as int];
+  }
+
+  @protected
+  SunPoint dco_decode_sun_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return SunPoint(
+      altitudeDeg: dco_decode_f_64(arr[0]),
+      azimuthDeg: dco_decode_f_64(arr[1]),
     );
   }
 
@@ -1402,6 +1607,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GeoPoint sse_decode_box_autoadd_geo_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_geo_point(deserializer));
+  }
+
+  @protected
   HorizonPoint sse_decode_box_autoadd_horizon_point(
     SseDeserializer deserializer,
   ) {
@@ -1410,11 +1621,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  LocalEclipseKind sse_decode_box_autoadd_local_eclipse_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_local_eclipse_kind(deserializer));
+  }
+
+  @protected
   LocalLunarView sse_decode_box_autoadd_local_lunar_view(
     SseDeserializer deserializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_local_lunar_view(deserializer));
+  }
+
+  @protected
+  LocalSolarView sse_decode_box_autoadd_local_solar_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_local_solar_view(deserializer));
   }
 
   @protected
@@ -1500,6 +1727,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return EventKind.values[inner];
+  }
+
+  @protected
+  double sse_decode_f_32(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return deserializer.buffer.getFloat32();
   }
 
   @protected
@@ -1598,6 +1831,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getFloat32List(len_);
+  }
+
+  @protected
   Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -1668,6 +1908,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SolarDiskPoint> sse_decode_list_solar_disk_point(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SolarDiskPoint>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_solar_disk_point(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<SolarPhase> sse_decode_list_solar_phase(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SolarPhase>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_solar_phase(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  LocalEclipseKind sse_decode_local_eclipse_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return LocalEclipseKind.values[inner];
+  }
+
+  @protected
   LocalLunarView sse_decode_local_lunar_view(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_verdict = sse_decode_lunar_visibility(deserializer);
@@ -1679,6 +1952,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       totalityVisible: var_totalityVisible,
       trackAltitudeDeg: var_trackAltitudeDeg,
       moonEvents: var_moonEvents,
+    );
+  }
+
+  @protected
+  LocalSolarView sse_decode_local_solar_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_verdict = sse_decode_solar_visibility(deserializer);
+    var var_kind = sse_decode_opt_box_autoadd_local_eclipse_kind(deserializer);
+    var var_magnitude = sse_decode_f_64(deserializer);
+    var var_obscuration = sse_decode_f_64(deserializer);
+    var var_phases = sse_decode_list_solar_phase(deserializer);
+    var var_centralSeconds = sse_decode_opt_box_autoadd_f_64(deserializer);
+    var var_centerlineDistanceKm = sse_decode_opt_box_autoadd_f_64(
+      deserializer,
+    );
+    var var_centerlineBearingDeg = sse_decode_opt_box_autoadd_f_64(
+      deserializer,
+    );
+    var var_trackStartUtc = sse_decode_String(deserializer);
+    var var_track = sse_decode_list_solar_disk_point(deserializer);
+    return LocalSolarView(
+      verdict: var_verdict,
+      kind: var_kind,
+      magnitude: var_magnitude,
+      obscuration: var_obscuration,
+      phases: var_phases,
+      centralSeconds: var_centralSeconds,
+      centerlineDistanceKm: var_centerlineDistanceKm,
+      centerlineBearingDeg: var_centerlineBearingDeg,
+      trackStartUtc: var_trackStartUtc,
+      track: var_track,
     );
   }
 
@@ -1801,6 +2105,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  GeoPoint? sse_decode_opt_box_autoadd_geo_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_geo_point(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   HorizonPoint? sse_decode_opt_box_autoadd_horizon_point(
     SseDeserializer deserializer,
   ) {
@@ -1814,6 +2129,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  LocalEclipseKind? sse_decode_opt_box_autoadd_local_eclipse_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_local_eclipse_kind(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   LocalLunarView? sse_decode_opt_box_autoadd_local_lunar_view(
     SseDeserializer deserializer,
   ) {
@@ -1821,6 +2149,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_local_lunar_view(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  LocalSolarView? sse_decode_opt_box_autoadd_local_solar_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_local_solar_view(deserializer));
     } else {
       return null;
     }
@@ -1977,6 +2318,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SolarDiskPoint sse_decode_solar_disk_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_seconds = sse_decode_f_64(deserializer);
+    var var_xArcmin = sse_decode_f_64(deserializer);
+    var var_yArcmin = sse_decode_f_64(deserializer);
+    var var_sunRadiusArcmin = sse_decode_f_64(deserializer);
+    var var_moonRadiusArcmin = sse_decode_f_64(deserializer);
+    var var_obscuration = sse_decode_f_64(deserializer);
+    var var_sunAltitudeDeg = sse_decode_f_64(deserializer);
+    var var_zenithAngleDeg = sse_decode_f_64(deserializer);
+    return SolarDiskPoint(
+      seconds: var_seconds,
+      xArcmin: var_xArcmin,
+      yArcmin: var_yArcmin,
+      sunRadiusArcmin: var_sunRadiusArcmin,
+      moonRadiusArcmin: var_moonRadiusArcmin,
+      obscuration: var_obscuration,
+      sunAltitudeDeg: var_sunAltitudeDeg,
+      zenithAngleDeg: var_zenithAngleDeg,
+    );
+  }
+
+  @protected
+  SolarEclipseDetail sse_decode_solar_eclipse_detail(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_diagram = sse_decode_solar_eclipse_diagram(deserializer);
+    var var_saros = sse_decode_String(deserializer);
+    var var_centralLine = sse_decode_list_geo_point(deserializer);
+    var var_pathWidthKm = sse_decode_list_prim_f_64_strict(deserializer);
+    var var_greatestPoint = sse_decode_opt_box_autoadd_geo_point(deserializer);
+    var var_gridStepDeg = sse_decode_f_64(deserializer);
+    var var_gridRows = sse_decode_u_32(deserializer);
+    var var_gridCols = sse_decode_u_32(deserializer);
+    var var_grid = sse_decode_list_prim_f_32_strict(deserializer);
+    var var_local = sse_decode_opt_box_autoadd_local_solar_view(deserializer);
+    return SolarEclipseDetail(
+      diagram: var_diagram,
+      saros: var_saros,
+      centralLine: var_centralLine,
+      pathWidthKm: var_pathWidthKm,
+      greatestPoint: var_greatestPoint,
+      gridStepDeg: var_gridStepDeg,
+      gridRows: var_gridRows,
+      gridCols: var_gridCols,
+      grid: var_grid,
+      local: var_local,
+    );
+  }
+
+  @protected
   SolarEclipseDiagram sse_decode_solar_eclipse_diagram(
     SseDeserializer deserializer,
   ) {
@@ -1993,6 +2386,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       umbraRadius: var_umbraRadius,
       axisDeclinationDeg: var_axisDeclinationDeg,
     );
+  }
+
+  @protected
+  SolarPhase sse_decode_solar_phase(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_utc = sse_decode_String(deserializer);
+    var var_sun = sse_decode_sun_point(deserializer);
+    return SolarPhase(
+      code: var_code,
+      name: var_name,
+      utc: var_utc,
+      sun: var_sun,
+    );
+  }
+
+  @protected
+  SolarVisibility sse_decode_solar_visibility(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SolarVisibility.values[inner];
+  }
+
+  @protected
+  SunPoint sse_decode_sun_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_altitudeDeg = sse_decode_f_64(deserializer);
+    var var_azimuthDeg = sse_decode_f_64(deserializer);
+    return SunPoint(altitudeDeg: var_altitudeDeg, azimuthDeg: var_azimuthDeg);
   }
 
   @protected
@@ -2176,6 +2599,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_geo_point(
+    GeoPoint self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_geo_point(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_horizon_point(
     HorizonPoint self,
     SseSerializer serializer,
@@ -2185,12 +2617,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_local_eclipse_kind(
+    LocalEclipseKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_local_eclipse_kind(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_local_lunar_view(
     LocalLunarView self,
     SseSerializer serializer,
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_local_lunar_view(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_local_solar_view(
+    LocalSolarView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_local_solar_view(self, serializer);
   }
 
   @protected
@@ -2259,6 +2709,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_event_kind(EventKind self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_f_32(double self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    serializer.buffer.putFloat32(self);
   }
 
   @protected
@@ -2340,6 +2796,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_prim_f_32_strict(
+    Float32List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putFloat32List(self);
+  }
+
+  @protected
   void sse_encode_list_prim_f_64_strict(
     Float64List self,
     SseSerializer serializer,
@@ -2418,6 +2884,39 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_solar_disk_point(
+    List<SolarDiskPoint> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_solar_disk_point(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_solar_phase(
+    List<SolarPhase> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_solar_phase(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_local_eclipse_kind(
+    LocalEclipseKind self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_local_lunar_view(
     LocalLunarView self,
     SseSerializer serializer,
@@ -2427,6 +2926,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.totalityVisible, serializer);
     sse_encode_list_prim_f_64_strict(self.trackAltitudeDeg, serializer);
     sse_encode_list_sky_event_item(self.moonEvents, serializer);
+  }
+
+  @protected
+  void sse_encode_local_solar_view(
+    LocalSolarView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_solar_visibility(self.verdict, serializer);
+    sse_encode_opt_box_autoadd_local_eclipse_kind(self.kind, serializer);
+    sse_encode_f_64(self.magnitude, serializer);
+    sse_encode_f_64(self.obscuration, serializer);
+    sse_encode_list_solar_phase(self.phases, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.centralSeconds, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.centerlineDistanceKm, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.centerlineBearingDeg, serializer);
+    sse_encode_String(self.trackStartUtc, serializer);
+    sse_encode_list_solar_disk_point(self.track, serializer);
   }
 
   @protected
@@ -2520,6 +3037,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_geo_point(
+    GeoPoint? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_geo_point(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_horizon_point(
     HorizonPoint? self,
     SseSerializer serializer,
@@ -2533,6 +3063,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_local_eclipse_kind(
+    LocalEclipseKind? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_local_eclipse_kind(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_local_lunar_view(
     LocalLunarView? self,
     SseSerializer serializer,
@@ -2542,6 +3085,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_local_lunar_view(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_local_solar_view(
+    LocalSolarView? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_local_solar_view(self, serializer);
     }
   }
 
@@ -2648,6 +3204,40 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_solar_disk_point(
+    SolarDiskPoint self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.seconds, serializer);
+    sse_encode_f_64(self.xArcmin, serializer);
+    sse_encode_f_64(self.yArcmin, serializer);
+    sse_encode_f_64(self.sunRadiusArcmin, serializer);
+    sse_encode_f_64(self.moonRadiusArcmin, serializer);
+    sse_encode_f_64(self.obscuration, serializer);
+    sse_encode_f_64(self.sunAltitudeDeg, serializer);
+    sse_encode_f_64(self.zenithAngleDeg, serializer);
+  }
+
+  @protected
+  void sse_encode_solar_eclipse_detail(
+    SolarEclipseDetail self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_solar_eclipse_diagram(self.diagram, serializer);
+    sse_encode_String(self.saros, serializer);
+    sse_encode_list_geo_point(self.centralLine, serializer);
+    sse_encode_list_prim_f_64_strict(self.pathWidthKm, serializer);
+    sse_encode_opt_box_autoadd_geo_point(self.greatestPoint, serializer);
+    sse_encode_f_64(self.gridStepDeg, serializer);
+    sse_encode_u_32(self.gridRows, serializer);
+    sse_encode_u_32(self.gridCols, serializer);
+    sse_encode_list_prim_f_32_strict(self.grid, serializer);
+    sse_encode_opt_box_autoadd_local_solar_view(self.local, serializer);
+  }
+
+  @protected
   void sse_encode_solar_eclipse_diagram(
     SolarEclipseDiagram self,
     SseSerializer serializer,
@@ -2658,6 +3248,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_f_64(self.penumbraRadius, serializer);
     sse_encode_f_64(self.umbraRadius, serializer);
     sse_encode_f_64(self.axisDeclinationDeg, serializer);
+  }
+
+  @protected
+  void sse_encode_solar_phase(SolarPhase self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.utc, serializer);
+    sse_encode_sun_point(self.sun, serializer);
+  }
+
+  @protected
+  void sse_encode_solar_visibility(
+    SolarVisibility self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_sun_point(SunPoint self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.altitudeDeg, serializer);
+    sse_encode_f_64(self.azimuthDeg, serializer);
   }
 
   @protected

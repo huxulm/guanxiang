@@ -16,7 +16,7 @@ use guanxiang_core::events::lunar_eclipse::{self, LunarEclipse, LunarEclipseKind
 use guanxiang_core::events::occultation::{self, Target};
 use guanxiang_core::events::saros;
 use guanxiang_core::events::sat_transit::{self, SatTransit};
-use guanxiang_core::events::solar_eclipse::{self, SolarEclipseKind};
+use guanxiang_core::events::solar_eclipse::{self, SolarEclipse, SolarEclipseKind};
 use guanxiang_core::events::visibility::{apparent_altitude, VisibilityFilter};
 use guanxiang_core::events::{separation, transit, Span};
 use guanxiang_core::satellite::Satellite;
@@ -597,6 +597,9 @@ fn search_span(
                         l.s("食带宽度", "Path width"),
                         format!("{:.0} km", p.path_width_km),
                     ));
+                }
+                if let Some(sr) = saros::solar_saros(&e.greatest) {
+                    details.push(detail(l.s("沙罗序列", "Saros series"), saros_label(sr, l)));
                 }
                 let mut summary = format!("{} {:.3}", l.s("食分", "Magnitude"), e.magnitude);
                 if let Some(f) = filter {
@@ -1324,16 +1327,28 @@ pub fn solar_eclipse_diagram(
     tt_jd: f64,
     lang: Lang,
 ) -> anyhow::Result<SolarEclipseDiagram> {
-    let eph = &engine.eph;
-    let e = solar_eclipse::search(eph, eclipse_span(tt_jd)?)?
+    let e = find_solar_eclipse(engine, tt_jd, lang)?;
+    solar_diagram(engine, &e, lang)
+}
+
+/// 按食甚的 TT 儒略日找回那次日食。
+fn find_solar_eclipse(engine: &Engine, tt_jd: f64, lang: Lang) -> anyhow::Result<SolarEclipse> {
+    solar_eclipse::search(&engine.eph, eclipse_span(tt_jd)?)?
         .into_iter()
         .min_by(|a, b| {
             (a.greatest.tt_jd() - tt_jd)
                 .abs()
                 .total_cmp(&(b.greatest.tt_jd() - tt_jd).abs())
         })
-        .ok_or_else(|| anyhow::anyhow!("{}", lang.s("找不到这次日食", "Eclipse not found")))?;
-    let d = e.diagram(eph, DIAGRAM_STEP_S)?;
+        .ok_or_else(|| anyhow::anyhow!("{}", lang.s("找不到这次日食", "Eclipse not found")))
+}
+
+fn solar_diagram(
+    engine: &Engine,
+    e: &SolarEclipse,
+    lang: Lang,
+) -> anyhow::Result<SolarEclipseDiagram> {
+    let d = e.diagram(&engine.eph, DIAGRAM_STEP_S)?;
     let point = |p: &solar_eclipse::PlanePoint, label: &str| DiagramPoint {
         x: p.x,
         y: p.y,
@@ -1346,6 +1361,316 @@ pub fn solar_eclipse_diagram(
         penumbra_radius: d.l1,
         umbra_radius: d.l2,
         axis_declination_deg: d.d.to_degrees(),
+    })
+}
+
+/// 某一时刻的太阳位置（度；高度含大气折射，方位从北向东量）。
+#[derive(Debug, Clone, Copy)]
+pub struct SunPoint {
+    pub altitude_deg: f64,
+    pub azimuth_deg: f64,
+}
+
+/// 本地日食的一个食相。
+#[derive(Debug, Clone)]
+pub struct SolarPhase {
+    /// C1、C2、Max、C3、C4
+    pub code: String,
+    pub name: String,
+    pub utc: String,
+    pub sun: SunPoint,
+}
+
+/// 本地看到的日食类型。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LocalEclipseKind {
+    Partial,
+    Annular,
+    Total,
+}
+
+/// 在观测地能看到多少（C1–C4 期间太阳是否在地平线上）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum SolarVisibility {
+    Full,
+    /// 日出时已在食中
+    Rises,
+    /// 日落时仍在食中
+    Sets,
+    RisesAndSets,
+    /// 食发生时太阳在地平线下
+    Hidden,
+    /// 这里不发生日食
+    NoEclipse,
+}
+
+/// 太阳面模拟的一个取样点（角分）。偏移 x 向东、y 向北（天球上，抬头看时东在左）。
+#[derive(Debug, Clone, Copy)]
+pub struct SolarDiskPoint {
+    /// 距 `track_start_utc` 的秒数
+    pub seconds: f64,
+    pub x_arcmin: f64,
+    pub y_arcmin: f64,
+    pub sun_radius_arcmin: f64,
+    pub moon_radius_arcmin: f64,
+    pub obscuration: f64,
+    pub sun_altitude_deg: f64,
+    /// 天顶方向的位置角（度，从北向东量）
+    pub zenith_angle_deg: f64,
+}
+
+/// 观测地的日食情况。
+#[derive(Debug, Clone)]
+pub struct LocalSolarView {
+    pub verdict: SolarVisibility,
+    /// 这里不食时为空
+    pub kind: Option<LocalEclipseKind>,
+    /// 食分：全食、环食时为月日视直径比，偏食时为太阳直径被遮的比例
+    pub magnitude: f64,
+    /// 食面积：太阳圆面被遮的比例
+    pub obscuration: f64,
+    pub phases: Vec<SolarPhase>,
+    /// 全食或环食的持续时间（秒）
+    pub central_seconds: Option<f64>,
+    /// 到中心线最近点的距离（km）和方向（度，从北向东量）；非中心食为空
+    pub centerline_distance_km: Option<f64>,
+    pub centerline_bearing_deg: Option<f64>,
+    /// 太阳面模拟：C1 前 10 分钟到 C4 后 10 分钟，每 30 秒一个点，全食或环食阶段每 2 秒一个点
+    pub track_start_utc: String,
+    pub track: Vec<SolarDiskPoint>,
+}
+
+/// 日食详情页的全部数据。
+#[derive(Debug, Clone)]
+pub struct SolarEclipseDetail {
+    pub diagram: SolarEclipseDiagram,
+    /// 沙罗序列，如“136（第 38 次，共 71 次）”；星历范围外为空
+    pub saros: String,
+    /// 中心线（每分钟一个点）和各点的食带宽度（km）；非中心食为空
+    pub central_line: Vec<GeoPoint>,
+    pub path_width_km: Vec<f64>,
+    pub greatest_point: Option<GeoPoint>,
+    /// 全球最大食分栅格：第 0 行中心纬度 90 − step/2，第 0 列中心经度 −180 + step/2
+    pub grid_step_deg: f64,
+    pub grid_rows: u32,
+    pub grid_cols: u32,
+    pub grid: Vec<f32>,
+    pub local: Option<LocalSolarView>,
+}
+
+/// 中心线取样间隔（秒）
+const CENTRAL_LINE_STEP_S: f64 = 60.0;
+/// 食分栅格的格子边长（度）和时间取样间隔（秒）
+const GRID_STEP_DEG: f64 = 2.0;
+const GRID_SAMPLE_S: f64 = 120.0;
+
+/// 日食详情。`tt_jd` 为搜索结果里该次日食的食甚；`site` 为空时不算本地情况。
+pub fn solar_eclipse_detail(
+    engine: &Engine,
+    tt_jd: f64,
+    site: Option<Site>,
+    lang: Lang,
+) -> anyhow::Result<SolarEclipseDetail> {
+    let eph = &engine.eph;
+    let e = find_solar_eclipse(engine, tt_jd, lang)?;
+    let diagram = solar_diagram(engine, &e, lang)?;
+    let line = e.central_line(eph, CENTRAL_LINE_STEP_S)?;
+    let grid = e.max_magnitude_grid(eph, GRID_STEP_DEG, GRID_SAMPLE_S)?;
+    let local = match site {
+        Some(s) => Some(local_solar_view(engine, &e, &line, s, lang)?),
+        None => None,
+    };
+    Ok(SolarEclipseDetail {
+        diagram,
+        saros: saros::solar_saros(&e.greatest)
+            .map(|s| saros_label(s, lang))
+            .unwrap_or_default(),
+        central_line: line
+            .iter()
+            .map(|p| geo((p.latitude_deg, p.longitude_deg)))
+            .collect(),
+        path_width_km: line.iter().map(|p| p.path_width_km).collect(),
+        greatest_point: e
+            .greatest_point
+            .map(|p| geo((p.latitude_deg, p.longitude_deg))),
+        grid_step_deg: grid.step_deg,
+        grid_rows: grid.rows as u32,
+        grid_cols: grid.cols as u32,
+        grid: grid.values,
+        local,
+    })
+}
+
+/// 本地日食的食相名称，顺序：C1、C2、食甚、C3、C4。
+fn solar_phase_name(l: Lang, i: usize) -> &'static str {
+    const ZH: [&str; 5] = ["初亏", "食既", "食甚", "生光", "复圆"];
+    const EN: [&str; 5] = [
+        "First contact",
+        "Second contact",
+        "Maximum",
+        "Third contact",
+        "Fourth contact",
+    ];
+    match l {
+        Lang::Zh => ZH[i],
+        Lang::En => EN[i],
+    }
+}
+
+/// 从 p 到 q 的初始方位角（度，从北向东量）。
+fn bearing_deg(p: (f64, f64), q: (f64, f64)) -> f64 {
+    let (la1, la2) = (p.0.to_radians(), q.0.to_radians());
+    let dl = (q.1 - p.1).to_radians();
+    let y = dl.sin() * la2.cos();
+    let x = la1.cos() * la2.sin() - la1.sin() * la2.cos() * dl.cos();
+    y.atan2(x).to_degrees().rem_euclid(360.0)
+}
+
+fn local_solar_view(
+    engine: &Engine,
+    e: &SolarEclipse,
+    line: &[solar_eclipse::GroundPoint],
+    site: Site,
+    lang: Lang,
+) -> anyhow::Result<LocalSolarView> {
+    let eph = &engine.eph;
+    let obs = Observer::from_degrees(site.latitude_deg, site.longitude_deg, site.height_m)?;
+    let here = (site.latitude_deg, site.longitude_deg);
+
+    // 到中心线最近点
+    let pts: Vec<(f64, f64)> = line
+        .iter()
+        .map(|p| (p.latitude_deg, p.longitude_deg))
+        .collect();
+    let centerline_distance_km = distance_to_polyline_km(here, &pts);
+    let centerline_bearing_deg = pts
+        .iter()
+        .min_by(|a, b| {
+            let d =
+                |q: &&(f64, f64)| distance_to_polyline_km(here, &[**q, **q]).unwrap_or(f64::MAX);
+            d(a).total_cmp(&d(b))
+        })
+        .map(|q| bearing_deg(here, *q));
+
+    let Some(lo) = local_eclipse::local_solar(eph, e, &obs, None)? else {
+        return Ok(LocalSolarView {
+            verdict: SolarVisibility::NoEclipse,
+            kind: None,
+            magnitude: 0.0,
+            obscuration: 0.0,
+            phases: Vec::new(),
+            central_seconds: None,
+            centerline_distance_km,
+            centerline_bearing_deg,
+            track_start_utc: String::new(),
+            track: Vec::new(),
+        });
+    };
+    let c = lo.contacts;
+    let moments = [
+        ("C1", c[0]),
+        ("C2", c[1]),
+        ("Max", Some(lo.maximum)),
+        ("C3", c[2]),
+        ("C4", c[3]),
+    ];
+    let mut phases = Vec::new();
+    for (i, (code, t)) in moments.into_iter().enumerate() {
+        let Some(t) = t else { continue };
+        phases.push(SolarPhase {
+            code: code.to_string(),
+            name: solar_phase_name(lang, i).to_string(),
+            utc: utc(&t),
+            sun: SunPoint {
+                altitude_deg: apparent_altitude(eph, Body::Sun, &t, &obs)?.to_degrees(),
+                azimuth_deg: astrometry::topocentric(eph, Body::Sun, &t, &obs)?
+                    .horizontal
+                    .azimuth
+                    .to_degrees(),
+            },
+        });
+    }
+
+    // 模拟轨迹的取样时刻
+    let start = c[0].unwrap_or(lo.maximum).add_seconds(-600.0);
+    let end = c[3].unwrap_or(lo.maximum).add_seconds(600.0);
+    let mut secs: Vec<f64> = Vec::new();
+    let total = end.tt_seconds() - start.tt_seconds();
+    let mut x = 0.0;
+    while x <= total {
+        secs.push(x);
+        x += 30.0;
+    }
+    if let (Some(a), Some(b)) = (c[1], c[2]) {
+        let (a, b) = (
+            a.tt_seconds() - start.tt_seconds(),
+            b.tt_seconds() - start.tt_seconds(),
+        );
+        let mut x = a;
+        while x < b {
+            secs.push(x);
+            x += 2.0;
+        }
+    }
+    for t in c.iter().flatten().chain([&lo.maximum]) {
+        secs.push(t.tt_seconds() - start.tt_seconds());
+    }
+    secs.sort_by(f64::total_cmp);
+    secs.dedup_by(|a, b| (*a - *b).abs() < 0.5);
+    let times: Vec<Time> = secs.iter().map(|s| start.add_seconds(*s)).collect();
+    let arcmin = |r: f64| r.to_degrees() * 60.0;
+    let track: Vec<SolarDiskPoint> = local_eclipse::solar_disk_views(eph, &obs, &times)?
+        .iter()
+        .zip(&secs)
+        .map(|(v, s)| SolarDiskPoint {
+            seconds: *s,
+            x_arcmin: arcmin(v.x),
+            y_arcmin: arcmin(v.y),
+            sun_radius_arcmin: arcmin(v.sun_radius),
+            moon_radius_arcmin: arcmin(v.moon_radius),
+            obscuration: v.obscuration,
+            sun_altitude_deg: v.sun_altitude_deg,
+            zenith_angle_deg: v.zenith_angle.to_degrees(),
+        })
+        .collect();
+
+    // C1–C4 期间太阳在地平线上的情况
+    let (a, b) = (
+        c[0].map_or(0.0, |t| t.tt_seconds() - start.tt_seconds()),
+        c[3].map_or(total, |t| t.tt_seconds() - start.tt_seconds()),
+    );
+    let up: Vec<bool> = track
+        .iter()
+        .filter(|p| p.seconds >= a - 0.5 && p.seconds <= b + 0.5)
+        .map(|p| p.sun_altitude_deg > 0.0)
+        .collect();
+    let verdict = match (
+        up.first(),
+        up.last(),
+        up.iter().any(|u| *u),
+        up.iter().all(|u| *u),
+    ) {
+        (_, _, _, true) => SolarVisibility::Full,
+        (_, _, false, _) => SolarVisibility::Hidden,
+        (Some(false), Some(true), _, _) => SolarVisibility::Rises,
+        (Some(true), Some(false), _, _) => SolarVisibility::Sets,
+        _ => SolarVisibility::RisesAndSets,
+    };
+    Ok(LocalSolarView {
+        verdict,
+        kind: Some(match lo.kind {
+            local_eclipse::LocalSolarKind::Partial => LocalEclipseKind::Partial,
+            local_eclipse::LocalSolarKind::Annular => LocalEclipseKind::Annular,
+            local_eclipse::LocalSolarKind::Total => LocalEclipseKind::Total,
+        }),
+        magnitude: lo.magnitude,
+        obscuration: lo.obscuration,
+        phases,
+        central_seconds: lo.central_duration_s(),
+        centerline_distance_km,
+        centerline_bearing_deg,
+        track_start_utc: utc_ms(&start),
+        track,
     })
 }
 
@@ -1879,6 +2204,58 @@ mod tests {
             .unwrap()
             .local
             .is_none());
+    }
+
+    /// 2027-08-02 日全食：卢克索全食约 6 分 20 秒、伦敦偏食、北京不食
+    #[test]
+    fn solar_eclipse_detail_2027_08_02() {
+        let Some(engine) = test_engine() else { return };
+        let site = |lat, lon| Site {
+            latitude_deg: lat,
+            longitude_deg: lon,
+            height_m: 0.0,
+        };
+        let d = solar_eclipse_detail(
+            &engine,
+            2_461_619.922,
+            Some(site(25.6872, 32.6396)),
+            Lang::Zh,
+        )
+        .unwrap();
+        assert_eq!(d.saros, "136（第 38 次，共 71 次）");
+        assert!(d.central_line.len() > 100);
+        assert_eq!(d.central_line.len(), d.path_width_km.len());
+        assert_eq!(d.grid.len(), (d.grid_rows * d.grid_cols) as usize);
+        let v = d.local.unwrap();
+        assert_eq!(v.kind, Some(LocalEclipseKind::Total));
+        assert_eq!(v.verdict, SolarVisibility::Full);
+        let codes: Vec<&str> = v.phases.iter().map(|p| p.code.as_str()).collect();
+        assert_eq!(codes, ["C1", "C2", "Max", "C3", "C4"]);
+        // NASA：卢克索附近全食约 6 分 20 秒
+        let dur = v.central_seconds.unwrap();
+        assert!((dur - 380.0).abs() < 15.0, "{dur}");
+        assert!(v.centerline_distance_km.unwrap() < 30.0);
+        // 轨迹按时间排列，全食阶段食面积为 1
+        assert!(v.track.windows(2).all(|w| w[0].seconds < w[1].seconds));
+        assert!(v.track.iter().any(|p| p.obscuration > 0.9999));
+
+        let d = solar_eclipse_detail(
+            &engine,
+            2_461_619.922,
+            Some(site(51.5074, -0.1278)),
+            Lang::En,
+        )
+        .unwrap();
+        let v = d.local.unwrap();
+        assert_eq!(v.kind, Some(LocalEclipseKind::Partial));
+        assert!(v.central_seconds.is_none());
+        // 伦敦在中心线以南方向（食带经过直布罗陀海峡）
+        let b = v.centerline_bearing_deg.unwrap();
+        assert!((120.0..240.0).contains(&b), "{b}");
+
+        let d = solar_eclipse_detail(&engine, 2_461_619.922, Some(site(39.9, 116.4)), Lang::Zh)
+            .unwrap();
+        assert_eq!(d.local.unwrap().verdict, SolarVisibility::NoEclipse);
     }
 
     #[test]

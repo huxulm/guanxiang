@@ -86,10 +86,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double dco_decode_box_autoadd_f_64(dynamic raw);
 
   @protected
+  GeoPoint dco_decode_box_autoadd_geo_point(dynamic raw);
+
+  @protected
   HorizonPoint dco_decode_box_autoadd_horizon_point(dynamic raw);
 
   @protected
+  LocalEclipseKind dco_decode_box_autoadd_local_eclipse_kind(dynamic raw);
+
+  @protected
   LocalLunarView dco_decode_box_autoadd_local_lunar_view(dynamic raw);
+
+  @protected
+  LocalSolarView dco_decode_box_autoadd_local_solar_view(dynamic raw);
 
   @protected
   ObserverInput dco_decode_box_autoadd_observer_input(dynamic raw);
@@ -114,6 +123,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EventKind dco_decode_event_kind(dynamic raw);
+
+  @protected
+  double dco_decode_f_32(dynamic raw);
 
   @protected
   double dco_decode_f_64(dynamic raw);
@@ -143,6 +155,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<GeoPoint> dco_decode_list_geo_point(dynamic raw);
 
   @protected
+  Float32List dco_decode_list_prim_f_32_strict(dynamic raw);
+
+  @protected
   Float64List dco_decode_list_prim_f_64_strict(dynamic raw);
 
   @protected
@@ -164,7 +179,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<SkyEventItem> dco_decode_list_sky_event_item(dynamic raw);
 
   @protected
+  List<SolarDiskPoint> dco_decode_list_solar_disk_point(dynamic raw);
+
+  @protected
+  List<SolarPhase> dco_decode_list_solar_phase(dynamic raw);
+
+  @protected
+  LocalEclipseKind dco_decode_local_eclipse_kind(dynamic raw);
+
+  @protected
   LocalLunarView dco_decode_local_lunar_view(dynamic raw);
+
+  @protected
+  LocalSolarView dco_decode_local_solar_view(dynamic raw);
 
   @protected
   LunarEclipseDetail dco_decode_lunar_eclipse_detail(dynamic raw);
@@ -191,10 +218,19 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double? dco_decode_opt_box_autoadd_f_64(dynamic raw);
 
   @protected
+  GeoPoint? dco_decode_opt_box_autoadd_geo_point(dynamic raw);
+
+  @protected
   HorizonPoint? dco_decode_opt_box_autoadd_horizon_point(dynamic raw);
 
   @protected
+  LocalEclipseKind? dco_decode_opt_box_autoadd_local_eclipse_kind(dynamic raw);
+
+  @protected
   LocalLunarView? dco_decode_opt_box_autoadd_local_lunar_view(dynamic raw);
+
+  @protected
+  LocalSolarView? dco_decode_opt_box_autoadd_local_solar_view(dynamic raw);
 
   @protected
   ObserverInput? dco_decode_opt_box_autoadd_observer_input(dynamic raw);
@@ -224,7 +260,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SkyKind dco_decode_sky_kind(dynamic raw);
 
   @protected
+  SolarDiskPoint dco_decode_solar_disk_point(dynamic raw);
+
+  @protected
+  SolarEclipseDetail dco_decode_solar_eclipse_detail(dynamic raw);
+
+  @protected
   SolarEclipseDiagram dco_decode_solar_eclipse_diagram(dynamic raw);
+
+  @protected
+  SolarPhase dco_decode_solar_phase(dynamic raw);
+
+  @protected
+  SolarVisibility dco_decode_solar_visibility(dynamic raw);
+
+  @protected
+  SunPoint dco_decode_sun_point(dynamic raw);
 
   @protected
   Tonight dco_decode_tonight(dynamic raw);
@@ -304,12 +355,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double sse_decode_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
+  GeoPoint sse_decode_box_autoadd_geo_point(SseDeserializer deserializer);
+
+  @protected
   HorizonPoint sse_decode_box_autoadd_horizon_point(
     SseDeserializer deserializer,
   );
 
   @protected
+  LocalEclipseKind sse_decode_box_autoadd_local_eclipse_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   LocalLunarView sse_decode_box_autoadd_local_lunar_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  LocalSolarView sse_decode_box_autoadd_local_solar_view(
     SseDeserializer deserializer,
   );
 
@@ -340,6 +404,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   EventKind sse_decode_event_kind(SseDeserializer deserializer);
+
+  @protected
+  double sse_decode_f_32(SseDeserializer deserializer);
 
   @protected
   double sse_decode_f_64(SseDeserializer deserializer);
@@ -373,6 +440,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<GeoPoint> sse_decode_list_geo_point(SseDeserializer deserializer);
 
   @protected
+  Float32List sse_decode_list_prim_f_32_strict(SseDeserializer deserializer);
+
+  @protected
   Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer);
 
   @protected
@@ -400,7 +470,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  List<SolarDiskPoint> sse_decode_list_solar_disk_point(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  List<SolarPhase> sse_decode_list_solar_phase(SseDeserializer deserializer);
+
+  @protected
+  LocalEclipseKind sse_decode_local_eclipse_kind(SseDeserializer deserializer);
+
+  @protected
   LocalLunarView sse_decode_local_lunar_view(SseDeserializer deserializer);
+
+  @protected
+  LocalSolarView sse_decode_local_solar_view(SseDeserializer deserializer);
 
   @protected
   LunarEclipseDetail sse_decode_lunar_eclipse_detail(
@@ -433,12 +517,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   double? sse_decode_opt_box_autoadd_f_64(SseDeserializer deserializer);
 
   @protected
+  GeoPoint? sse_decode_opt_box_autoadd_geo_point(SseDeserializer deserializer);
+
+  @protected
   HorizonPoint? sse_decode_opt_box_autoadd_horizon_point(
     SseDeserializer deserializer,
   );
 
   @protected
+  LocalEclipseKind? sse_decode_opt_box_autoadd_local_eclipse_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   LocalLunarView? sse_decode_opt_box_autoadd_local_lunar_view(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  LocalSolarView? sse_decode_opt_box_autoadd_local_solar_view(
     SseDeserializer deserializer,
   );
 
@@ -472,9 +569,26 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SkyKind sse_decode_sky_kind(SseDeserializer deserializer);
 
   @protected
+  SolarDiskPoint sse_decode_solar_disk_point(SseDeserializer deserializer);
+
+  @protected
+  SolarEclipseDetail sse_decode_solar_eclipse_detail(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   SolarEclipseDiagram sse_decode_solar_eclipse_diagram(
     SseDeserializer deserializer,
   );
+
+  @protected
+  SolarPhase sse_decode_solar_phase(SseDeserializer deserializer);
+
+  @protected
+  SolarVisibility sse_decode_solar_visibility(SseDeserializer deserializer);
+
+  @protected
+  SunPoint sse_decode_sun_point(SseDeserializer deserializer);
 
   @protected
   Tonight sse_decode_tonight(SseDeserializer deserializer);
@@ -567,14 +681,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_f_64(double self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_geo_point(
+    GeoPoint self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_horizon_point(
     HorizonPoint self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_box_autoadd_local_eclipse_kind(
+    LocalEclipseKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_local_lunar_view(
     LocalLunarView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_local_solar_view(
+    LocalSolarView self,
     SseSerializer serializer,
   );
 
@@ -609,6 +741,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_event_kind(EventKind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_f_32(double self, SseSerializer serializer);
+
+  @protected
   void sse_encode_f_64(double self, SseSerializer serializer);
 
   @protected
@@ -640,6 +775,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_geo_point(List<GeoPoint> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_prim_f_32_strict(
+    Float32List self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_prim_f_64_strict(
@@ -681,8 +822,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_solar_disk_point(
+    List<SolarDiskPoint> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_solar_phase(
+    List<SolarPhase> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_local_eclipse_kind(
+    LocalEclipseKind self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_local_lunar_view(
     LocalLunarView self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_local_solar_view(
+    LocalSolarView self,
     SseSerializer serializer,
   );
 
@@ -723,14 +888,32 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_opt_box_autoadd_f_64(double? self, SseSerializer serializer);
 
   @protected
+  void sse_encode_opt_box_autoadd_geo_point(
+    GeoPoint? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_horizon_point(
     HorizonPoint? self,
     SseSerializer serializer,
   );
 
   @protected
+  void sse_encode_opt_box_autoadd_local_eclipse_kind(
+    LocalEclipseKind? self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_opt_box_autoadd_local_lunar_view(
     LocalLunarView? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_local_solar_view(
+    LocalSolarView? self,
     SseSerializer serializer,
   );
 
@@ -768,10 +951,34 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_sky_kind(SkyKind self, SseSerializer serializer);
 
   @protected
+  void sse_encode_solar_disk_point(
+    SolarDiskPoint self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_solar_eclipse_detail(
+    SolarEclipseDetail self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_solar_eclipse_diagram(
     SolarEclipseDiagram self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_solar_phase(SolarPhase self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_solar_visibility(
+    SolarVisibility self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_sun_point(SunPoint self, SseSerializer serializer);
 
   @protected
   void sse_encode_tonight(Tonight self, SseSerializer serializer);

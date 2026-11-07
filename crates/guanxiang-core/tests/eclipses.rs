@@ -435,3 +435,39 @@ fn magnitude_grid_matches_local_circumstances() {
     // 偏食区约占地球表面的三分之一左右
     assert!(lit > 2000 && lit < 9000, "{lit}");
 }
+
+/// 日食模拟用的日月圆面：本地食甚时的食面积与 local_solar 一致，C1、C4 时两圆外切，
+/// 全食时月面盖住日面。
+#[test]
+fn solar_disk_views_are_consistent() {
+    use guanxiang_core::Observer;
+    use guanxiang_core::events::local_eclipse;
+
+    let Some(eph) = ephemeris() else { return };
+    let span = Span::new(Time::from_tt_jd(2_461_619.0), Time::from_tt_jd(2_461_621.0)).unwrap();
+    let e = &solar_eclipse::search(&eph, span).unwrap()[0];
+    for (name, lat, lon) in [("madrid", 40.4168, -3.7038), ("luxor", 25.6872, 32.6396)] {
+        let obs = Observer::from_degrees(lat, lon, 0.0).unwrap();
+        let l = local_eclipse::local_solar(&eph, e, &obs, None)
+            .unwrap()
+            .unwrap();
+        let c = l.contacts;
+        let times = [c[0].unwrap(), l.maximum, c[3].unwrap()];
+        let v = local_eclipse::solar_disk_views(&eph, &obs, &times).unwrap();
+        let gap = |d: &local_eclipse::SolarDiskView| {
+            (d.x.hypot(d.y) - d.sun_radius - d.moon_radius).to_degrees() * 3600.0
+        };
+        assert!(gap(&v[0]).abs() < 0.05, "{name} C1 {}″", gap(&v[0]));
+        assert!(gap(&v[2]).abs() < 0.05, "{name} C4 {}″", gap(&v[2]));
+        assert!((v[1].obscuration - l.obscuration).abs() < 1e-6, "{name}");
+        assert!(
+            (v[1].sun_altitude_deg - l.sun_altitude_deg[1]).abs() < 1e-6,
+            "{name}"
+        );
+        // 天顶位置角在 (−π, π]
+        assert!(
+            v.iter()
+                .all(|d| d.zenith_angle.abs() <= std::f64::consts::PI)
+        );
+    }
+}

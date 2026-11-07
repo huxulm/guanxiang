@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `eclipse_span`, `find_lunar_eclipse`, `finished`, `found`, `geo`, `is_cancelled`, `l_phase`, `lat_lon`, `local_lunar_view`, `lunar_diagram`, `moon_phase_name`, `progress`, `s`, `saros_label`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `bearing_deg`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `eclipse_span`, `find_lunar_eclipse`, `find_solar_eclipse`, `finished`, `found`, `geo`, `is_cancelled`, `l_phase`, `lat_lon`, `local_lunar_view`, `local_solar_view`, `lunar_diagram`, `moon_phase_name`, `progress`, `s`, `saros_label`, `sat_item`, `search_span`, `send`, `solar_diagram`, `solar_phase_name`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// 支持的天体，供界面列出：label = 英文键名（传回 Rust 用），value = 显示名。
 List<Detail> bodyNames({required Lang lang}) =>
@@ -65,6 +65,19 @@ Future<SolarEclipseDiagram> solarEclipseDiagram({
 }) => RustLib.instance.api.crateApiGuanxiangSolarEclipseDiagram(
   engine: engine,
   ttJd: ttJd,
+  lang: lang,
+);
+
+/// 日食详情。`tt_jd` 为搜索结果里该次日食的食甚；`site` 为空时不算本地情况。
+Future<SolarEclipseDetail> solarEclipseDetail({
+  required Engine engine,
+  required double ttJd,
+  Site? site,
+  required Lang lang,
+}) => RustLib.instance.api.crateApiGuanxiangSolarEclipseDetail(
+  engine: engine,
+  ttJd: ttJd,
+  site: site,
   lang: lang,
 );
 
@@ -340,6 +353,9 @@ class HorizonPoint {
 /// 显示语言。
 enum Lang { zh, en }
 
+/// 本地看到的日食类型。
+enum LocalEclipseKind { partial, annular, total }
+
 /// 观测地的可见情况。
 class LocalLunarView {
   final LunarVisibility verdict;
@@ -376,6 +392,74 @@ class LocalLunarView {
           totalityVisible == other.totalityVisible &&
           trackAltitudeDeg == other.trackAltitudeDeg &&
           moonEvents == other.moonEvents;
+}
+
+/// 观测地的日食情况。
+class LocalSolarView {
+  final SolarVisibility verdict;
+
+  /// 这里不食时为空
+  final LocalEclipseKind? kind;
+
+  /// 食分：全食、环食时为月日视直径比，偏食时为太阳直径被遮的比例
+  final double magnitude;
+
+  /// 食面积：太阳圆面被遮的比例
+  final double obscuration;
+  final List<SolarPhase> phases;
+
+  /// 全食或环食的持续时间（秒）
+  final double? centralSeconds;
+
+  /// 到中心线最近点的距离（km）和方向（度，从北向东量）；非中心食为空
+  final double? centerlineDistanceKm;
+  final double? centerlineBearingDeg;
+
+  /// 太阳面模拟：C1 前 10 分钟到 C4 后 10 分钟，每 30 秒一个点，全食或环食阶段每 2 秒一个点
+  final String trackStartUtc;
+  final List<SolarDiskPoint> track;
+
+  const LocalSolarView({
+    required this.verdict,
+    this.kind,
+    required this.magnitude,
+    required this.obscuration,
+    required this.phases,
+    this.centralSeconds,
+    this.centerlineDistanceKm,
+    this.centerlineBearingDeg,
+    required this.trackStartUtc,
+    required this.track,
+  });
+
+  @override
+  int get hashCode =>
+      verdict.hashCode ^
+      kind.hashCode ^
+      magnitude.hashCode ^
+      obscuration.hashCode ^
+      phases.hashCode ^
+      centralSeconds.hashCode ^
+      centerlineDistanceKm.hashCode ^
+      centerlineBearingDeg.hashCode ^
+      trackStartUtc.hashCode ^
+      track.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LocalSolarView &&
+          runtimeType == other.runtimeType &&
+          verdict == other.verdict &&
+          kind == other.kind &&
+          magnitude == other.magnitude &&
+          obscuration == other.obscuration &&
+          phases == other.phases &&
+          centralSeconds == other.centralSeconds &&
+          centerlineDistanceKm == other.centerlineDistanceKm &&
+          centerlineBearingDeg == other.centerlineBearingDeg &&
+          trackStartUtc == other.trackStartUtc &&
+          track == other.track;
 }
 
 /// 月食详情页的全部数据。
@@ -859,6 +943,119 @@ enum SkyKind {
   moonset,
 }
 
+/// 太阳面模拟的一个取样点（角分）。偏移 x 向东、y 向北（天球上，抬头看时东在左）。
+class SolarDiskPoint {
+  /// 距 `track_start_utc` 的秒数
+  final double seconds;
+  final double xArcmin;
+  final double yArcmin;
+  final double sunRadiusArcmin;
+  final double moonRadiusArcmin;
+  final double obscuration;
+  final double sunAltitudeDeg;
+
+  /// 天顶方向的位置角（度，从北向东量）
+  final double zenithAngleDeg;
+
+  const SolarDiskPoint({
+    required this.seconds,
+    required this.xArcmin,
+    required this.yArcmin,
+    required this.sunRadiusArcmin,
+    required this.moonRadiusArcmin,
+    required this.obscuration,
+    required this.sunAltitudeDeg,
+    required this.zenithAngleDeg,
+  });
+
+  @override
+  int get hashCode =>
+      seconds.hashCode ^
+      xArcmin.hashCode ^
+      yArcmin.hashCode ^
+      sunRadiusArcmin.hashCode ^
+      moonRadiusArcmin.hashCode ^
+      obscuration.hashCode ^
+      sunAltitudeDeg.hashCode ^
+      zenithAngleDeg.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SolarDiskPoint &&
+          runtimeType == other.runtimeType &&
+          seconds == other.seconds &&
+          xArcmin == other.xArcmin &&
+          yArcmin == other.yArcmin &&
+          sunRadiusArcmin == other.sunRadiusArcmin &&
+          moonRadiusArcmin == other.moonRadiusArcmin &&
+          obscuration == other.obscuration &&
+          sunAltitudeDeg == other.sunAltitudeDeg &&
+          zenithAngleDeg == other.zenithAngleDeg;
+}
+
+/// 日食详情页的全部数据。
+class SolarEclipseDetail {
+  final SolarEclipseDiagram diagram;
+
+  /// 沙罗序列，如“136（第 38 次，共 71 次）”；星历范围外为空
+  final String saros;
+
+  /// 中心线（每分钟一个点）和各点的食带宽度（km）；非中心食为空
+  final List<GeoPoint> centralLine;
+  final Float64List pathWidthKm;
+  final GeoPoint? greatestPoint;
+
+  /// 全球最大食分栅格：第 0 行中心纬度 90 − step/2，第 0 列中心经度 −180 + step/2
+  final double gridStepDeg;
+  final int gridRows;
+  final int gridCols;
+  final Float32List grid;
+  final LocalSolarView? local;
+
+  const SolarEclipseDetail({
+    required this.diagram,
+    required this.saros,
+    required this.centralLine,
+    required this.pathWidthKm,
+    this.greatestPoint,
+    required this.gridStepDeg,
+    required this.gridRows,
+    required this.gridCols,
+    required this.grid,
+    this.local,
+  });
+
+  @override
+  int get hashCode =>
+      diagram.hashCode ^
+      saros.hashCode ^
+      centralLine.hashCode ^
+      pathWidthKm.hashCode ^
+      greatestPoint.hashCode ^
+      gridStepDeg.hashCode ^
+      gridRows.hashCode ^
+      gridCols.hashCode ^
+      grid.hashCode ^
+      local.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SolarEclipseDetail &&
+          runtimeType == other.runtimeType &&
+          diagram == other.diagram &&
+          saros == other.saros &&
+          centralLine == other.centralLine &&
+          pathWidthKm == other.pathWidthKm &&
+          greatestPoint == other.greatestPoint &&
+          gridStepDeg == other.gridStepDeg &&
+          gridRows == other.gridRows &&
+          gridCols == other.gridCols &&
+          grid == other.grid &&
+          local == other.local;
+}
+
 /// 日食示意图：从太阳方向看地球，影轴扫过的轨迹。
 class SolarEclipseDiagram {
   /// 影轴轨迹（每 5 分钟）
@@ -898,6 +1095,73 @@ class SolarEclipseDiagram {
           penumbraRadius == other.penumbraRadius &&
           umbraRadius == other.umbraRadius &&
           axisDeclinationDeg == other.axisDeclinationDeg;
+}
+
+/// 本地日食的一个食相。
+class SolarPhase {
+  /// C1、C2、Max、C3、C4
+  final String code;
+  final String name;
+  final String utc;
+  final SunPoint sun;
+
+  const SolarPhase({
+    required this.code,
+    required this.name,
+    required this.utc,
+    required this.sun,
+  });
+
+  @override
+  int get hashCode =>
+      code.hashCode ^ name.hashCode ^ utc.hashCode ^ sun.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SolarPhase &&
+          runtimeType == other.runtimeType &&
+          code == other.code &&
+          name == other.name &&
+          utc == other.utc &&
+          sun == other.sun;
+}
+
+/// 在观测地能看到多少（C1–C4 期间太阳是否在地平线上）。
+enum SolarVisibility {
+  full,
+
+  /// 日出时已在食中
+  rises,
+
+  /// 日落时仍在食中
+  sets,
+  risesAndSets,
+
+  /// 食发生时太阳在地平线下
+  hidden,
+
+  /// 这里不发生日食
+  noEclipse,
+}
+
+/// 某一时刻的太阳位置（度；高度含大气折射，方位从北向东量）。
+class SunPoint {
+  final double altitudeDeg;
+  final double azimuthDeg;
+
+  const SunPoint({required this.altitudeDeg, required this.azimuthDeg});
+
+  @override
+  int get hashCode => altitudeDeg.hashCode ^ azimuthDeg.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SunPoint &&
+          runtimeType == other.runtimeType &&
+          altitudeDeg == other.altitudeDeg &&
+          azimuthDeg == other.azimuthDeg;
 }
 
 /// 看板“今晚”卡片的数据。
