@@ -13,6 +13,8 @@
 - almanac_events.csv：5 个地点、2026 年每月 1 日和 15 日（UTC 0 时起 24 小时）的全部出没和晨昏；
   记录 Skyfield 的 ΔT，测试按同一 ΔT 计算。
 - moon_phase.csv：同样时刻的月球照亮比例和日月视黄经差（地心）。
+- sublunar.csv：月下点（地心视位置在 ITRS 中的球面纬度和经度，不含极移），取 2025–2029 年
+  几次月食前后每小时一个时刻；记录 Skyfield 的 ΔT。月食可见区域图用它。
 """
 
 import csv
@@ -23,6 +25,7 @@ import numpy as np
 import skyfield
 from skyfield import almanac
 from skyfield.api import load, load_file, wgs84
+from skyfield.framelib import itrs
 from skyfield.searchlib import find_discrete
 
 FIX = os.path.join(os.path.dirname(__file__), "..", "..", "crates", "guanxiang-core", "tests", "fixtures", "skyfield")
@@ -97,6 +100,17 @@ def main() -> None:
                 k = almanac.fraction_illuminated(eph, "moon", t)
                 phase = almanac.moon_phase(eph, t).degrees
                 w.writerow([f"{t.tt:.8f}", f"{float(k):.10f}", f"{float(phase):.8f}"])
+
+    with open(os.path.join(FIX, "sublunar.csv"), "w", newline="") as f:
+        f.write(note)
+        w = csv.writer(f, lineterminator="\n")
+        w.writerow(["jd_tt", "delta_t_s", "lat_deg", "lon_deg"])
+        # 几次月食的食甚日期（UTC），每次前后各 4 小时
+        for y, mo, d, h in [(2025, 9, 7, 18), (2026, 3, 3, 11), (2028, 12, 31, 17), (2029, 6, 26, 3)]:
+            for dh in range(-4, 5):
+                t = ts.utc(y, mo, d, h + dh)
+                lat, lon, _ = earth.at(t).observe(eph["moon"]).apparent().frame_latlon(itrs)
+                w.writerow([f"{t.tt:.8f}", f"{float(t.delta_t):.6f}", f"{lat.degrees:.8f}", f"{lon.degrees:.8f}"])
 
 
 if __name__ == "__main__":

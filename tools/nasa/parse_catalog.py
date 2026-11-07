@@ -11,7 +11,9 @@
 输出到 crates/guanxiang-core/tests/fixtures/nasa/：
 - solar_2001_2100.csv：date, td（食甚，TD）, delta_t, type（如 T、A、H、P、A-、T+）, gamma, magnitude,
   食甚点 lat_deg、lon_deg（NASA 取整到 1°）、sun_alt_deg、width_km、duration_s（中心食在食甚点的持续时间）
-- lunar_2001_2100.csv：date, td（食甚，TD）, delta_t, type（N、P、T 及后缀）, gamma, pen_mag, um_mag
+- lunar_2001_2100.csv：date, td（食甚，TD）, delta_t, type（N、P、T 及后缀）, gamma, pen_mag, um_mag,
+  luna（NASA 的朔望月序号，2000-01-06 的朔为 0）、saros（沙罗序列号）、
+  pen_dur_min、par_dur_min、total_dur_min（半影食、本影食、全食的持续时间，分钟；没有的留空）
 
 NASA 星表用 VSOP87/ELP-2000-82 和自己的 ΔT 模型，秒级差异不一定是错误（见 docs/PLAN.md）。
 只用标准库。
@@ -70,14 +72,16 @@ def main() -> None:
     with open(os.path.join(OUT, "lunar_2001_2100.csv"), "w", newline="\n", encoding="utf-8") as f:
         f.write("# NASA Five Millennium Canon of Lunar Eclipses, 2001-2100 (eclipse.gsfc.nasa.gov)\n")
         w = csv.writer(f, lineterminator="\n")
-        w.writerow(["date", "td", "delta_t", "type", "gamma", "pen_mag", "um_mag"])
+        w.writerow(["date", "td", "delta_t", "type", "gamma", "pen_mag", "um_mag",
+                    "luna", "saros", "pen_dur_min", "par_dur_min", "total_dur_min"])
         n = 0
         for m in lines(le_path):
             date = f"{m[2]}-{MONTHS[m[3]]:02d}-{m[4]}"
             rest = m[11].split()
-            # rest：Gamma PenMag UmMag ...（QSE 已在第 10 组）
+            # rest：Gamma PenMag UmMag PenDur ParDur TotalDur Lat Long（QSE 已在第 10 组）
             gamma, pen, um = rest[0], rest[1], rest[2]
-            w.writerow([date, m[5], m[6], m[9], gamma, pen, um])
+            durs = ["" if x == "-" else x for x in rest[3:6]]
+            w.writerow([date, m[5], m[6], m[9], gamma, pen, um, m[7], m[8], *durs])
             n += 1
         print(f"lunar: {n}", file=sys.stderr)
 
