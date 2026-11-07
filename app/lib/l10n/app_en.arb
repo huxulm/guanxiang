@@ -298,5 +298,7 @@
   "solarTipFilter": "Use eclipse glasses or a solar filter that meets ISO 12312-2. Sunglasses, stacked film, smoked glass and other dark glass are not safe.",
   "solarTipPinhole": "Without a filter, use pinhole projection: poke a small hole in a card and project the Sun's image onto a sheet of white paper. During the partial phases, sunlight through leaves also makes crescent-shaped spots.",
   "solarTipCamera": "Cameras, telescopes and binoculars need a proper solar filter over the front lens (never at the eyepiece end); never aim an unfiltered instrument at the Sun, even to frame a shot.",
-  "solarTipTotality": "Only during totality (C2 to C3) may you remove the filter to see the corona; put it back as soon as the diamond ring appears before C3. During an annular eclipse, keep the filter on the whole time, even when only a thin ring is left."
+  "solarTipTotality": "Only during totality (C2 to C3) may you remove the filter to see the corona; put it back as soon as the diamond ring appears before C3. During an annular eclipse, keep the filter on the whole time, even when only a thin ring is left.",
+  "allParameters": "All parameters",
+  "allParametersCount": "All parameters ({count})"
 }

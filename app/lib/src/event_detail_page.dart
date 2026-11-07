@@ -40,6 +40,66 @@ class EventDetailPage extends StatelessWidget {
     ].join('\n');
   }
 
+  /// 从底部拉出全部参数（日月食页用：页面上已有更好读的卡片，原始参数收起来）。
+  void _showParameters(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      showDragHandle: true,
+      // 宽屏上不铺满整个窗口
+      constraints: const BoxConstraints(maxWidth: 640),
+      builder: (context) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.6,
+        minChildSize: 0.3,
+        maxChildSize: 0.95,
+        builder: (context, controller) {
+          final theme = Theme.of(context);
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Padding(
+                padding: const EdgeInsets.fromLTRB(20, 0, 8, 4),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        l.allParameters,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    _CopyButton(text: _plainText()),
+                  ],
+                ),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView(
+                  controller: controller,
+                  padding: const EdgeInsets.only(bottom: 16),
+                  children: [
+                    _ParameterRows(details: event.details),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                      child: Text(
+                        l.detailFooter(event.ttJd.toStringAsFixed(6)),
+                        style: theme.textTheme.bodySmall,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -49,10 +109,18 @@ class EventDetailPage extends StatelessWidget {
     final left = t == null ? null : countdown(l, t);
     final lunar = engine != null && event.kind == EventKind.lunarEclipse;
     final solar = engine != null && event.kind == EventKind.solarEclipse;
+    // 日月食页上，原始参数收进底部抽屉；其他事件的参数表就是主体内容，照旧直接显示
+    final sheet = (lunar || solar) && event.details.isNotEmpty;
     return Scaffold(
       appBar: AppBar(
         title: Text(event.title),
         actions: [
+          if (sheet)
+            IconButton(
+              icon: const Icon(Icons.table_rows_outlined),
+              tooltip: l.allParameters,
+              onPressed: () => _showParameters(context),
+            ),
           IconButton(
             icon: const Icon(Icons.copy_all_outlined),
             tooltip: l.copyDetails,
@@ -124,6 +192,18 @@ class EventDetailPage extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
+          if (sheet)
+            Align(
+              alignment: AlignmentDirectional.centerStart,
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: OutlinedButton.icon(
+                  icon: const Icon(Icons.table_rows_outlined, size: 18),
+                  label: Text(l.allParametersCount(event.details.length)),
+                  onPressed: () => _showParameters(context),
+                ),
+              ),
+            ),
           const SizedBox(height: 16),
           if (lunar) ...[
             LunarEclipseSections(
@@ -141,20 +221,7 @@ class EventDetailPage extends StatelessWidget {
             ),
             const SizedBox(height: 16),
           ],
-          Card(
-            child: Column(
-              children: [
-                for (final (i, d) in event.details.indexed) ...[
-                  if (i > 0) const Divider(height: 1, indent: 16),
-                  ListTile(
-                    dense: true,
-                    title: Text(d.label),
-                    trailing: Text(d.value, style: theme.textTheme.bodyLarge),
-                  ),
-                ],
-              ],
-            ),
-          ),
+          if (!sheet) Card(child: _ParameterRows(details: event.details)),
           if (!lunar &&
               !solar &&
               engine != null &&
@@ -169,6 +236,60 @@ class EventDetailPage extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 参数表：每行左边是名称、右边是值。
+class _ParameterRows extends StatelessWidget {
+  const _ParameterRows({required this.details});
+
+  final List<Detail> details;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        for (final (i, d) in details.indexed) ...[
+          if (i > 0) const Divider(height: 1, indent: 16),
+          ListTile(
+            dense: true,
+            title: Text(d.label),
+            trailing: Text(d.value, style: theme.textTheme.bodyLarge),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// 抽屉里的复制按钮：抽屉挡住了页面底部的提示条，复制后图标变成对勾 2 秒。
+class _CopyButton extends StatefulWidget {
+  const _CopyButton({required this.text});
+
+  final String text;
+
+  @override
+  State<_CopyButton> createState() => _CopyButtonState();
+}
+
+class _CopyButtonState extends State<_CopyButton> {
+  bool _done = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    return IconButton(
+      icon: Icon(_done ? Icons.check : Icons.copy_all_outlined),
+      tooltip: _done ? l.copied : l.copyDetails,
+      onPressed: () async {
+        await Clipboard.setData(ClipboardData(text: widget.text));
+        if (!mounted) return;
+        setState(() => _done = true);
+        await Future<void>.delayed(const Duration(seconds: 2));
+        if (mounted) setState(() => _done = false);
+      },
     );
   }
 }

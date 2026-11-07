@@ -400,6 +400,13 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'U2'));
     await tester.pump();
     expect(find.text('全食中'), findsOneWidget);
+
+    // 原始参数收在底部抽屉里：页面上没有参数表，点按钮后才出现
+    expect(find.text('γ（影轴离地心）'), findsNothing);
+    await tester.tap(find.textContaining('全部参数（'));
+    await tester.pumpAndSettle();
+    expect(find.text('γ（影轴离地心）'), findsOneWidget);
+    expect(find.text('沙罗序列'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
   testWidgets('日食详情：本地全食、太阳面模拟和地图', (tester) async {

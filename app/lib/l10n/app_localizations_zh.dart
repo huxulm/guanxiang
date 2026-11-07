@@ -1055,4 +1055,12 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get solarTipTotality =>
       '只有全食阶段（食既到生光）可以摘下滤光片直接看日冕；看到生光前的“钻石环”就要马上戴回去。环食哪怕只剩一圈亮环，也必须全程用滤光膜。';
+
+  @override
+  String get allParameters => '全部参数';
+
+  @override
+  String allParametersCount(int count) {
+    return '全部参数（$count 项）';
+  }
 }

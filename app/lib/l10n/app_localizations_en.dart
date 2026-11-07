@@ -1098,4 +1098,12 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get solarTipTotality =>
       'Only during totality (C2 to C3) may you remove the filter to see the corona; put it back as soon as the diamond ring appears before C3. During an annular eclipse, keep the filter on the whole time, even when only a thin ring is left.';
+
+  @override
+  String get allParameters => 'All parameters';
+
+  @override
+  String allParametersCount(int count) {
+    return 'All parameters ($count)';
+  }
 }

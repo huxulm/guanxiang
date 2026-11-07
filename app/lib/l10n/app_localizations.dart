@@ -1891,6 +1891,18 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'只有全食阶段（食既到生光）可以摘下滤光片直接看日冕；看到生光前的“钻石环”就要马上戴回去。环食哪怕只剩一圈亮环，也必须全程用滤光膜。'**
   String get solarTipTotality;
+
+  /// No description provided for @allParameters.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部参数'**
+  String get allParameters;
+
+  /// No description provided for @allParametersCount.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部参数（{count} 项）'**
+  String allParametersCount(int count);
 }
 
 class _AppLocalizationsDelegate
