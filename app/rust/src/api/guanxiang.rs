@@ -343,6 +343,13 @@ fn utc(t: &Time) -> String {
         .unwrap_or_else(|_| format!("TT JD {:.5}", t.tt_jd()))
 }
 
+/// 经纬度写成 “31.30°S 48.48°W”
+fn lat_lon(lat_deg: f64, lon_deg: f64) -> String {
+    let ns = if lat_deg >= 0.0 { 'N' } else { 'S' };
+    let ew = if lon_deg >= 0.0 { 'E' } else { 'W' };
+    format!("{:.2}°{ns} {:.2}°{ew}", lat_deg.abs(), lon_deg.abs())
+}
+
 fn detail(label: impl Into<String>, value: String) -> Detail {
     Detail {
         label: label.into(),
@@ -561,7 +568,10 @@ fn search_span(
                         l.s("食甚（全球，UTC）", "Greatest eclipse (UTC)"),
                         utc(&e.greatest),
                     ),
-                    detail("γ", format!("{:+.4}", e.gamma)),
+                    detail(
+                        l.s("γ（影轴离地心）", "Gamma (axis offset)"),
+                        format!("{:+.4}", e.gamma),
+                    ),
                     detail(
                         l.s("食分（全球）", "Magnitude"),
                         format!("{:.4}", e.magnitude),
@@ -570,7 +580,7 @@ fn search_span(
                 if let Some(p) = e.greatest_point {
                     details.push(detail(
                         l.s("食甚点", "Point of greatest eclipse"),
-                        format!("{:.2}°, {:.2}°", p.latitude_deg, p.longitude_deg),
+                        lat_lon(p.latitude_deg, p.longitude_deg),
                     ));
                     details.push(detail(
                         l.s("食甚点太阳高度", "Sun altitude there"),
@@ -664,7 +674,10 @@ fn search_span(
                         l.s("食甚（UTC）", "Greatest eclipse (UTC)"),
                         utc(&e.greatest),
                     ),
-                    detail("γ", format!("{:+.4}", e.gamma)),
+                    detail(
+                        l.s("γ（影轴离地心）", "Gamma (axis offset)"),
+                        format!("{:+.4}", e.gamma),
+                    ),
                     detail(
                         l.s("半影食分", "Penumbral magnitude"),
                         format!("{:.4}", e.penumbral_magnitude),
