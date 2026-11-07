@@ -203,6 +203,8 @@ pub struct EventItem {
     pub tt_jd: f64,
     pub summary: String,
     pub details: Vec<Detail>,
+    /// 肉眼几乎看不出（目前只有半影月食），看板等处默认不列出
+    pub subtle: bool,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -435,6 +437,7 @@ fn search_span(
                     };
                     out.push(EventItem {
                         kind: EventKind::Transit,
+                        subtle: false,
                         title,
                         utc: utc(&t.greatest),
                         tt_jd: t.greatest.tt_jd(),
@@ -496,6 +499,7 @@ fn search_span(
                 };
                 out.push(EventItem {
                     kind: req.kind,
+                    subtle: false,
                     title,
                     utc: utc(&e.time),
                     tt_jd: e.time.tt_jd(),
@@ -536,6 +540,7 @@ fn search_span(
                 };
                 out.push(EventItem {
                     kind: EventKind::Appulse,
+                    subtle: false,
                     title,
                     utc: utc(&m.time),
                     tt_jd: m.time.tt_jd(),
@@ -639,6 +644,7 @@ fn search_span(
                 }
                 out.push(EventItem {
                     kind: EventKind::SolarEclipse,
+                    subtle: false,
                     title: format!(
                         "{name}{}",
                         if non_central {
@@ -704,14 +710,24 @@ fn search_span(
                 }
                 out.push(EventItem {
                     kind: EventKind::LunarEclipse,
+                    subtle: e.kind == LunarEclipseKind::Penumbral,
                     title: name.to_string(),
                     utc: utc(&e.greatest),
                     tt_jd: e.greatest.tt_jd(),
-                    summary: format!(
-                        "{} {:.3}",
-                        l.s("本影食分", "Umbral magnitude"),
-                        e.umbral_magnitude
-                    ),
+                    // 半影月食的本影食分是负数，对读者没有意义，改写半影食分
+                    summary: if e.kind == LunarEclipseKind::Penumbral {
+                        format!(
+                            "{} {:.3}",
+                            l.s("半影食分", "Penumbral magnitude"),
+                            e.penumbral_magnitude
+                        )
+                    } else {
+                        format!(
+                            "{} {:.3}",
+                            l.s("本影食分", "Umbral magnitude"),
+                            e.umbral_magnitude
+                        )
+                    },
                     details,
                 });
             }
@@ -765,6 +781,7 @@ fn search_span(
                 match filter {
                     None => out.push(EventItem {
                         kind: EventKind::Occultation,
+                        subtle: false,
                         title: format!(
                             "{title}{}",
                             l.s("（地心候选）", " (geocentric candidate)")
@@ -806,6 +823,7 @@ fn search_span(
                         let daytime = o.sun_altitude_deg.iter().all(|&h| h > -6.0);
                         out.push(EventItem {
                             kind: EventKind::Occultation,
+                            subtle: false,
                             title,
                             utc: utc(&o.disappearance),
                             tt_jd: o.disappearance.tt_jd(),

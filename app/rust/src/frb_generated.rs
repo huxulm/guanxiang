@@ -591,6 +591,7 @@ impl SseDecode for crate::api::guanxiang::EventItem {
         let mut var_ttJd = <f64>::sse_decode(deserializer);
         let mut var_summary = <String>::sse_decode(deserializer);
         let mut var_details = <Vec<crate::api::guanxiang::Detail>>::sse_decode(deserializer);
+        let mut var_subtle = <bool>::sse_decode(deserializer);
         return crate::api::guanxiang::EventItem {
             kind: var_kind,
             title: var_title,
@@ -598,6 +599,7 @@ impl SseDecode for crate::api::guanxiang::EventItem {
             tt_jd: var_ttJd,
             summary: var_summary,
             details: var_details,
+            subtle: var_subtle,
         };
     }
 }
@@ -1043,6 +1045,7 @@ impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::EventItem {
             self.tt_jd.into_into_dart().into_dart(),
             self.summary.into_into_dart().into_dart(),
             self.details.into_into_dart().into_dart(),
+            self.subtle.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1365,6 +1368,7 @@ impl SseEncode for crate::api::guanxiang::EventItem {
         <f64>::sse_encode(self.tt_jd, serializer);
         <String>::sse_encode(self.summary, serializer);
         <Vec<crate::api::guanxiang::Detail>>::sse_encode(self.details, serializer);
+        <bool>::sse_encode(self.subtle, serializer);
     }
 }
 

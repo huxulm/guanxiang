@@ -606,8 +606,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   EventItem dco_decode_event_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
     return EventItem(
       kind: dco_decode_event_kind(arr[0]),
       title: dco_decode_String(arr[1]),
@@ -615,6 +615,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ttJd: dco_decode_f_64(arr[3]),
       summary: dco_decode_String(arr[4]),
       details: dco_decode_list_detail(arr[5]),
+      subtle: dco_decode_bool(arr[6]),
     );
   }
 
@@ -991,6 +992,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_ttJd = sse_decode_f_64(deserializer);
     var var_summary = sse_decode_String(deserializer);
     var var_details = sse_decode_list_detail(deserializer);
+    var var_subtle = sse_decode_bool(deserializer);
     return EventItem(
       kind: var_kind,
       title: var_title,
@@ -998,6 +1000,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ttJd: var_ttJd,
       summary: var_summary,
       details: var_details,
+      subtle: var_subtle,
     );
   }
 
@@ -1475,6 +1478,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_f_64(self.ttJd, serializer);
     sse_encode_String(self.summary, serializer);
     sse_encode_list_detail(self.details, serializer);
+    sse_encode_bool(self.subtle, serializer);
   }
 
   @protected

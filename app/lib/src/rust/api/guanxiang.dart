@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `lat_lon`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
 // These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// 支持的天体，供界面列出：label = 英文键名（传回 Rust 用），value = 显示名。
@@ -112,6 +112,9 @@ class EventItem {
   final String summary;
   final List<Detail> details;
 
+  /// 肉眼几乎看不出（目前只有半影月食），看板等处默认不列出
+  final bool subtle;
+
   const EventItem({
     required this.kind,
     required this.title,
@@ -119,6 +122,7 @@ class EventItem {
     required this.ttJd,
     required this.summary,
     required this.details,
+    required this.subtle,
   });
 
   @override
@@ -128,7 +132,8 @@ class EventItem {
       utc.hashCode ^
       ttJd.hashCode ^
       summary.hashCode ^
-      details.hashCode;
+      details.hashCode ^
+      subtle.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -140,7 +145,8 @@ class EventItem {
           utc == other.utc &&
           ttJd == other.ttJd &&
           summary == other.summary &&
-          details == other.details;
+          details == other.details &&
+          subtle == other.subtle;
 }
 
 enum EventKind {
