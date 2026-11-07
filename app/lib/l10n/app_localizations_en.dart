@@ -955,4 +955,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lunarMapCaption =>
       'Zones use the umbral phases (U1 to U4); for a penumbral eclipse, P1 to P4. Each curve marks where the Moon is on the horizon at that contact; ★ is where the Moon is overhead at greatest eclipse, and the dot is your location. Computed geocentrically without refraction or parallax, so boundaries may be off by about 1°.';
+
+  @override
+  String get lunarTipsTitle => 'Watching and photographing';
+
+  @override
+  String get lunarTipEyes =>
+      'A lunar eclipse is completely safe to watch with the naked eye; no filter is needed. Binoculars or a small telescope show the colours and shading better.';
+
+  @override
+  String get lunarTipPhoto =>
+      'Photography: during the partial phases the lit part is still bright; start around ISO 100, 1/250 s, f/8. Totality is far darker; start around ISO 800–1600 and 1–4 s on a tripod, and use a tracking mount at long focal lengths or the Moon will trail.';
+
+  @override
+  String get lunarTipBracket =>
+      'Totality\'s brightness cannot be predicted, so bracket your exposures every few minutes; take a frame of the uneclipsed full Moon before U1 for comparison.';
+
+  @override
+  String get lunarTipSolar =>
+      'Note: solar eclipses are different and must be viewed through an ISO 12312-2 solar filter or eclipse glasses.';
 }

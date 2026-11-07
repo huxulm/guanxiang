@@ -13,6 +13,8 @@ import 'package:guanxiang/l10n/app_localizations.dart';
 import 'package:guanxiang/src/app.dart';
 import 'package:guanxiang/src/dashboard_page.dart';
 import 'package:guanxiang/src/eclipse_diagram.dart';
+import 'package:guanxiang/src/event_detail_page.dart';
+import 'package:guanxiang/src/lunar_eclipse_detail.dart';
 import 'package:guanxiang/src/licenses.dart';
 import 'package:guanxiang/src/rust/api/guanxiang.dart';
 import 'package:guanxiang/src/rust/frb_generated.dart';
@@ -343,6 +345,61 @@ void main() {
       // ignore: avoid_print
       print('示意图：${event.title} ${event.utc}');
     }
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('月食详情：时间轴、本地可见情况、滑块和地图', (tester) async {
+    final updates = await search(
+      engine: engine,
+      request: const SearchRequest(
+        kind: EventKind.lunarEclipse,
+        bodyA: '',
+        bodyB: '',
+        fromYear: 2025,
+        toYear: 2026,
+        maxSeparationDeg: 0,
+        lang: Lang.zh,
+      ),
+      token: CancelToken(),
+    ).toList();
+    final event = updates
+        .where((u) => u.kind == UpdateKind.found)
+        .map((u) => u.item!)
+        .firstWhere((e) => e.utc.startsWith('2025-09-07'));
+    final settings = Settings.inMemory();
+    await settings.setMode(LocationMode.manual);
+    await settings.setManual(const Place(39.9042, 116.4074, 44));
+
+    // 窗口拉高，整页一次排下（列表不会把下面的卡片省略掉）
+    tester.view.physicalSize = const Size(900, 7000);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.reset);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('zh'),
+        supportedLocales: const [Locale('en'), Locale('zh')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: EventDetailPage(event: event, engine: engine, settings: settings),
+      ),
+    );
+    final verdict = find.text('全程可见');
+    for (var i = 0; i < 200 && verdict.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(verdict, findsWidgets, reason: '北京应全程可见');
+    expect(find.text('全食 1 小时 22 分'), findsOneWidget);
+    expect(find.textContaining('沙罗序列 128'), findsWidgets);
+    expect(find.byType(PhaseTimeline), findsOneWidget);
+    expect(find.text('全球可见区域'), findsOneWidget);
+
+    // 默认停在食甚（全食中）；点 P1 后是半影食，点 U2 回到全食
+    expect(find.text('全食中'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'P1'));
+    await tester.pump();
+    expect(find.text('半影食中'), findsOneWidget);
+    await tester.tap(find.widgetWithText(ChoiceChip, 'U2'));
+    await tester.pump();
+    expect(find.text('全食中'), findsOneWidget);
     await tester.pumpWidget(const SizedBox());
   });
 }

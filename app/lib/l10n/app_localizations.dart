@@ -1657,6 +1657,36 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'按本影食（初亏到复圆）划分，半影月食按半影食始到半影食终。曲线是各接触时刻月亮正好在地平线上的地方，★ 是食甚时月亮在天顶的地方，圆点是你的观测地。按地心计算，没有计入大气折射和视差，边界附近可能差 1° 左右。'**
   String get lunarMapCaption;
+
+  /// No description provided for @lunarTipsTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'观测与拍摄'**
+  String get lunarTipsTitle;
+
+  /// No description provided for @lunarTipEyes.
+  ///
+  /// In zh, this message translates to:
+  /// **'月食直接用眼睛看就很安全，不需要任何滤光片。双筒望远镜或小望远镜里，月面的颜色和明暗变化更明显。'**
+  String get lunarTipEyes;
+
+  /// No description provided for @lunarTipPhoto.
+  ///
+  /// In zh, this message translates to:
+  /// **'拍摄参考：偏食阶段月亮的亮部仍然很亮，可以从 ISO 100、1/250 s、f/8 开始试；全食阶段暗很多，可以从 ISO 800–1600、1–4 s 开始，要用三脚架，焦距较长时最好用赤道仪跟踪，否则月亮会拖线。'**
+  String get lunarTipPhoto;
+
+  /// No description provided for @lunarTipBracket.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食阶段的亮度没法预报，最好每隔几分钟换几档曝光多拍几张；初亏前先拍一张没被遮住的满月，方便对比。'**
+  String get lunarTipBracket;
+
+  /// No description provided for @lunarTipSolar.
+  ///
+  /// In zh, this message translates to:
+  /// **'注意：日食不一样，看日食必须用符合 ISO 12312-2 的滤光膜或日食眼镜。'**
+  String get lunarTipSolar;
 }
 
 class _AppLocalizationsDelegate

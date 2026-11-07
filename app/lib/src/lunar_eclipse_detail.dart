@@ -108,6 +108,8 @@ class _LunarEclipseSectionsState extends State<LunarEclipseSections> {
             _SimulationCard(detail: d),
             const SizedBox(height: 16),
             _WorldMapCard(detail: d, place: place),
+            const SizedBox(height: 16),
+            const _ObservingTips(),
           ],
         );
       },
@@ -1256,6 +1258,57 @@ class _WorldMapCardState extends State<_WorldMapCard> {
             ),
             const SizedBox(height: 8),
             Text(l.lunarMapCaption, style: muted),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 观测与拍摄提示
+// ---------------------------------------------------------------------------
+
+class _ObservingTips extends StatelessWidget {
+  const _ObservingTips();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    Widget tip(IconData icon, String text, {Color? color}) => Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: color ?? cs.onSurfaceVariant),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(color: color),
+            ),
+          ),
+        ],
+      ),
+    );
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.lunarTipsTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            tip(Icons.visibility_outlined, l.lunarTipEyes),
+            tip(Icons.photo_camera_outlined, l.lunarTipPhoto),
+            tip(Icons.exposure_outlined, l.lunarTipBracket),
+            tip(Icons.wb_sunny_outlined, l.lunarTipSolar, color: cs.error),
           ],
         ),
       ),
