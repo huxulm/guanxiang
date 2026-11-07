@@ -897,4 +897,23 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String get lunarDanjonNote =>
       '月面模拟只是示意：全食时月亮有多暗、偏红还是偏橙，取决于地球大气里的云和火山灰，没法预报（天文上用丹戎等级 L0–L4 记录，L0 几乎看不见，L4 是明亮的橙红色）。';
+
+  @override
+  String get lunarMapTitle => '全球可见区域';
+
+  @override
+  String get lunarMapFull => '全程可见';
+
+  @override
+  String get lunarMapRises => '月出时已开始';
+
+  @override
+  String get lunarMapSets => '月落时未结束';
+
+  @override
+  String get lunarMapHidden => '看不到';
+
+  @override
+  String get lunarMapCaption =>
+      '按本影食（初亏到复圆）划分，半影月食按半影食始到半影食终。曲线是各接触时刻月亮正好在地平线上的地方，★ 是食甚时月亮在天顶的地方，圆点是你的观测地。按地心计算，没有计入大气折射和视差，边界附近可能差 1° 左右。';
 }

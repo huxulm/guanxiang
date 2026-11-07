@@ -25,7 +25,9 @@ const acknowledgements = '''
 
 地图：底图 © OpenStreetMap 贡献者，数据以 ODbL 许可发布。Android 上经用户同意后可改用高德地图（高德开放平台地图 SDK，© 高德软件有限公司），使用时遵守高德开放平台的服务条款和隐私权政策；中心线等坐标在国内转换为 GCJ-02 后绘制。
 
-验证：日月食结果与 NASA 五千年日月食典（Espenak & Meeus）比对，视位置与 Skyfield 比对；这些对照数据不随应用分发。
+日月食的全球地图：陆地轮廓来自 Natural Earth 1:110m（公有领域），随应用打包。
+
+验证：日月食结果和沙罗序列与 NASA 五千年日月食典（Espenak & Meeus）比对，视位置与 Skyfield 比对；这些对照数据不随应用分发。
 ''';
 
 /// 致谢的英文版。
@@ -44,7 +46,9 @@ Artificial satellites: orbital elements are CelesTrak GP data (T. S. Kelso), dow
 
 Maps: base map © OpenStreetMap contributors, data available under the ODbL. On Android, with the user's consent, AMap (AutoNavi Open Platform map SDK, © AutoNavi) can be used instead, subject to its terms of service and privacy policy; inside China, coordinates are converted to GCJ-02 before drawing.
 
-Validation: eclipses were checked against the NASA Five Millennium Canon (Espenak & Meeus) and apparent positions against Skyfield; these reference data are not distributed with the app.
+Eclipse world maps: land outlines from Natural Earth 1:110m (public domain), bundled with the app.
+
+Validation: eclipses and Saros numbers were checked against the NASA Five Millennium Canon (Espenak & Meeus) and apparent positions against Skyfield; these reference data are not distributed with the app.
 ''';
 
 /// `rust.txt` 中的一条：若干 crate 共用的一份许可证文本。

@@ -82,6 +82,8 @@ flutter:
     - assets/de440s_1900_2100.bsp
     # Rust 依赖的许可证，由 tools/licenses/gen_rust_notices.py 生成（进 Git）
     - assets/licenses/rust.txt
+    # 日月食地图的陆地轮廓（Natural Earth 1:110m），由 tools/geo/gen_land.py 生成
+    - assets/geo/land_110m.json
 
   # To add assets to your application, add an assets section, like this:
   # assets:

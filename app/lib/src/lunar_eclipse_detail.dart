@@ -9,6 +9,7 @@ import 'settings.dart';
 import 'settings_page.dart';
 import 'theme.dart';
 import 'time_format.dart';
+import 'world_map.dart';
 
 /// 月食详情页的增强部分：食相时间轴和持续时间、各食相时刻与本地可见情况、示意图。
 class LunarEclipseSections extends StatefulWidget {
@@ -105,6 +106,8 @@ class _LunarEclipseSectionsState extends State<LunarEclipseSections> {
             ),
             const SizedBox(height: 16),
             _SimulationCard(detail: d),
+            const SizedBox(height: 16),
+            _WorldMapCard(detail: d, place: place),
           ],
         );
       },
@@ -1012,4 +1015,250 @@ class _MoonFacePainter extends CustomPainter {
       old.position != position ||
       old.diagram != diagram ||
       old.accents != accents;
+}
+
+// ---------------------------------------------------------------------------
+// 全球可见区域
+// ---------------------------------------------------------------------------
+
+/// 地图上的分区。
+enum LunarZone { full, rises, sets, hidden }
+
+/// 按网格划分可见区域：月偏食、月全食按 U1、U4，半影月食按 P1、P4 时月亮的地心高度。
+/// 返回 (行数, 列数, 分区)，第 0 行是最北一行（中心纬度 90 − step/2），第 0 列中心经度 −180 + step/2。
+(int, int, List<LunarZone>) lunarVisibilityGrid(
+  List<EclipsePhase> phases, {
+  double step = 2,
+}) {
+  EclipsePhase? find(String code) =>
+      phases.where((p) => p.code == code).firstOrNull;
+  final start = find('U1') ?? find('P1') ?? phases.first;
+  final end = find('U4') ?? find('P4') ?? phases.last;
+  final rows = (180 / step).round();
+  final cols = (360 / step).round();
+  final zones = List<LunarZone>.filled(rows * cols, LunarZone.hidden);
+  for (var r = 0; r < rows; r++) {
+    final lat = 90 - (r + 0.5) * step;
+    for (var c = 0; c < cols; c++) {
+      final lon = -180 + (c + 0.5) * step;
+      final a =
+          geocentricAltitude(
+            lat,
+            lon,
+            start.sublunar.latitudeDeg,
+            start.sublunar.longitudeDeg,
+          ) >
+          0;
+      final b =
+          geocentricAltitude(
+            lat,
+            lon,
+            end.sublunar.latitudeDeg,
+            end.sublunar.longitudeDeg,
+          ) >
+          0;
+      zones[r * cols + c] = a && b
+          ? LunarZone.full
+          : b
+          ? LunarZone.rises
+          : a
+          ? LunarZone.sets
+          : LunarZone.hidden;
+    }
+  }
+  return (rows, cols, zones);
+}
+
+class _WorldMapCard extends StatefulWidget {
+  const _WorldMapCard({required this.detail, this.place});
+
+  final LunarEclipseDetail detail;
+  final Place? place;
+
+  @override
+  State<_WorldMapCard> createState() => _WorldMapCardState();
+}
+
+class _WorldMapCardState extends State<_WorldMapCard> {
+  static const _step = 2.0;
+  late (int, int, List<LunarZone>) _grid;
+
+  @override
+  void initState() {
+    super.initState();
+    _grid = lunarVisibilityGrid(widget.detail.phases, step: _step);
+  }
+
+  @override
+  void didUpdateWidget(_WorldMapCard old) {
+    super.didUpdateWidget(old);
+    if (old.detail != widget.detail) {
+      _grid = lunarVisibilityGrid(widget.detail.phases, step: _step);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    final accents = AstroAccents.of(context);
+    final d = widget.detail;
+    final max = d.phases.where((p) => p.code == 'Max').firstOrNull;
+    final center = max?.sublunar.longitudeDeg ?? 0;
+    final colors = {
+      LunarZone.full: Colors.transparent,
+      LunarZone.rises: cs.primary.withValues(alpha: 0.22),
+      LunarZone.sets: cs.tertiary.withValues(alpha: 0.26),
+      LunarZone.hidden: Colors.black.withValues(
+        alpha: theme.brightness == Brightness.dark ? 0.45 : 0.30,
+      ),
+    };
+    final label = (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11))
+        .copyWith(color: cs.onSurface, fontWeight: FontWeight.w600);
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant,
+    );
+    final place = widget.place;
+
+    void fill(Canvas canvas, MapProjection p) {
+      // 同一分区的格子并成一条路径一次画完，格子之间不会透出缝
+      final (rows, cols, zones) = _grid;
+      final cell = _step * p.k;
+      final paths = {for (final z in LunarZone.values) z: Path()};
+      for (var r = 0; r < rows; r++) {
+        final y = r * cell;
+        for (var c = 0; c < cols; c++) {
+          final z = zones[r * cols + c];
+          if (z == LunarZone.full) continue;
+          final o = p.at(90 - (r + 0.5) * _step, -180 + (c + 0.5) * _step);
+          paths[z]!.addRect(
+            Rect.fromLTWH(o.dx - cell / 2, y, cell + 0.6, cell + 0.6),
+          );
+        }
+      }
+      for (final MapEntry(key: z, value: path) in paths.entries) {
+        if (z == LunarZone.full) continue;
+        canvas.drawPath(
+          path,
+          Paint()
+            ..color = colors[z]!
+            ..isAntiAlias = false,
+        );
+      }
+    }
+
+    void marks(Canvas canvas, MapProjection p) {
+      final line = Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.2
+        ..color = cs.onSurface.withValues(alpha: 0.75);
+      var n = 0;
+      for (final ph in d.phases) {
+        if (ph.code == 'Max') continue;
+        final pts = horizonCircle(
+          ph.sublunar.latitudeDeg,
+          ph.sublunar.longitudeDeg,
+        );
+        final path = p.polyline(pts);
+        p.drawWrapped(canvas, (c) => c.drawPath(path, line));
+        // 标签放在曲线西侧（地下点以西 90° 那一支），纬度分三档错开，相邻曲线的标签不重叠
+        final target = const [-12.0, -32.0, -52.0][n++ % 3];
+        (double, double)? best;
+        for (final q in pts) {
+          var dl = q.$2 - ph.sublunar.longitudeDeg;
+          dl -= 360 * (dl / 360).round();
+          if (dl >= 0) continue;
+          if (best == null ||
+              (q.$1 - target).abs() < (best.$1 - target).abs()) {
+            best = q;
+          }
+        }
+        if (best == null) continue;
+        final o = p.at(best.$1, best.$2);
+        final tp = TextPainter(
+          text: TextSpan(text: ph.code, style: label),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        final box = Rect.fromCenter(
+          center: o,
+          width: tp.width + 6,
+          height: tp.height + 2,
+        );
+        canvas.drawRRect(
+          RRect.fromRectAndRadius(box, const Radius.circular(3)),
+          Paint()..color = cs.surface.withValues(alpha: 0.85),
+        );
+        tp.paint(canvas, o - Offset(tp.width / 2, tp.height / 2));
+      }
+      if (max != null) {
+        final o = p.at(max.sublunar.latitudeDeg, max.sublunar.longitudeDeg);
+        final tp = TextPainter(
+          text: TextSpan(
+            text: '★',
+            style: label.copyWith(color: accents.eclipse, fontSize: 16),
+          ),
+          textDirection: TextDirection.ltr,
+        )..layout();
+        tp.paint(canvas, o - Offset(tp.width / 2, tp.height / 2));
+      }
+      if (place != null) {
+        final o = p.at(place.lat, place.lon);
+        canvas.drawCircle(o, 4.5, Paint()..color = cs.surface);
+        canvas.drawCircle(o, 3.2, Paint()..color = cs.primary);
+      }
+    }
+
+    Widget legend(Color c, String text) => Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 14,
+          height: 14,
+          decoration: BoxDecoration(
+            color: c,
+            border: Border.all(color: cs.outline),
+            borderRadius: BorderRadius.circular(3),
+          ),
+        ),
+        const SizedBox(width: 6),
+        Text(text, style: theme.textTheme.bodySmall),
+      ],
+    );
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 14),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l.lunarMapTitle,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: WorldMap(centerLon: center, fill: fill, marks: marks),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 14,
+              runSpacing: 6,
+              children: [
+                legend(Colors.transparent, l.lunarMapFull),
+                legend(colors[LunarZone.rises]!, l.lunarMapRises),
+                legend(colors[LunarZone.sets]!, l.lunarMapSets),
+                legend(colors[LunarZone.hidden]!, l.lunarMapHidden),
+              ],
+            ),
+            const SizedBox(height: 8),
+            Text(l.lunarMapCaption, style: muted),
+          ],
+        ),
+      ),
+    );
+  }
 }

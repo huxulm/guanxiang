@@ -936,4 +936,23 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get lunarDanjonNote =>
       'The simulated Moon is only a guide: how dark and how red the Moon looks during totality depends on clouds and volcanic dust in Earth\'s atmosphere and cannot be predicted (observers rate it on the Danjon scale, from L0, nearly invisible, to L4, bright copper-orange).';
+
+  @override
+  String get lunarMapTitle => 'Where it can be seen';
+
+  @override
+  String get lunarMapFull => 'Entire eclipse';
+
+  @override
+  String get lunarMapRises => 'Moonrise during eclipse';
+
+  @override
+  String get lunarMapSets => 'Moonset during eclipse';
+
+  @override
+  String get lunarMapHidden => 'Not visible';
+
+  @override
+  String get lunarMapCaption =>
+      'Zones use the umbral phases (U1 to U4); for a penumbral eclipse, P1 to P4. Each curve marks where the Moon is on the horizon at that contact; ★ is where the Moon is overhead at greatest eclipse, and the dot is your location. Computed geocentrically without refraction or parallax, so boundaries may be off by about 1°.';
 }

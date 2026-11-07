@@ -253,5 +253,11 @@
   "lunarMoonDown": "Moon below the horizon",
   "lunarSliderLabel": "Time",
   "lunarDiagramCaption": "North up, east left (as seen in the sky). The outer circle is Earth's penumbra, the inner one the umbra. The small circles show the Moon at each contact (P1 penumbral begins, U1 partial begins, U2 total begins, U3 total ends, U4 partial ends, P4 penumbral ends); the arrow shows its motion. Drag the slider or tap a phase to see where the Moon is and how it looks at that moment.",
-  "lunarDanjonNote": "The simulated Moon is only a guide: how dark and how red the Moon looks during totality depends on clouds and volcanic dust in Earth's atmosphere and cannot be predicted (observers rate it on the Danjon scale, from L0, nearly invisible, to L4, bright copper-orange)."
+  "lunarDanjonNote": "The simulated Moon is only a guide: how dark and how red the Moon looks during totality depends on clouds and volcanic dust in Earth's atmosphere and cannot be predicted (observers rate it on the Danjon scale, from L0, nearly invisible, to L4, bright copper-orange).",
+  "lunarMapTitle": "Where it can be seen",
+  "lunarMapFull": "Entire eclipse",
+  "lunarMapRises": "Moonrise during eclipse",
+  "lunarMapSets": "Moonset during eclipse",
+  "lunarMapHidden": "Not visible",
+  "lunarMapCaption": "Zones use the umbral phases (U1 to U4); for a penumbral eclipse, P1 to P4. Each curve marks where the Moon is on the horizon at that contact; ★ is where the Moon is overhead at greatest eclipse, and the dot is your location. Computed geocentrically without refraction or parallax, so boundaries may be off by about 1°."
 }
