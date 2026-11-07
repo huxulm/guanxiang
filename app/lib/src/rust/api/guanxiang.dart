@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `finished`, `found`, `geo`, `is_cancelled`, `lat_lon`, `moon_phase_name`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `eclipse_span`, `finished`, `found`, `geo`, `is_cancelled`, `lat_lon`, `moon_phase_name`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// 支持的天体，供界面列出：label = 英文键名（传回 Rust 用），value = 显示名。
 List<Detail> bodyNames({required Lang lang}) =>
@@ -32,6 +32,28 @@ List<SatelliteInfo> parseOmm({required String json}) =>
 /// 观测太阳的安全提示，所有涉及太阳的结果都附带，卫星页也显示。
 String sunSafetyNotice({required Lang lang}) =>
     RustLib.instance.api.crateApiGuanxiangSunSafetyNotice(lang: lang);
+
+/// 月食示意图。`tt_jd` 为搜索结果里该次月食的食甚（`EventItem.tt_jd`）。
+Future<LunarEclipseDiagram> lunarEclipseDiagram({
+  required Engine engine,
+  required double ttJd,
+  required Lang lang,
+}) => RustLib.instance.api.crateApiGuanxiangLunarEclipseDiagram(
+  engine: engine,
+  ttJd: ttJd,
+  lang: lang,
+);
+
+/// 日食示意图。`tt_jd` 为搜索结果里该次日食的食甚（`EventItem.tt_jd`）。
+Future<SolarEclipseDiagram> solarEclipseDiagram({
+  required Engine engine,
+  required double ttJd,
+  required Lang lang,
+}) => RustLib.instance.api.crateApiGuanxiangSolarEclipseDiagram(
+  engine: engine,
+  ttJd: ttJd,
+  lang: lang,
+);
 
 /// 某地在 `[start_utc, start_utc + hours]` 内的日月出没、晨昏，以及开始时刻的月相。
 ///
@@ -122,6 +144,39 @@ class Detail {
           value == other.value;
 }
 
+/// 示意图上的一点。月食图单位为度（月心相对地影中心，x 向东、y 向北）；
+/// 日食图单位为地球赤道半径（影轴在基本面上，x 向东、y 向北）。
+class DiagramPoint {
+  final double x;
+  final double y;
+
+  /// UTC，如 "2025-09-07 18:11:48"
+  final String utc;
+
+  /// 接触点名称（P1、U1、U2、U3、U4、P4、食甚），轨迹点为空
+  final String label;
+
+  const DiagramPoint({
+    required this.x,
+    required this.y,
+    required this.utc,
+    required this.label,
+  });
+
+  @override
+  int get hashCode => x.hashCode ^ y.hashCode ^ utc.hashCode ^ label.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DiagramPoint &&
+          runtimeType == other.runtimeType &&
+          x == other.x &&
+          y == other.y &&
+          utc == other.utc &&
+          label == other.label;
+}
+
 /// 一个事件，已整理成界面显示用的文字。
 class EventItem {
   final EventKind kind;
@@ -200,6 +255,47 @@ class GeoPoint {
 
 /// 显示语言。
 enum Lang { zh, en }
+
+/// 月食示意图（NASA 星表的月食图）。
+class LunarEclipseDiagram {
+  /// 食甚时的半影、本影半径和月球视半径（度）
+  final double penumbraDeg;
+  final double umbraDeg;
+  final double moonSemidiameterDeg;
+
+  /// 月心轨迹（半影食始前 30 分钟到半影食终后 30 分钟，每 5 分钟）
+  final List<DiagramPoint> path;
+
+  /// 食甚和各接触点
+  final List<DiagramPoint> marks;
+
+  const LunarEclipseDiagram({
+    required this.penumbraDeg,
+    required this.umbraDeg,
+    required this.moonSemidiameterDeg,
+    required this.path,
+    required this.marks,
+  });
+
+  @override
+  int get hashCode =>
+      penumbraDeg.hashCode ^
+      umbraDeg.hashCode ^
+      moonSemidiameterDeg.hashCode ^
+      path.hashCode ^
+      marks.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LunarEclipseDiagram &&
+          runtimeType == other.runtimeType &&
+          penumbraDeg == other.penumbraDeg &&
+          umbraDeg == other.umbraDeg &&
+          moonSemidiameterDeg == other.moonSemidiameterDeg &&
+          path == other.path &&
+          marks == other.marks;
+}
 
 /// 月相。
 class MoonInfo {
@@ -545,6 +641,47 @@ enum SkyKind {
   astronomicalDusk,
   moonrise,
   moonset,
+}
+
+/// 日食示意图：从太阳方向看地球，影轴扫过的轨迹。
+class SolarEclipseDiagram {
+  /// 影轴轨迹（每 5 分钟）
+  final List<DiagramPoint> track;
+  final DiagramPoint greatest;
+
+  /// 食甚时半影、本影半径（地球半径）；本影为负表示全食
+  final double penumbraRadius;
+  final double umbraRadius;
+
+  /// 影轴赤纬（度），决定图上地轴和赤道的倾斜
+  final double axisDeclinationDeg;
+
+  const SolarEclipseDiagram({
+    required this.track,
+    required this.greatest,
+    required this.penumbraRadius,
+    required this.umbraRadius,
+    required this.axisDeclinationDeg,
+  });
+
+  @override
+  int get hashCode =>
+      track.hashCode ^
+      greatest.hashCode ^
+      penumbraRadius.hashCode ^
+      umbraRadius.hashCode ^
+      axisDeclinationDeg.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SolarEclipseDiagram &&
+          runtimeType == other.runtimeType &&
+          track == other.track &&
+          greatest == other.greatest &&
+          penumbraRadius == other.penumbraRadius &&
+          umbraRadius == other.umbraRadius &&
+          axisDeclinationDeg == other.axisDeclinationDeg;
 }
 
 /// 看板“今晚”卡片的数据。

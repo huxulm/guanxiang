@@ -410,3 +410,67 @@ pub fn normalize_longitude_deg(lon: f64) -> f64 {
     let x = lon.rem_euclid(360.0);
     if x > 180.0 { x - 360.0 } else { x }
 }
+
+/// 基本面上的一点（地球赤道半径）：x 向东、y 向北。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct PlanePoint {
+    pub time: Time,
+    pub x: f64,
+    pub y: f64,
+}
+
+/// 画日食示意图用的数据：从太阳方向看地球，影轴在基本面上扫过的轨迹（NASA 星表的日食图）。
+#[derive(Debug, Clone, PartialEq)]
+pub struct SolarDiagram {
+    /// 半影接触地球前后的影轴轨迹
+    pub track: Vec<PlanePoint>,
+    pub greatest: PlanePoint,
+    /// 食甚时半影、本影在基本面上的半径（地球半径）；l2 < 0 为全食
+    pub l1: f64,
+    pub l2: f64,
+    /// 影轴赤纬（弧度），决定图上地轴和赤道的倾斜
+    pub d: f64,
+}
+
+impl SolarEclipse {
+    /// 日食示意图数据，轨迹每隔 `step_s` 秒一个点，覆盖半影与地球相交的整段时间（前后各多一个点）。
+    pub fn diagram(&self, eph: &dyn Ephemeris, step_s: f64) -> Result<SolarDiagram> {
+        let rot = &self.elements_rot;
+        let tg = self.greatest.tt_seconds();
+        let eg = elements(eph, tg, rot)?;
+        let point = |e: &BesselianElements, tt: f64| PlanePoint {
+            time: Time::from_tt_seconds(tt),
+            x: e.x,
+            y: e.y,
+        };
+        // 半影圆与地球圆面相交：影轴离地心 < 1 + l1
+        let touches = |e: &BesselianElements| (e.x * e.x + e.y * e.y).sqrt() < 1.0 + e.l1;
+        let mut track = vec![point(&eg, tg)];
+        for dir in [-1.0, 1.0] {
+            let mut side = Vec::new();
+            let mut tt = tg;
+            loop {
+                tt += dir * step_s;
+                let e = elements(eph, tt, rot)?;
+                side.push(point(&e, tt));
+                if !touches(&e) || (tt - tg).abs() > 0.3 * DAY {
+                    break;
+                }
+            }
+            if dir < 0.0 {
+                side.reverse();
+                side.extend(track);
+                track = side;
+            } else {
+                track.extend(side);
+            }
+        }
+        Ok(SolarDiagram {
+            track,
+            greatest: point(&eg, tg),
+            l1: eg.l1,
+            l2: eg.l2,
+            d: eg.d,
+        })
+    }
+}

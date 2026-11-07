@@ -97,6 +97,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Detail dco_decode_detail(dynamic raw);
 
   @protected
+  DiagramPoint dco_decode_diagram_point(dynamic raw);
+
+  @protected
   EventItem dco_decode_event_item(dynamic raw);
 
   @protected
@@ -118,6 +121,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Detail> dco_decode_list_detail(dynamic raw);
 
   @protected
+  List<DiagramPoint> dco_decode_list_diagram_point(dynamic raw);
+
+  @protected
   List<GeoPoint> dco_decode_list_geo_point(dynamic raw);
 
   @protected
@@ -137,6 +143,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<SkyEventItem> dco_decode_list_sky_event_item(dynamic raw);
+
+  @protected
+  LunarEclipseDiagram dco_decode_lunar_eclipse_diagram(dynamic raw);
 
   @protected
   MoonInfo dco_decode_moon_info(dynamic raw);
@@ -173,6 +182,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SkyKind dco_decode_sky_kind(dynamic raw);
+
+  @protected
+  SolarEclipseDiagram dco_decode_solar_eclipse_diagram(dynamic raw);
 
   @protected
   Tonight dco_decode_tonight(dynamic raw);
@@ -265,6 +277,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Detail sse_decode_detail(SseDeserializer deserializer);
 
   @protected
+  DiagramPoint sse_decode_diagram_point(SseDeserializer deserializer);
+
+  @protected
   EventItem sse_decode_event_item(SseDeserializer deserializer);
 
   @protected
@@ -284,6 +299,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<Detail> sse_decode_list_detail(SseDeserializer deserializer);
+
+  @protected
+  List<DiagramPoint> sse_decode_list_diagram_point(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<GeoPoint> sse_decode_list_geo_point(SseDeserializer deserializer);
@@ -309,6 +329,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<SkyEventItem> sse_decode_list_sky_event_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  LunarEclipseDiagram sse_decode_lunar_eclipse_diagram(
     SseDeserializer deserializer,
   );
 
@@ -351,6 +376,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   SkyKind sse_decode_sky_kind(SseDeserializer deserializer);
+
+  @protected
+  SolarEclipseDiagram sse_decode_solar_eclipse_diagram(
+    SseDeserializer deserializer,
+  );
 
   @protected
   Tonight sse_decode_tonight(SseDeserializer deserializer);
@@ -458,6 +488,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_detail(Detail self, SseSerializer serializer);
 
   @protected
+  void sse_encode_diagram_point(DiagramPoint self, SseSerializer serializer);
+
+  @protected
   void sse_encode_event_item(EventItem self, SseSerializer serializer);
 
   @protected
@@ -477,6 +510,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_detail(List<Detail> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_list_diagram_point(
+    List<DiagramPoint> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_geo_point(List<GeoPoint> self, SseSerializer serializer);
@@ -511,6 +550,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_list_sky_event_item(
     List<SkyEventItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_lunar_eclipse_diagram(
+    LunarEclipseDiagram self,
     SseSerializer serializer,
   );
 
@@ -558,6 +603,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_sky_kind(SkyKind self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_solar_eclipse_diagram(
+    SolarEclipseDiagram self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_tonight(Tonight self, SseSerializer serializer);

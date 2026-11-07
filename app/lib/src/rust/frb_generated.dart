@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1487924222;
+  int get rustContentHash => -264907309;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -93,6 +93,12 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiGuanxiangInitApp();
 
+  Future<LunarEclipseDiagram> crateApiGuanxiangLunarEclipseDiagram({
+    required Engine engine,
+    required double ttJd,
+    required Lang lang,
+  });
+
   List<SatelliteInfo> crateApiGuanxiangParseOmm({required String json});
 
   Future<List<SatTransitItem>> crateApiGuanxiangSatelliteTransits({
@@ -113,6 +119,12 @@ abstract class RustLibApi extends BaseApi {
     required Engine engine,
     required SearchRequest request,
     required CancelToken token,
+  });
+
+  Future<SolarEclipseDiagram> crateApiGuanxiangSolarEclipseDiagram({
+    required Engine engine,
+    required double ttJd,
+    required Lang lang,
   });
 
   String crateApiGuanxiangSunSafetyNotice({required Lang lang});
@@ -308,13 +320,53 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
+  Future<LunarEclipseDiagram> crateApiGuanxiangLunarEclipseDiagram({
+    required Engine engine,
+    required double ttJd,
+    required Lang lang,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEngine(
+            engine,
+            serializer,
+          );
+          sse_encode_f_64(ttJd, serializer);
+          sse_encode_lang(lang, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_lunar_eclipse_diagram,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangLunarEclipseDiagramConstMeta,
+        argValues: [engine, ttJd, lang],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangLunarEclipseDiagramConstMeta =>
+      const TaskConstMeta(
+        debugName: "lunar_eclipse_diagram",
+        argNames: ["engine", "ttJd", "lang"],
+      );
+
+  @override
   List<SatelliteInfo> crateApiGuanxiangParseOmm({required String json}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(json, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_satellite_info,
@@ -365,7 +417,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 9,
             port: port_,
           );
         },
@@ -435,7 +487,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 9,
+              funcId: 10,
               port: port_,
             );
           },
@@ -458,13 +510,53 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
+  Future<SolarEclipseDiagram> crateApiGuanxiangSolarEclipseDiagram({
+    required Engine engine,
+    required double ttJd,
+    required Lang lang,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEngine(
+            engine,
+            serializer,
+          );
+          sse_encode_f_64(ttJd, serializer);
+          sse_encode_lang(lang, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 11,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_solar_eclipse_diagram,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangSolarEclipseDiagramConstMeta,
+        argValues: [engine, ttJd, lang],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangSolarEclipseDiagramConstMeta =>
+      const TaskConstMeta(
+        debugName: "solar_eclipse_diagram",
+        argNames: ["engine", "ttJd", "lang"],
+      );
+
+  @override
   String crateApiGuanxiangSunSafetyNotice({required Lang lang}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_lang(lang, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -507,7 +599,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 13,
             port: port_,
           );
         },
@@ -676,6 +768,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DiagramPoint dco_decode_diagram_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return DiagramPoint(
+      x: dco_decode_f_64(arr[0]),
+      y: dco_decode_f_64(arr[1]),
+      utc: dco_decode_String(arr[2]),
+      label: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
   EventItem dco_decode_event_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -735,6 +841,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<DiagramPoint> dco_decode_list_diagram_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_diagram_point).toList();
+  }
+
+  @protected
   List<GeoPoint> dco_decode_list_geo_point(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_geo_point).toList();
@@ -774,6 +886,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<SkyEventItem> dco_decode_list_sky_event_item(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_sky_event_item).toList();
+  }
+
+  @protected
+  LunarEclipseDiagram dco_decode_lunar_eclipse_diagram(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return LunarEclipseDiagram(
+      penumbraDeg: dco_decode_f_64(arr[0]),
+      umbraDeg: dco_decode_f_64(arr[1]),
+      moonSemidiameterDeg: dco_decode_f_64(arr[2]),
+      path: dco_decode_list_diagram_point(arr[3]),
+      marks: dco_decode_list_diagram_point(arr[4]),
+    );
   }
 
   @protected
@@ -921,6 +1048,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SkyKind dco_decode_sky_kind(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return SkyKind.values[raw as int];
+  }
+
+  @protected
+  SolarEclipseDiagram dco_decode_solar_eclipse_diagram(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return SolarEclipseDiagram(
+      track: dco_decode_list_diagram_point(arr[0]),
+      greatest: dco_decode_diagram_point(arr[1]),
+      penumbraRadius: dco_decode_f_64(arr[2]),
+      umbraRadius: dco_decode_f_64(arr[3]),
+      axisDeclinationDeg: dco_decode_f_64(arr[4]),
+    );
   }
 
   @protected
@@ -1109,6 +1251,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  DiagramPoint sse_decode_diagram_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_x = sse_decode_f_64(deserializer);
+    var var_y = sse_decode_f_64(deserializer);
+    var var_utc = sse_decode_String(deserializer);
+    var var_label = sse_decode_String(deserializer);
+    return DiagramPoint(x: var_x, y: var_y, utc: var_utc, label: var_label);
+  }
+
+  @protected
   EventItem sse_decode_event_item(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_kind = sse_decode_event_kind(deserializer);
@@ -1174,6 +1326,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <Detail>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_detail(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<DiagramPoint> sse_decode_list_diagram_point(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DiagramPoint>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_diagram_point(deserializer));
     }
     return ans_;
   }
@@ -1251,6 +1417,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_sky_event_item(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  LunarEclipseDiagram sse_decode_lunar_eclipse_diagram(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_penumbraDeg = sse_decode_f_64(deserializer);
+    var var_umbraDeg = sse_decode_f_64(deserializer);
+    var var_moonSemidiameterDeg = sse_decode_f_64(deserializer);
+    var var_path = sse_decode_list_diagram_point(deserializer);
+    var var_marks = sse_decode_list_diagram_point(deserializer);
+    return LunarEclipseDiagram(
+      penumbraDeg: var_penumbraDeg,
+      umbraDeg: var_umbraDeg,
+      moonSemidiameterDeg: var_moonSemidiameterDeg,
+      path: var_path,
+      marks: var_marks,
+    );
   }
 
   @protected
@@ -1446,6 +1631,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return SkyKind.values[inner];
+  }
+
+  @protected
+  SolarEclipseDiagram sse_decode_solar_eclipse_diagram(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_track = sse_decode_list_diagram_point(deserializer);
+    var var_greatest = sse_decode_diagram_point(deserializer);
+    var var_penumbraRadius = sse_decode_f_64(deserializer);
+    var var_umbraRadius = sse_decode_f_64(deserializer);
+    var var_axisDeclinationDeg = sse_decode_f_64(deserializer);
+    return SolarEclipseDiagram(
+      track: var_track,
+      greatest: var_greatest,
+      penumbraRadius: var_penumbraRadius,
+      umbraRadius: var_umbraRadius,
+      axisDeclinationDeg: var_axisDeclinationDeg,
+    );
   }
 
   @protected
@@ -1654,6 +1858,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_diagram_point(DiagramPoint self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.x, serializer);
+    sse_encode_f_64(self.y, serializer);
+    sse_encode_String(self.utc, serializer);
+    sse_encode_String(self.label, serializer);
+  }
+
+  @protected
   void sse_encode_event_item(EventItem self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_event_kind(self.kind, serializer);
@@ -1702,6 +1915,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_detail(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_diagram_point(
+    List<DiagramPoint> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_diagram_point(item, serializer);
     }
   }
 
@@ -1783,6 +2008,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_sky_event_item(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_lunar_eclipse_diagram(
+    LunarEclipseDiagram self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.penumbraDeg, serializer);
+    sse_encode_f_64(self.umbraDeg, serializer);
+    sse_encode_f_64(self.moonSemidiameterDeg, serializer);
+    sse_encode_list_diagram_point(self.path, serializer);
+    sse_encode_list_diagram_point(self.marks, serializer);
   }
 
   @protected
@@ -1920,6 +2158,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   void sse_encode_sky_kind(SkyKind self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_solar_eclipse_diagram(
+    SolarEclipseDiagram self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_diagram_point(self.track, serializer);
+    sse_encode_diagram_point(self.greatest, serializer);
+    sse_encode_f_64(self.penumbraRadius, serializer);
+    sse_encode_f_64(self.umbraRadius, serializer);
+    sse_encode_f_64(self.axisDeclinationDeg, serializer);
   }
 
   @protected

@@ -238,3 +238,74 @@ fn local_circumstances_at_greatest_point_match_nasa() {
     assert!(table.max("持续时间差 s") <= 2.0);
     assert!(table.max("食分差") <= 0.001);
 }
+
+/// 示意图数据的几何自洽：月心到影轴的距离在食甚等于搜索得到的 γ 角距，
+/// 在各接触时刻等于影子半径 ± 月球半径；日食影轴在食甚离地心 |γ|，轨迹两端在半影之外。
+#[test]
+fn eclipse_diagrams_are_consistent() {
+    let Some(eph) = ephemeris() else { return };
+    // 2025-09-07 月全食、2027-08-02 日全食
+    let span = Span::new(Time::from_tt_jd(2_460_920.5), Time::from_tt_jd(2_461_660.5)).unwrap();
+
+    let lunar = lunar_eclipse::search(&eph, span, ShadowModel::Danjon).unwrap();
+    let total = lunar
+        .iter()
+        .find(|e| e.kind == LunarEclipseKind::Total)
+        .expect("2025-09-07 月全食");
+    let d = lunar_eclipse::diagram(&eph, total, ShadowModel::Danjon, 300.0).unwrap();
+    let r = |p: &lunar_eclipse::ShadowPoint| p.x_deg.hypot(p.y_deg);
+    // γ（地球半径）→ 角距：只检查量级一致，精确值由接触点检查
+    assert!(
+        r(&d.greatest) < d.umbra_deg - d.moon_semidiameter_deg,
+        "全食时月球整个在本影里"
+    );
+    let expect = [
+        d.penumbra_deg + d.moon_semidiameter_deg,
+        d.umbra_deg + d.moon_semidiameter_deg,
+        d.umbra_deg - d.moon_semidiameter_deg,
+        d.umbra_deg - d.moon_semidiameter_deg,
+        d.umbra_deg + d.moon_semidiameter_deg,
+        d.penumbra_deg + d.moon_semidiameter_deg,
+    ];
+    for (i, c) in d.contacts.iter().enumerate() {
+        let c = c.as_ref().unwrap();
+        // 影子半径在几小时内变化很小，用食甚时的值，容差 0.002°（约 7″）
+        assert!(
+            (r(c) - expect[i]).abs() < 0.002,
+            "接触 {i}：{:.4}° vs {:.4}°",
+            r(c),
+            expect[i]
+        );
+    }
+    // 月球自西向东穿过地影：x 递增
+    assert!(d.path.first().unwrap().x_deg < d.path.last().unwrap().x_deg);
+    println!(
+        "月全食示意图：{} 个点，半影 {:.3}°，本影 {:.3}°，月球 {:.3}°",
+        d.path.len(),
+        d.penumbra_deg,
+        d.umbra_deg,
+        d.moon_semidiameter_deg
+    );
+
+    let solar = solar_eclipse::search(&eph, span).unwrap();
+    let e = solar
+        .iter()
+        .find(|e| e.kind == SolarEclipseKind::Total)
+        .expect("2027-08-02 日全食");
+    let s = e.diagram(&eph, 300.0).unwrap();
+    let g = s.greatest.x.hypot(s.greatest.y);
+    assert!((g - e.gamma.abs()).abs() < 1e-3, "{g} vs {}", e.gamma);
+    assert!(s.l2 < 0.0, "全食的本影半径为负");
+    for p in [s.track.first().unwrap(), s.track.last().unwrap()] {
+        assert!(p.x.hypot(p.y) > 1.0 + s.l1 - 0.02);
+    }
+    // 影子自西向东扫过：x 递增
+    assert!(s.track.first().unwrap().x < s.track.last().unwrap().x);
+    println!(
+        "日全食示意图：{} 个点，γ {:.4}，l1 {:.4}，l2 {:.4}",
+        s.track.len(),
+        e.gamma,
+        s.l1,
+        s.l2
+    );
+}

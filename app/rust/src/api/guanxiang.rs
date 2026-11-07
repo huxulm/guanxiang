@@ -963,6 +963,125 @@ pub fn sun_safety_notice(lang: Lang) -> String {
     .to_string()
 }
 
+/// 示意图上的一点。月食图单位为度（月心相对地影中心，x 向东、y 向北）；
+/// 日食图单位为地球赤道半径（影轴在基本面上，x 向东、y 向北）。
+#[derive(Debug, Clone)]
+pub struct DiagramPoint {
+    pub x: f64,
+    pub y: f64,
+    /// UTC，如 "2025-09-07 18:11:48"
+    pub utc: String,
+    /// 接触点名称（P1、U1、U2、U3、U4、P4、食甚），轨迹点为空
+    pub label: String,
+}
+
+/// 月食示意图（NASA 星表的月食图）。
+#[derive(Debug, Clone)]
+pub struct LunarEclipseDiagram {
+    /// 食甚时的半影、本影半径和月球视半径（度）
+    pub penumbra_deg: f64,
+    pub umbra_deg: f64,
+    pub moon_semidiameter_deg: f64,
+    /// 月心轨迹（半影食始前 30 分钟到半影食终后 30 分钟，每 5 分钟）
+    pub path: Vec<DiagramPoint>,
+    /// 食甚和各接触点
+    pub marks: Vec<DiagramPoint>,
+}
+
+/// 日食示意图：从太阳方向看地球，影轴扫过的轨迹。
+#[derive(Debug, Clone)]
+pub struct SolarEclipseDiagram {
+    /// 影轴轨迹（每 5 分钟）
+    pub track: Vec<DiagramPoint>,
+    pub greatest: DiagramPoint,
+    /// 食甚时半影、本影半径（地球半径）；本影为负表示全食
+    pub penumbra_radius: f64,
+    pub umbra_radius: f64,
+    /// 影轴赤纬（度），决定图上地轴和赤道的倾斜
+    pub axis_declination_deg: f64,
+}
+
+/// 示意图轨迹的取样间隔（秒）
+const DIAGRAM_STEP_S: f64 = 300.0;
+
+/// 找回 `tt_jd` 那次日食或月食所在的一天。
+fn eclipse_span(tt_jd: f64) -> anyhow::Result<Span> {
+    Ok(Span::new(
+        Time::from_tt_jd(tt_jd - 1.0),
+        Time::from_tt_jd(tt_jd + 1.0),
+    )?)
+}
+
+/// 月食示意图。`tt_jd` 为搜索结果里该次月食的食甚（`EventItem.tt_jd`）。
+pub fn lunar_eclipse_diagram(
+    engine: &Engine,
+    tt_jd: f64,
+    lang: Lang,
+) -> anyhow::Result<LunarEclipseDiagram> {
+    let eph = &engine.eph;
+    let e = lunar_eclipse::search(eph, eclipse_span(tt_jd)?, ShadowModel::Danjon)?
+        .into_iter()
+        .min_by(|a, b| {
+            (a.greatest.tt_jd() - tt_jd)
+                .abs()
+                .total_cmp(&(b.greatest.tt_jd() - tt_jd).abs())
+        })
+        .ok_or_else(|| anyhow::anyhow!("{}", lang.s("找不到这次月食", "Eclipse not found")))?;
+    let d = lunar_eclipse::diagram(eph, &e, ShadowModel::Danjon, DIAGRAM_STEP_S)?;
+    let point = |p: &lunar_eclipse::ShadowPoint, label: &str| DiagramPoint {
+        x: p.x_deg,
+        y: p.y_deg,
+        utc: utc(&p.time),
+        label: label.to_string(),
+    };
+    let names = ["P1", "U1", "U2", "U3", "U4", "P4"];
+    let mut marks: Vec<DiagramPoint> = d
+        .contacts
+        .iter()
+        .zip(names)
+        .filter_map(|(c, n)| c.as_ref().map(|c| point(c, n)))
+        .collect();
+    marks.push(point(&d.greatest, lang.s("食甚", "Max")));
+    Ok(LunarEclipseDiagram {
+        penumbra_deg: d.penumbra_deg,
+        umbra_deg: d.umbra_deg,
+        moon_semidiameter_deg: d.moon_semidiameter_deg,
+        path: d.path.iter().map(|p| point(p, "")).collect(),
+        marks,
+    })
+}
+
+/// 日食示意图。`tt_jd` 为搜索结果里该次日食的食甚（`EventItem.tt_jd`）。
+pub fn solar_eclipse_diagram(
+    engine: &Engine,
+    tt_jd: f64,
+    lang: Lang,
+) -> anyhow::Result<SolarEclipseDiagram> {
+    let eph = &engine.eph;
+    let e = solar_eclipse::search(eph, eclipse_span(tt_jd)?)?
+        .into_iter()
+        .min_by(|a, b| {
+            (a.greatest.tt_jd() - tt_jd)
+                .abs()
+                .total_cmp(&(b.greatest.tt_jd() - tt_jd).abs())
+        })
+        .ok_or_else(|| anyhow::anyhow!("{}", lang.s("找不到这次日食", "Eclipse not found")))?;
+    let d = e.diagram(eph, DIAGRAM_STEP_S)?;
+    let point = |p: &solar_eclipse::PlanePoint, label: &str| DiagramPoint {
+        x: p.x,
+        y: p.y,
+        utc: utc(&p.time),
+        label: label.to_string(),
+    };
+    Ok(SolarEclipseDiagram {
+        track: d.track.iter().map(|p| point(p, "")).collect(),
+        greatest: point(&d.greatest, lang.s("食甚", "Max")),
+        penumbra_radius: d.l1,
+        umbra_radius: d.l2,
+        axis_declination_deg: d.d.to_degrees(),
+    })
+}
+
 /// 出没、晨昏事件的类型（与 core 的 `SkyEventKind` 一一对应）。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SkyKind {
@@ -1407,6 +1526,25 @@ mod tests {
             return None;
         }
         Some(Engine::from_bytes(std::fs::read(path).unwrap()).unwrap())
+    }
+
+    /// 按食甚的 TT 儒略日找回日月食并给出示意图数据
+    #[test]
+    fn eclipse_diagrams_by_tt_jd() {
+        let Some(engine) = test_engine() else { return };
+        // 2025-09-07 月全食，食甚约 18:11 UTC
+        let l = lunar_eclipse_diagram(&engine, 2_460_926.259, Lang::Zh).unwrap();
+        let labels: Vec<&str> = l.marks.iter().map(|m| m.label.as_str()).collect();
+        assert_eq!(labels, ["P1", "U1", "U2", "U3", "U4", "P4", "食甚"]);
+        assert!(l.marks.last().unwrap().utc.starts_with("2025-09-07 18:1"));
+        // 2027-08-02 日全食，食甚约 10:07 UTC
+        let s = solar_eclipse_diagram(&engine, 2_461_619.923, Lang::En).unwrap();
+        assert!(
+            s.greatest.utc.starts_with("2027-08-02 10:0"),
+            "{}",
+            s.greatest.utc
+        );
+        assert!(s.umbra_radius < 0.0 && s.track.len() > 20);
     }
 
     #[test]

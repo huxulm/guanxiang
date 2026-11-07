@@ -185,3 +185,74 @@ fn refine(eph: &dyn Ephemeris, tc: f64, model: ShadowModel) -> Result<Option<Lun
         contacts,
     }))
 }
+
+/// 月心相对地影中心的位置（度，切平面投影）：x 向东（赤经增加方向）、y 向北。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ShadowPoint {
+    pub time: Time,
+    pub x_deg: f64,
+    pub y_deg: f64,
+}
+
+/// 画月食示意图用的数据（NASA 星表的月食图）。
+#[derive(Debug, Clone, PartialEq)]
+pub struct LunarDiagram {
+    /// 食甚时的半影、本影半径和月球视半径（度）
+    pub penumbra_deg: f64,
+    pub umbra_deg: f64,
+    pub moon_semidiameter_deg: f64,
+    /// 半影食始前 30 分钟到半影食终后 30 分钟的月心轨迹
+    pub path: Vec<ShadowPoint>,
+    /// 食甚时的月心位置
+    pub greatest: ShadowPoint,
+    /// 各接触时刻的月心位置，顺序与 [`LunarEclipse::contacts`] 相同
+    pub contacts: [Option<ShadowPoint>; 6],
+}
+
+fn shadow_point(eph: &dyn Ephemeris, tt: f64) -> Result<ShadowPoint> {
+    let t = Time::from_tt_seconds(tt);
+    let (moon, sun) = astrometry::geocentric_direction_pair(eph, Body::Moon, Body::Sun, &t)?;
+    let axis: Vec3 = -sun.apparent;
+    let (a, d) = (axis.y.atan2(axis.x), axis.z.asin());
+    let east = Vec3::new(-a.sin(), a.cos(), 0.0);
+    let north = Vec3::new(-d.sin() * a.cos(), -d.sin() * a.sin(), d.cos());
+    let m = moon.apparent;
+    let w = m.dot(axis);
+    Ok(ShadowPoint {
+        time: t,
+        x_deg: (m.dot(east) / w).atan().to_degrees(),
+        y_deg: (m.dot(north) / w).atan().to_degrees(),
+    })
+}
+
+/// 月食示意图数据，轨迹每隔 `step_s` 秒一个点。
+pub fn diagram(
+    eph: &dyn Ephemeris,
+    eclipse: &LunarEclipse,
+    model: ShadowModel,
+    step_s: f64,
+) -> Result<LunarDiagram> {
+    let tg = eclipse.greatest.tt_seconds();
+    let g = geometry(eph, tg, model)?;
+    let p1 = eclipse.contacts[0].map_or(tg - 0.15 * DAY, |t| t.tt_seconds());
+    let p4 = eclipse.contacts[5].map_or(tg + 0.15 * DAY, |t| t.tt_seconds());
+    let (t0, t1) = (p1 - 1800.0, p4 + 1800.0);
+    let n = ((t1 - t0) / step_s).ceil() as usize;
+    let path = (0..=n)
+        .map(|i| shadow_point(eph, (t0 + i as f64 * step_s).min(t1)))
+        .collect::<Result<Vec<_>>>()?;
+    let mut contacts = [None; 6];
+    for (c, t) in contacts.iter_mut().zip(eclipse.contacts) {
+        if let Some(t) = t {
+            *c = Some(shadow_point(eph, t.tt_seconds())?);
+        }
+    }
+    Ok(LunarDiagram {
+        penumbra_deg: g.penumbra.to_degrees(),
+        umbra_deg: g.umbra.to_degrees(),
+        moon_semidiameter_deg: g.moon_semidiameter.to_degrees(),
+        path,
+        greatest: shadow_point(eph, tg)?,
+        contacts,
+    })
+}
