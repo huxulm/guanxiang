@@ -10,7 +10,8 @@
 
 输出到 crates/guanxiang-core/tests/fixtures/nasa/：
 - solar_2001_2100.csv：date, td（食甚，TD）, delta_t, type（如 T、A、H、P、A-、T+）, gamma, magnitude,
-  食甚点 lat_deg、lon_deg（NASA 取整到 1°）、sun_alt_deg、width_km、duration_s（中心食在食甚点的持续时间）
+  食甚点 lat_deg、lon_deg（NASA 取整到 1°）、sun_alt_deg、width_km、duration_s（中心食在食甚点的持续时间）、
+  luna（朔望月序号）、saros（沙罗序列号）
 - lunar_2001_2100.csv：date, td（食甚，TD）, delta_t, type（N、P、T 及后缀）, gamma, pen_mag, um_mag,
   luna（NASA 的朔望月序号，2000-01-06 的朔为 0）、saros（沙罗序列号）、
   pen_dur_min、par_dur_min、total_dur_min（半影食、本影食、全食的持续时间，分钟；没有的留空）
@@ -49,7 +50,8 @@ def main() -> None:
     with open(os.path.join(OUT, "solar_2001_2100.csv"), "w", newline="\n", encoding="utf-8") as f:
         f.write("# NASA Five Millennium Canon of Solar Eclipses, 2001-2100 (eclipse.gsfc.nasa.gov)\n")
         w = csv.writer(f, lineterminator="\n")
-        w.writerow(["date", "td", "delta_t", "type", "gamma", "magnitude", "lat_deg", "lon_deg", "sun_alt_deg", "width_km", "duration_s"])
+        w.writerow(["date", "td", "delta_t", "type", "gamma", "magnitude", "lat_deg", "lon_deg", "sun_alt_deg", "width_km", "duration_s",
+                    "luna", "saros"])
         n = 0
         for m in lines(se_path):
             date = f"{m[2]}-{MONTHS[m[3]]:02d}-{m[4]}"
@@ -65,7 +67,7 @@ def main() -> None:
                 dm = re.fullmatch(r"(\d+)m(\d+)s", tok)
                 if dm:
                     dur = str(int(dm[1]) * 60 + int(dm[2]))
-            w.writerow([date, m[5], m[6], m[9], gamma, mag, lat, lon, alt, width, dur])
+            w.writerow([date, m[5], m[6], m[9], gamma, mag, lat, lon, alt, width, dur, m[7], m[8]])
             n += 1
         print(f"solar: {n}", file=sys.stderr)
 

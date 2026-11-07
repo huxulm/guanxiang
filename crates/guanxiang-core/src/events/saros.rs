@@ -1,21 +1,21 @@
 //! 沙罗序列。
 //!
-//! 同一沙罗序列里相邻两次月食相隔 223 个朔望月（约 18 年 11 天）。序列表由
-//! `tools/nasa/gen_saros_table.py` 从 NASA 月食沙罗目录生成，只收 1899–2101 年间有月食的序列，
+//! 同一沙罗序列里相邻两次日食（或月食）相隔 223 个朔望月（约 18 年 11 天）。序列表由
+//! `tools/nasa/gen_saros_table.py` 从 NASA 日月食沙罗目录生成，只收 1899–2101 年间有食的序列，
 //! 与 App 打包的星历范围一致；超出范围时返回 None。
 
 mod table;
 
 use crate::time::Time;
 
-/// 一次月食在沙罗序列中的位置。
+/// 一次日月食在沙罗序列中的位置。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Saros {
     /// 序列号（NASA 编号）
     pub series: u16,
     /// 第几次（从 1 开始）
     pub member: u16,
-    /// 序列中的月食总数
+    /// 序列中的日食（或月食）总数
     pub count: u16,
 }
 
@@ -31,10 +31,23 @@ pub fn full_moon_lunation(t: &Time) -> i32 {
     ((t.tt_jd() - JDE0) / SYNODIC_DAYS - 0.5).round() as i32
 }
 
+/// 朔所在的朔望月序号（NASA Luna Num）。
+pub fn new_moon_lunation(t: &Time) -> i32 {
+    ((t.tt_jd() - JDE0) / SYNODIC_DAYS).round() as i32
+}
+
 /// 月食（以食甚时刻表示）所在的沙罗序列。
 pub fn lunar_saros(greatest: &Time) -> Option<Saros> {
-    let n = full_moon_lunation(greatest);
-    table::LUNAR.iter().find_map(|&(series, first, count)| {
+    find(table::LUNAR, full_moon_lunation(greatest))
+}
+
+/// 日食（以食甚时刻表示）所在的沙罗序列。
+pub fn solar_saros(greatest: &Time) -> Option<Saros> {
+    find(table::SOLAR, new_moon_lunation(greatest))
+}
+
+fn find(table: &[(u16, i32, u16)], n: i32) -> Option<Saros> {
+    table.iter().find_map(|&(series, first, count)| {
         let d = n - first;
         (d >= 0 && d % SAROS_LUNATIONS == 0 && d / SAROS_LUNATIONS < i32::from(count)).then(|| {
             Saros {
@@ -71,12 +84,29 @@ mod tests {
     }
 
     #[test]
-    fn table_has_no_overlaps() {
+    fn saros_136_member_38() {
+        // 2027-08-02 10:07:50 TD 日全食，NASA Luna Num 341
+        let t = Time::from_tt_jd(2_461_619.922_11);
+        assert_eq!(new_moon_lunation(&t), 341);
+        assert_eq!(
+            solar_saros(&t),
+            Some(Saros {
+                series: 136,
+                member: 38,
+                count: 71
+            })
+        );
+    }
+
+    #[test]
+    fn tables_have_no_overlaps() {
         // 同一个朔望月不能属于两个序列
-        let mut seen = std::collections::HashSet::new();
-        for &(_, first, count) in table::LUNAR {
-            for i in 0..i32::from(count) {
-                assert!(seen.insert(first + SAROS_LUNATIONS * i));
+        for t in [table::LUNAR, table::SOLAR] {
+            let mut seen = std::collections::HashSet::new();
+            for &(_, first, count) in t {
+                for i in 0..i32::from(count) {
+                    assert!(seen.insert(first + SAROS_LUNATIONS * i));
+                }
             }
         }
     }

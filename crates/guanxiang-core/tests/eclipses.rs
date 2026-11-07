@@ -362,3 +362,76 @@ fn lunar_saros_and_durations_match_nasa() {
         assert!(table.max(c) <= 0.5, "{c}");
     }
 }
+
+#[test]
+fn solar_saros_matches_nasa() {
+    use guanxiang_core::events::saros;
+
+    let Some(eph) = ephemeris() else { return };
+    let rows = fixture("nasa", "solar_2001_2100.csv");
+    let found = solar_eclipse::search(&eph, century21()).unwrap();
+    for r in &rows {
+        let t = tt(&r[0], &r[1]);
+        let e = found
+            .iter()
+            .find(|e| (e.greatest.tt_seconds() - t.tt_seconds()).abs() < 3.0 * 3600.0)
+            .unwrap();
+        assert_eq!(
+            saros::new_moon_lunation(&e.greatest),
+            num(&r[11]) as i32,
+            "{}",
+            r[0]
+        );
+        let s = saros::solar_saros(&e.greatest).unwrap_or_else(|| panic!("{} 没有沙罗序列", r[0]));
+        assert_eq!(f64::from(s.series), num(&r[12]), "{}", r[0]);
+    }
+}
+
+/// 全球最大食分栅格（贝塞尔根数）与本地情况（站心视位置，独立算法）对照：2027-08-02 日全食。
+#[test]
+fn magnitude_grid_matches_local_circumstances() {
+    use guanxiang_core::Observer;
+    use guanxiang_core::events::local_eclipse;
+
+    let Some(eph) = ephemeris() else { return };
+    let span = Span::new(Time::from_tt_jd(2_461_619.0), Time::from_tt_jd(2_461_621.0)).unwrap();
+    let e = &solar_eclipse::search(&eph, span).unwrap()[0];
+
+    let mut table = MaxTable::new(&["食分差"]);
+    for (name, lat, lon) in [
+        ("madrid", 40.4168, -3.7038),
+        ("london", 51.5074, -0.1278),
+        ("cairo", 30.0444, 31.2357),
+        ("athens", 37.9838, 23.7275),
+        ("nairobi", -1.2921, 36.8219),
+    ] {
+        let obs = Observer::from_degrees(lat, lon, 0.0).unwrap();
+        let local = local_eclipse::local_solar(&eph, e, &obs, None)
+            .unwrap()
+            .unwrap_or_else(|| panic!("{name} 应能看到偏食"));
+        assert_eq!(local.kind, local_eclipse::LocalSolarKind::Partial, "{name}");
+        let ours = e.max_magnitude_at(&eph, lat, lon, 20.0).unwrap();
+        println!("{name}: 栅格 {ours:.4}，本地 {:.4}", local.magnitude);
+        table.add(name, &[ours - local.magnitude]);
+    }
+    table.print("最大食分，贝塞尔根数对比站心计算（2027-08-02）");
+    assert!(table.max("食分差") <= 0.002);
+
+    // 北京看不到；中心线上的食甚点食分 > 1
+    assert_eq!(e.max_magnitude_at(&eph, 39.9, 116.4, 60.0).unwrap(), 0.0);
+    let g = e.greatest_point.unwrap();
+    assert!(
+        e.max_magnitude_at(&eph, g.latitude_deg, g.longitude_deg, 20.0)
+            .unwrap()
+            > 1.0
+    );
+
+    let started = std::time::Instant::now();
+    let grid = e.max_magnitude_grid(&eph, 2.0, 120.0).unwrap();
+    println!("2° 栅格用时 {:?}", started.elapsed());
+    assert_eq!((grid.rows, grid.cols), (90, 180));
+    assert!(grid.values.iter().all(|v| (0.0..1.2).contains(v)));
+    let lit = grid.values.iter().filter(|v| **v > 0.0).count();
+    // 偏食区约占地球表面的三分之一左右
+    assert!(lit > 2000 && lit < 9000, "{lit}");
+}

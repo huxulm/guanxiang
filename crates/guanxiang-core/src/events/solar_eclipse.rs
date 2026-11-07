@@ -474,3 +474,148 @@ impl SolarEclipse {
         })
     }
 }
+
+/// 全球最大食分栅格：每格中心的地面点在整次日食中看到的最大食分（太阳直径被遮的比例，
+/// 与 [`crate::events::local_eclipse::LocalSolarEclipse::magnitude`] 的偏食定义相同），
+/// 只计太阳在地平线以上的时刻；看不到食的格子为 0。
+#[derive(Debug, Clone, PartialEq)]
+pub struct MagnitudeGrid {
+    pub step_deg: f64,
+    pub rows: usize,
+    pub cols: usize,
+    /// 第 r 行第 c 列在 `r * cols + c`；第 0 行中心纬度 90 − step/2，第 0 列中心经度 −180 + step/2
+    pub values: Vec<f32>,
+}
+
+/// 地面点（大地纬度、经度，海拔 0）在地固系中的位置和椭球法向（地球赤道半径）。
+struct GroundSite {
+    pos: Vec3,
+    normal: Vec3,
+}
+
+impl GroundSite {
+    fn new(lat: f64, lon: f64) -> Self {
+        let (sp, cp) = lat.sin_cos();
+        let (sl, cl) = lon.sin_cos();
+        let n = 1.0 / (1.0 - e2() * sp * sp).sqrt();
+        Self {
+            pos: Vec3::new(n * cp * cl, n * cp * sl, n * (1.0 - e2()) * sp),
+            normal: Vec3::new(cp * cl, cp * sl, sp),
+        }
+    }
+}
+
+/// 某一时刻的贝塞尔根数和地固系 → 真赤道的旋转（GAST 的正余弦）。
+struct PlaneSample {
+    e: BesselianElements,
+    sin_g: f64,
+    cos_g: f64,
+}
+
+impl PlaneSample {
+    /// 地面点此刻看到的食分；太阳在地平线下或不在半影内时为 0。
+    fn magnitude(&self, site: &GroundSite) -> f64 {
+        let e = &self.e;
+        let rot = |v: Vec3| {
+            Vec3::new(
+                self.cos_g * v.x - self.sin_g * v.y,
+                self.sin_g * v.x + self.cos_g * v.y,
+                v.z,
+            )
+        };
+        if rot(site.normal).dot(e.axis) <= 0.0 {
+            return 0.0;
+        }
+        let p = rot(site.pos);
+        let (sa, ca) = e.a.sin_cos();
+        let (sd, cd) = e.d.sin_cos();
+        let xi = -sa * p.x + ca * p.y;
+        let eta = -sd * ca * p.x - sd * sa * p.y + cd * p.z;
+        let zeta = p.dot(e.axis);
+        let l1 = e.l1 - zeta * e.tan_f1;
+        let l2 = e.l2 - zeta * e.tan_f2;
+        let delta = ((e.x - xi).powi(2) + (e.y - eta).powi(2)).sqrt();
+        if delta >= l1 {
+            0.0
+        } else {
+            (l1 - delta) / (l1 + l2)
+        }
+    }
+}
+
+impl SolarEclipse {
+    /// 半影与地球相交的整段时间内，每隔 `step_s` 秒的贝塞尔根数。
+    fn plane_samples(&self, eph: &dyn Ephemeris, step_s: f64) -> Result<Vec<PlaneSample>> {
+        let rot = &self.elements_rot;
+        let tg = self.greatest.tt_seconds();
+        let touches = |e: &BesselianElements| (e.x * e.x + e.y * e.y).sqrt() < 1.0 + e.l1;
+        let sample = |tt: f64| -> Result<PlaneSample> {
+            let e = elements(eph, tt, rot)?;
+            let (sin_g, cos_g) = gast(&Time::from_tt_seconds(tt)).sin_cos();
+            Ok(PlaneSample { e, sin_g, cos_g })
+        };
+        let mut out = vec![sample(tg)?];
+        for dir in [-1.0, 1.0] {
+            let mut tt = tg;
+            loop {
+                tt += dir * step_s;
+                let s = sample(tt)?;
+                let inside = touches(&s.e);
+                if inside {
+                    out.push(s);
+                }
+                if !inside || (tt - tg).abs() > 0.3 * DAY {
+                    break;
+                }
+            }
+        }
+        Ok(out)
+    }
+
+    /// 某地（大地纬度、经度，度）在整次日食中看到的最大食分，取样间隔 `step_s` 秒。
+    pub fn max_magnitude_at(
+        &self,
+        eph: &dyn Ephemeris,
+        lat_deg: f64,
+        lon_deg: f64,
+        step_s: f64,
+    ) -> Result<f64> {
+        let site = GroundSite::new(lat_deg.to_radians(), lon_deg.to_radians());
+        Ok(self
+            .plane_samples(eph, step_s)?
+            .iter()
+            .map(|s| s.magnitude(&site))
+            .fold(0.0, f64::max))
+    }
+
+    /// 全球最大食分栅格，格子边长 `step_deg` 度，时间取样间隔 `step_s` 秒。
+    pub fn max_magnitude_grid(
+        &self,
+        eph: &dyn Ephemeris,
+        step_deg: f64,
+        step_s: f64,
+    ) -> Result<MagnitudeGrid> {
+        let samples = self.plane_samples(eph, step_s)?;
+        let rows = (180.0 / step_deg).round() as usize;
+        let cols = (360.0 / step_deg).round() as usize;
+        let mut values = vec![0f32; rows * cols];
+        for r in 0..rows {
+            let lat = (90.0 - (r as f64 + 0.5) * step_deg).to_radians();
+            for c in 0..cols {
+                let lon = (-180.0 + (c as f64 + 0.5) * step_deg).to_radians();
+                let site = GroundSite::new(lat, lon);
+                let m = samples
+                    .iter()
+                    .map(|s| s.magnitude(&site))
+                    .fold(0.0, f64::max);
+                values[r * cols + c] = m as f32;
+            }
+        }
+        Ok(MagnitudeGrid {
+            step_deg,
+            rows,
+            cols,
+            values,
+        })
+    }
+}
