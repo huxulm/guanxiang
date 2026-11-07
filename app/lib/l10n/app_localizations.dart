@@ -122,11 +122,71 @@ abstract class AppLocalizations {
   /// **'星历加载失败：{error}'**
   String ephemerisLoadFailed(String error);
 
+  /// No description provided for @today.
+  ///
+  /// In zh, this message translates to:
+  /// **'今天'**
+  String get today;
+
+  /// No description provided for @tomorrow.
+  ///
+  /// In zh, this message translates to:
+  /// **'明天'**
+  String get tomorrow;
+
+  /// No description provided for @inDays.
+  ///
+  /// In zh, this message translates to:
+  /// **'{n} 天后'**
+  String inDays(int n);
+
+  /// No description provided for @subtleHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'肉眼几乎看不出'**
+  String get subtleHint;
+
+  /// No description provided for @copyDetails.
+  ///
+  /// In zh, this message translates to:
+  /// **'复制'**
+  String get copyDetails;
+
+  /// No description provided for @copied.
+  ///
+  /// In zh, this message translates to:
+  /// **'已复制'**
+  String get copied;
+
   /// No description provided for @searchIdle.
   ///
   /// In zh, this message translates to:
   /// **'选好条件后点“搜索”'**
   String get searchIdle;
+
+  /// No description provided for @yearsNext10.
+  ///
+  /// In zh, this message translates to:
+  /// **'未来 10 年'**
+  String get yearsNext10;
+
+  /// No description provided for @yearsNext30.
+  ///
+  /// In zh, this message translates to:
+  /// **'未来 30 年'**
+  String get yearsNext30;
+
+  /// No description provided for @yearsTo2100.
+  ///
+  /// In zh, this message translates to:
+  /// **'到 {year} 年'**
+  String yearsTo2100(int year);
+
+  /// No description provided for @yearsAll.
+  ///
+  /// In zh, this message translates to:
+  /// **'全部 {from}–{to}'**
+  String yearsAll(int from, int to);
 
   /// No description provided for @kindTransit.
   ///
@@ -269,7 +329,7 @@ abstract class AppLocalizations {
   /// No description provided for @endYear.
   ///
   /// In zh, this message translates to:
-  /// **'结束年（不含）'**
+  /// **'结束年'**
   String get endYear;
 
   /// No description provided for @localOnly.
@@ -380,11 +440,11 @@ abstract class AppLocalizations {
   /// **'请输入起止年份'**
   String get enterYears;
 
-  /// No description provided for @endAfterStart.
+  /// No description provided for @endBeforeStart.
   ///
   /// In zh, this message translates to:
-  /// **'结束年份必须晚于起始年份'**
-  String get endAfterStart;
+  /// **'结束年份不能早于起始年份'**
+  String get endBeforeStart;
 
   /// No description provided for @yearsOutOfRange.
   ///
@@ -1118,12 +1178,6 @@ abstract class AppLocalizations {
   /// **'观象 · 近期看点'**
   String get dashboardTitle;
 
-  /// No description provided for @dashboardSubtitle.
-  ///
-  /// In zh, this message translates to:
-  /// **'探索天地大美，把握天象先机'**
-  String get dashboardSubtitle;
-
   /// No description provided for @quickExplore.
   ///
   /// In zh, this message translates to:
@@ -1193,7 +1247,7 @@ abstract class AppLocalizations {
   /// No description provided for @upcomingHint.
   ///
   /// In zh, this message translates to:
-  /// **'未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，点开可看详情。'**
+  /// **'未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，不含肉眼几乎看不出的半影月食。'**
   String get upcomingHint;
 
   /// No description provided for @upcomingLoading.

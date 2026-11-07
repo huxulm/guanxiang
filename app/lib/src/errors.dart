@@ -41,11 +41,11 @@ class YearRange {
   final int from;
   final int toExclusive;
 
-  /// 返回 null 表示有效，否则是错误提示。
-  String? check(AppLocalizations l, int? start, int? endExclusive) {
-    if (start == null || endExclusive == null) return l.enterYears;
-    if (endExclusive <= start) return l.endAfterStart;
-    if (start < from || endExclusive > toExclusive) {
+  /// 检查界面上输入的起止年份（结束年包含在内）。返回 null 表示有效，否则是错误提示。
+  String? check(AppLocalizations l, int? start, int? end) {
+    if (start == null || end == null) return l.enterYears;
+    if (end < start) return l.endBeforeStart;
+    if (start < from || end >= toExclusive) {
       return l.yearsOutOfRange(from, toExclusive - 1);
     }
     return null;

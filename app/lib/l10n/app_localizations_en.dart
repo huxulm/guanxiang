@@ -24,7 +24,49 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get today => 'Today';
+
+  @override
+  String get tomorrow => 'Tomorrow';
+
+  @override
+  String inDays(int n) {
+    String _temp0 = intl.Intl.pluralLogic(
+      n,
+      locale: localeName,
+      other: 'in $n days',
+      one: 'in 1 day',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get subtleHint => 'barely visible';
+
+  @override
+  String get copyDetails => 'Copy';
+
+  @override
+  String get copied => 'Copied';
+
+  @override
   String get searchIdle => 'Choose, then tap Search';
+
+  @override
+  String get yearsNext10 => 'Next 10 years';
+
+  @override
+  String get yearsNext30 => 'Next 30 years';
+
+  @override
+  String yearsTo2100(int year) {
+    return 'Until $year';
+  }
+
+  @override
+  String yearsAll(int from, int to) {
+    return 'All $from–$to';
+  }
 
   @override
   String get kindTransit => 'Transit';
@@ -97,7 +139,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get startYear => 'From year';
 
   @override
-  String get endYear => 'To year (excl.)';
+  String get endYear => 'End year';
 
   @override
   String get localOnly => 'Visible from my location';
@@ -163,7 +205,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get enterYears => 'Enter the start and end years';
 
   @override
-  String get endAfterStart => 'The end year must be after the start year';
+  String get endBeforeStart => 'The end year can\'t be before the start year';
 
   @override
   String yearsOutOfRange(int from, int to) {
@@ -633,9 +675,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get dashboardTitle => 'Guanxiang · Highlights';
 
   @override
-  String get dashboardSubtitle => 'Explore celestial events with precision';
-
-  @override
   String get quickExplore => 'Quick Explore';
 
   @override
@@ -670,7 +709,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upcomingHint =>
-      'Eclipses and close pairings of bright planets (within 3°) over the next year or so, computed on this device; eclipses are global. Tap for details.';
+      'Eclipses and close pairings of bright planets (within 3°) over the next year or so, computed on this device. Eclipses are global; penumbral lunar eclipses, which are barely visible, are left out.';
 
   @override
   String get upcomingLoading => 'Computing…';

@@ -250,9 +250,7 @@ void main() {
     );
     // 列表是懒构建的：一边往下滚一边等，直到出现结果卡片（或“没有找到”/错误）
     final scrollable = find.byType(Scrollable).first;
-    final tiles = find.byWidgetPredicate(
-      (w) => w is ListTile && w.isThreeLine == true,
-    );
+    final tiles = find.byType(UpcomingEventCard);
     final none = find.text('没有找到');
     for (var i = 0; i < 300; i++) {
       if (tiles.evaluate().isNotEmpty || none.evaluate().isNotEmpty) break;
@@ -264,11 +262,11 @@ void main() {
     await tester.drag(scrollable, const Offset(0, -3000));
     await tester.pumpAndSettle();
     for (final t in tiles.evaluate()) {
-      final tile = t.widget as ListTile;
+      final e = (t.widget as UpcomingEventCard).event;
+      // 半影月食肉眼几乎看不出，不该出现在看板上
+      expect(e.subtle, isFalse);
       // ignore: avoid_print
-      print(
-        '近期天象：${(tile.title as Text).data} | ${(tile.subtitle as Text).data}',
-      );
+      print('近期天象：${e.title} | ${e.utc} | ${e.summary}');
     }
     await tester.pumpWidget(const SizedBox());
     await dir.delete(recursive: true);

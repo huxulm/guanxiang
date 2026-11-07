@@ -11,7 +11,41 @@
       }
     }
   },
+  "today": "今天",
+  "tomorrow": "明天",
+  "inDays": "{n} 天后",
+  "@inDays": {
+    "placeholders": {
+      "n": {
+        "type": "int"
+      }
+    }
+  },
+  "subtleHint": "肉眼几乎看不出",
+  "copyDetails": "复制",
+  "copied": "已复制",
   "searchIdle": "选好条件后点“搜索”",
+  "yearsNext10": "未来 10 年",
+  "yearsNext30": "未来 30 年",
+  "yearsTo2100": "到 {year} 年",
+  "@yearsTo2100": {
+    "placeholders": {
+      "year": {
+        "type": "int"
+      }
+    }
+  },
+  "yearsAll": "全部 {from}–{to}",
+  "@yearsAll": {
+    "placeholders": {
+      "from": {
+        "type": "int"
+      },
+      "to": {
+        "type": "int"
+      }
+    }
+  },
   "kindTransit": "凌日",
   "kindConjunction": "合",
   "kindOpposition": "冲",
@@ -35,7 +69,7 @@
   "bodyB": "天体 B",
   "maxSeparation": "角距上限°",
   "startYear": "起始年",
-  "endYear": "结束年（不含）",
+  "endYear": "结束年",
   "localOnly": "只显示本地可见",
   "localOnlyHint": "目标在地平线上；非凌日事件还要求太阳低于 −6°",
   "latitude": "纬度°",
@@ -88,7 +122,7 @@
     }
   },
   "enterYears": "请输入起止年份",
-  "endAfterStart": "结束年份必须晚于起始年份",
+  "endBeforeStart": "结束年份不能早于起始年份",
   "yearsOutOfRange": "内置星历只覆盖 {from}–{to} 年，请在这个范围内搜索",
   "@yearsOutOfRange": {
     "placeholders": {
@@ -493,7 +527,6 @@
   "themeAstroRed": "夜间红光（保护暗适应）",
   "themeLight": "明亮浅色",
   "dashboardTitle": "观象 · 近期看点",
-  "dashboardSubtitle": "探索天地大美，把握天象先机",
   "quickExplore": "快捷探索",
   "quickEclipses": "近期日月食",
   "quickEclipsesDesc": "探索未来几年的日全食、日环食与月全食",
@@ -505,7 +538,7 @@
   "quickSpaceStationDesc": "天宫与国际空间站地面中心线预报",
   "currentLocation": "观测地",
   "curatedHighlights": "近期天象",
-  "upcomingHint": "未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，点开可看详情。",
+  "upcomingHint": "未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，不含肉眼几乎看不出的半影月食。",
   "upcomingLoading": "正在计算…",
   "upcomingNone": "没有找到"
 }

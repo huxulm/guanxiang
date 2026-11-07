@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../l10n/app_localizations.dart';
 import 'errors.dart';
 import 'event_detail_page.dart';
+import 'event_style.dart';
 import 'layout.dart';
 import 'rust/api/guanxiang.dart';
 import 'time_format.dart';
@@ -80,7 +81,7 @@ class SearchSession extends ChangeNotifier {
   }
 }
 
-/// 结果列表（宽屏嵌在搜索页里，窄屏放在结果页里）。
+/// 结果列表（宽屏嵌在搜索页里，窄屏放在结果页里）：按年份分组，每行有类型图标。
 class EventResultsList extends StatelessWidget {
   const EventResultsList({super.key, required this.session});
 
@@ -97,26 +98,74 @@ class EventResultsList extends StatelessWidget {
         if (s.results.isEmpty) {
           return Center(child: Text(s.running ? '' : l.noResults));
         }
+        // 行：int 是年份标题，EventItem 是事件
+        final rows = <Object>[];
+        int? year;
+        for (final e in s.results) {
+          final y = parseUtc(e.utc)?.toLocal().year;
+          if (y != null && y != year) rows.add(y);
+          year = y ?? year;
+          rows.add(e);
+        }
         return ContentInsets(
           min: 0,
-          builder: (context, side) => ListView.separated(
-            padding: EdgeInsets.symmetric(horizontal: side),
-            itemCount: s.results.length,
-            separatorBuilder: (_, _) => const Divider(height: 1),
-            itemBuilder: (context, i) {
-              final e = s.results[i];
-              return ListTile(
-                title: Text(e.title),
-                subtitle: Text('${formatAstroTime(e.utc)} · ${e.summary}'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () => Navigator.of(context).push(
-                  MaterialPageRoute(builder: (_) => EventDetailPage(event: e)),
-                ),
-              );
+          builder: (context, side) => ListView.builder(
+            padding: EdgeInsets.fromLTRB(side, 0, side, 16),
+            itemCount: rows.length,
+            itemBuilder: (context, i) => switch (rows[i]) {
+              final int y => _YearHeader(year: y),
+              final EventItem e => EventResultTile(event: e),
+              _ => const SizedBox.shrink(),
             },
           ),
         );
       },
+    );
+  }
+}
+
+class _YearHeader extends StatelessWidget {
+  const _YearHeader({required this.year});
+
+  final int year;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+      child: Text(
+        '$year',
+        style: theme.textTheme.titleSmall?.copyWith(
+          color: theme.colorScheme.primary,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+/// 结果列表的一行：类型图标、标题，下面两行是时间和摘要。
+class EventResultTile extends StatelessWidget {
+  const EventResultTile({super.key, required this.event});
+
+  final EventItem event;
+
+  @override
+  Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final e = event;
+    // 手机上只写本地时间（UTC 在详情页），宽屏两个都写
+    final time = formatAstroTime(e.utc, showUtc: !isNarrow(context));
+    final summary = e.subtle ? '${e.summary} · ${l.subtleHint}' : e.summary;
+    return ListTile(
+      leading: KindBadge(kind: e.kind),
+      title: Text(e.title),
+      subtitle: Text('$time\n$summary'),
+      isThreeLine: true,
+      trailing: const Icon(Icons.chevron_right),
+      onTap: () => Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => EventDetailPage(event: e))),
     );
   }
 }

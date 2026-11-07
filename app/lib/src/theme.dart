@@ -76,6 +76,7 @@ class AstroTheme {
       conjunction: Color(0xFFD03030),
       transit: Color(0xFFD03030),
       satellite: Color(0xFFD03030),
+      nightVision: true,
     ),
     dimFilledButtons: true,
   );
@@ -341,12 +342,16 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
     required this.conjunction,
     required this.transit,
     required this.satellite,
+    this.nightVision = false,
   });
 
   final Color eclipse;
   final Color conjunction;
   final Color transit;
   final Color satellite;
+
+  /// 红光（夜视）模式：地图等图片内容也要压暗成红色
+  final bool nightVision;
 
   static AstroAccents of(BuildContext context) =>
       Theme.of(context).extension<AstroAccents>() ?? _fallback;
@@ -369,6 +374,7 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
     conjunction: conjunction ?? this.conjunction,
     transit: transit ?? this.transit,
     satellite: satellite ?? this.satellite,
+    nightVision: nightVision,
   );
 
   @override
@@ -379,6 +385,7 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
       conjunction: Color.lerp(conjunction, other.conjunction, t)!,
       transit: Color.lerp(transit, other.transit, t)!,
       satellite: Color.lerp(satellite, other.satellite, t)!,
+      nightVision: t < 0.5 ? nightVision : other.nightVision,
     );
   }
 }

@@ -31,12 +31,15 @@ void main() {
 
   test('年份范围', () {
     const r = YearRange(1900, 2101);
-    expect(r.check(zh, 2026, 2056), isNull);
-    expect(r.check(zh, 1900, 2101), isNull);
+    // 结束年包含在内
+    expect(r.check(zh, 2026, 2055), isNull);
+    expect(r.check(zh, 1900, 2100), isNull);
+    expect(r.check(zh, 2030, 2030), isNull);
+    expect(r.check(zh, 1900, 2101), contains('1900–2100'));
     expect(r.check(zh, 1850, 1900), contains('1900–2100'));
     expect(r.check(en, 2090, 2120), contains('1900–2100'));
-    expect(r.check(zh, 2030, 2030), contains('晚于'));
-    expect(r.check(en, 2030, 2030), contains('after'));
+    expect(r.check(zh, 2030, 2029), contains('早于'));
+    expect(r.check(en, 2030, 2029), contains('before'));
     expect(r.check(zh, null, 2030), isNotNull);
   });
 

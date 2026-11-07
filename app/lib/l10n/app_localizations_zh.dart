@@ -24,7 +24,43 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get today => '今天';
+
+  @override
+  String get tomorrow => '明天';
+
+  @override
+  String inDays(int n) {
+    return '$n 天后';
+  }
+
+  @override
+  String get subtleHint => '肉眼几乎看不出';
+
+  @override
+  String get copyDetails => '复制';
+
+  @override
+  String get copied => '已复制';
+
+  @override
   String get searchIdle => '选好条件后点“搜索”';
+
+  @override
+  String get yearsNext10 => '未来 10 年';
+
+  @override
+  String get yearsNext30 => '未来 30 年';
+
+  @override
+  String yearsTo2100(int year) {
+    return '到 $year 年';
+  }
+
+  @override
+  String yearsAll(int from, int to) {
+    return '全部 $from–$to';
+  }
 
   @override
   String get kindTransit => '凌日';
@@ -96,7 +132,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get startYear => '起始年';
 
   @override
-  String get endYear => '结束年（不含）';
+  String get endYear => '结束年';
 
   @override
   String get localOnly => '只显示本地可见';
@@ -161,7 +197,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enterYears => '请输入起止年份';
 
   @override
-  String get endAfterStart => '结束年份必须晚于起始年份';
+  String get endBeforeStart => '结束年份不能早于起始年份';
 
   @override
   String yearsOutOfRange(int from, int to) {
@@ -606,9 +642,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get dashboardTitle => '观象 · 近期看点';
 
   @override
-  String get dashboardSubtitle => '探索天地大美，把握天象先机';
-
-  @override
   String get quickExplore => '快捷探索';
 
   @override
@@ -643,7 +676,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get upcomingHint =>
-      '未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，点开可看详情。';
+      '未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，不含肉眼几乎看不出的半影月食。';
 
   @override
   String get upcomingLoading => '正在计算…';

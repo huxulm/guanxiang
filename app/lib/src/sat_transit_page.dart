@@ -8,6 +8,7 @@ import 'amap_view.dart';
 import 'celestrak.dart' show appUserAgent;
 import 'rust/api/guanxiang.dart';
 import 'settings.dart';
+import 'theme.dart';
 
 /// 地图瓦片地址。OSM 瓦片政策建议不要把地址写死在多处，需要时在这里换成自建或商业瓦片。
 const tileUrlTemplate = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
@@ -80,7 +81,10 @@ class _SatTransitPageState extends State<SatTransitPage> {
     );
     final points = [observer, nearest, ...line];
     final bounds = LatLngBounds.fromPoints(points);
-    final lineColor = item.isTransit ? Colors.red : Colors.orange;
+    final night = AstroAccents.of(context).nightVision;
+    final lineColor = night
+        ? theme.colorScheme.primary
+        : (item.isTransit ? Colors.red : Colors.orange);
 
     return Scaffold(
       appBar: AppBar(title: Text(item.title)),
@@ -119,6 +123,13 @@ class _SatTransitPageState extends State<SatTransitPage> {
                       TileLayer(
                         urlTemplate: tileUrlTemplate,
                         tileProvider: _tileProvider,
+                        // 红光模式：瓦片反相成暗底，只留红色通道，不破坏暗适应
+                        tileBuilder: night
+                            ? (context, tile, _) => ColorFiltered(
+                                colorFilter: _nightVisionFilter,
+                                child: tile,
+                              )
+                            : null,
                       ),
                       PolylineLayer(
                         polylines: [
@@ -207,3 +218,11 @@ class _SatTransitPageState extends State<SatTransitPage> {
     );
   }
 }
+
+/// 亮度反相后只放进红色通道，最亮约 0x8C：浅色地图变成暗红底、深色道路。
+const _nightVisionFilter = ColorFilter.matrix([
+  -0.117, -0.393, -0.040, 0, 140, //
+  0, 0, 0, 0, 0, //
+  0, 0, 0, 0, 0, //
+  0, 0, 0, 1, 0, //
+]);

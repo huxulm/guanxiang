@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../l10n/app_localizations.dart';
 import 'errors.dart';
+import 'event_style.dart';
 import 'layout.dart';
 import 'locale.dart';
 import 'rust/api/guanxiang.dart';
@@ -11,16 +12,6 @@ import 'satellite_page.dart';
 import 'search_results.dart';
 import 'settings.dart';
 import 'settings_page.dart';
-
-String _kindLabel(AppLocalizations l, EventKind k) => switch (k) {
-  EventKind.transit => l.kindTransit,
-  EventKind.conjunction => l.kindConjunction,
-  EventKind.opposition => l.kindOpposition,
-  EventKind.appulse => l.kindAppulse,
-  EventKind.solarEclipse => l.kindSolarEclipse,
-  EventKind.lunarEclipse => l.kindLunarEclipse,
-  EventKind.occultation => l.kindOccultation,
-};
 
 /// 月掩星目标。label 传给 Rust（恒星用 core 星表的中文名查找），value 是显示名。
 List<Detail> _occultationTargets(
@@ -84,7 +75,7 @@ class SearchPageState extends State<SearchPage> {
     _years = YearRange(c[0], c[1]);
     final year = DateTime.now().year.clamp(_years.from, _years.toExclusive - 1);
     _fromCtrl.text = '$year';
-    _toCtrl.text = '${(year + 30).clamp(year + 1, _years.toExclusive)}';
+    _toCtrl.text = '${(year + 29).clamp(year, _years.toExclusive - 1)}';
     _idleStatus = (l) => l.searchIdle;
   }
 
@@ -110,6 +101,7 @@ class SearchPageState extends State<SearchPage> {
     final l = AppLocalizations.of(context);
     final from = int.tryParse(_fromCtrl.text.trim());
     final to = int.tryParse(_toCtrl.text.trim());
+    // 界面上的结束年包含在内，计算核心要的是不含的上界
     final yearError = _years.check(l, from, to);
     if (yearError != null || from == null || to == null) {
       _snack(yearError ?? l.enterYears);
@@ -160,14 +152,14 @@ class SearchPageState extends State<SearchPage> {
           : (_kind == EventKind.occultation ? _occultationTarget : _bodyA),
       bodyB: isTransit ? '' : _bodyB,
       fromYear: from,
-      toYear: to,
+      toYear: to + 1,
       maxSeparationDeg: double.tryParse(_maxSepCtrl.text.trim()) ?? 5,
       observer: observer,
       lang: rustLang(context),
     );
     final kind = _kind;
     final session = SearchSession(
-      title: (l) => '${_kindLabel(l, kind)} · $from–$to',
+      title: (l) => '${kindLabel(l, kind)} · $from–$to',
     )..addListener(_sessionChanged);
     session.start(
       search(engine: widget.engine, request: request, token: session.token),
@@ -292,7 +284,7 @@ class SearchPageState extends State<SearchPage> {
           children: [
             for (final k in EventKind.values)
               ChoiceChip(
-                label: Text(_kindLabel(l, k)),
+                label: Text(kindLabel(l, k)),
                 selected: _kind == k,
                 onSelected: _running ? null : (_) => setState(() => _kind = k),
               ),
@@ -307,9 +299,11 @@ class SearchPageState extends State<SearchPage> {
           crossAxisAlignment: WrapCrossAlignment.end,
           children: [
             _numberField(_fromCtrl, l.startYear),
-            _numberField(_toCtrl, l.endYear, width: 110),
+            _numberField(_toCtrl, l.endYear),
           ],
         ),
+        const SizedBox(height: 8),
+        _yearPresets(l),
         const SizedBox(height: 4),
         SwitchListTile(
           contentPadding: EdgeInsets.zero,
@@ -355,6 +349,33 @@ class SearchPageState extends State<SearchPage> {
               ? 0
               : (_session!.running ? _session!.progress : 1),
         ),
+      ],
+    );
+  }
+
+  /// 年份快捷选项：未来 10 年、未来 30 年、到星历末年、全部。
+  Widget _yearPresets(AppLocalizations l) {
+    final now = DateTime.now().year.clamp(_years.from, _years.toExclusive - 1);
+    final last = _years.toExclusive - 1;
+    void set(int from, int to) => setState(() {
+      _fromCtrl.text = '$from';
+      _toCtrl.text = '${to.clamp(from, last)}';
+    });
+    final presets = [
+      (l.yearsNext10, now, now + 9),
+      (l.yearsNext30, now, now + 29),
+      (l.yearsTo2100(last), now, last),
+      (l.yearsAll(_years.from, last), _years.from, last),
+    ];
+    return Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      children: [
+        for (final (label, from, to) in presets)
+          ActionChip(
+            label: Text(label),
+            onPressed: _running ? null : () => set(from, to),
+          ),
       ],
     );
   }
