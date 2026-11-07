@@ -319,6 +319,10 @@ fn sublunar_point_matches_skyfield() {
     for r in &rows {
         let t = Time::from_tt_jd(num(&r[0])).with_delta_t(num(&r[1]));
         let (lat, lon) = astrometry::sub_body_point(&eph, Body::Moon, &t).unwrap();
+        assert!(
+            lon > -std::f64::consts::PI && lon <= std::f64::consts::PI,
+            "{lon}"
+        );
         let mut dlon = lon.to_degrees() - num(&r[3]);
         dlon -= 360.0 * (dlon / 360.0).round();
         table.add(

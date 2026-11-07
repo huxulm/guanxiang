@@ -11,7 +11,7 @@
 //!
 //! 地平坐标由 CIRS 赤经和 ERA 求时角，不含大气折射；需要时用 [`refraction`]。
 
-use std::f64::consts::TAU;
+use std::f64::consts::{PI, TAU};
 
 use sofars::astro::{ab, ld, ldsun, pvtob};
 use sofars::coords::hd2ae;
@@ -103,7 +103,7 @@ pub fn topocentric(
     let mut cirs = [0.0; 3];
     rxp(&rc2i, &place.apparent_gcrs.into(), &mut cirs);
     let (ra_cirs, dec) = c2s(&cirs);
-    let ha = sofars::vm::anpm(era + obs.longitude - ra_cirs);
+    let ha = wrap_pi(era + obs.longitude - ra_cirs);
     let [az, alt] = hd2ae(ha, dec, obs.latitude);
 
     Ok(TopocentricPlace {
@@ -124,7 +124,13 @@ pub fn sub_body_point(eph: &dyn Ephemeris, body: Body, t: &Time) -> Result<(f64,
     rxp(&c2i_matrix(t), &p.apparent_gcrs.into(), &mut cirs);
     let (ra_cirs, dec) = c2s(&cirs);
     let (uta, utb) = t.ut1_jd_parts();
-    Ok((dec, sofars::vm::anpm(ra_cirs - era00(uta, utb))))
+    Ok((dec, wrap_pi(ra_cirs - era00(uta, utb))))
+}
+
+/// 角度归一化到 `(-π, π]`。不用 sofars 0.6 的 `anpm`：输入为负且绝对值不小于 π 时它多减了 2π。
+fn wrap_pi(a: f64) -> f64 {
+    let w = a.rem_euclid(TAU);
+    if w > PI { w - TAU } else { w }
 }
 
 /// GCRS → CIRS 矩阵（IAU 2006/2000A）。几小时内变化在毫角秒量级，同一事件内可复用。
