@@ -10,7 +10,7 @@
 | `crates/guanxiang-cli/` | 命令行：`info`、`distance`、`position`、`search`、`eclipse`、`occultation`、`satellite` |
 | `app/` | Flutter 应用；`app/rust/` 是 flutter_rust_bridge 2.13 桥接层（工作区成员），`app/lib/src/rust/` 是生成的绑定 |
 | `website/` | 官网（Vite + TypeScript + Tailwind 4），Cloudflare Workers 静态资源托管，https://guanx.huxulm.dev |
-| `tools/` | Python 脚本：生成对照数据（Skyfield、Horizons、NASA 星表）、ΔT 表、恒星表、许可证清单、应用图标 |
+| `tools/` | 脚本：Release 说明（`release_notes.py`）、Linux 打包和冒烟测试，以及生成对照数据（Skyfield、Horizons、NASA 星表）、ΔT 表、恒星表、许可证清单、应用图标 |
 | `data/` | 星历（不进 Git），获取方法见 `data/README.md` |
 
 ## 常用命令
@@ -59,12 +59,13 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 
 1. 改版本号：`app/pubspec.yaml` 的 `version`、`app/lib/src/licenses.dart` 的 `appVersion`、`website/src/main.ts` 的 `VERSION`（这三处要一致）。
 2. 构建：`flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64`；`flutter build windows --release` 后运行 `ISCC.exe windows\installer.iss`，再把 Release 目录打成 zip。
-3. 提交版本号，推到两边的 main：`git push origin main`、`git push github main`（GitHub 镜像 `huxulm/guanxiang`，远程名 `github`，只推 main，不推本地标签）。
-4. 在 GitHub 上建 Release 并上传本机构建的 4 个包（Linux 包由 Actions 构建）：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --notes-file <说明> <4 个包>`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml` 先在 ubuntu-22.04 上构建 Linux 包（`tools/package_linux.sh`，冒烟测试 `tools/smoke_linux.sh`）补传到 Release，再把 5 个包同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
-5. 官网平时的改动推到 GitHub main 后由 `website.yml` 自动部署；如果 R2 上还没有官网 `VERSION` 对应的包，会跳过部署，避免出现失效的下载链接。
-6. GitLab 上可以照旧推 `v*` 标签、建 GitLab Release（可选，GitLab CI 现在只做检查）。
-7. GitHub 的 `ci.yml` 跑的检查与 GitLab CI 相同，另加 `flutter analyze`/`flutter test`。
-8. Linux 版只在 GitHub Actions 上构建和测试（`ci.yml` 的 `linux`、`linux-smoke`），不在本机 WSL 里编译测试。必须在 ubuntu-22.04 上构建：在更新的系统上构建的程序会依赖新版 GLib，在 22.04 上无法启动。
+3. 写 Release 说明：`python tools/release_notes.py new <版本>` 从 `docs/releases/TEMPLATE.md` 生成 `docs/releases/v<版本>.md`（“已知限制”预填上一版），填好“更新”、核对“已知限制”后运行 `python tools/release_notes.py check <版本>`。说明和版本号一起提交，每个版本的说明都留在仓库里。
+4. 提交版本号和说明，推到两边的 main：`git push origin main`、`git push github main`（GitHub 镜像 `huxulm/guanxiang`，远程名 `github`，只推 main，不推本地标签）。
+5. 在 GitHub 上建 Release 并上传本机构建的 4 个包（Linux 包由 Actions 构建）：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --notes-file docs/releases/v<版本>.md <4 个包>`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml` 把标签提交里的 `docs/releases/v<版本>.md` 写回 Release 正文（以仓库为准，以后改说明就改这个文件再重跑 release.yml），同时在 ubuntu-22.04 上构建 Linux 包（`tools/package_linux.sh`，冒烟测试 `tools/smoke_linux.sh`）补传到 Release，再把 5 个包同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
+6. 官网平时的改动推到 GitHub main 后由 `website.yml` 自动部署；如果 R2 上还没有官网 `VERSION` 对应的包，会跳过部署，避免出现失效的下载链接。
+7. GitLab 上可以照旧推 `v*` 标签、建 GitLab Release（可选，GitLab CI 现在只做检查）。
+8. GitHub 的 `ci.yml` 跑的检查与 GitLab CI 相同，另加 `flutter analyze`/`flutter test`。
+9. Linux 版只在 GitHub Actions 上构建和测试（`ci.yml` 的 `linux`、`linux-smoke`），不在本机 WSL 里编译测试。必须在 ubuntu-22.04 上构建：在更新的系统上构建的程序会依赖新版 GLib，在 22.04 上无法启动。
 
 ## 安全
 
