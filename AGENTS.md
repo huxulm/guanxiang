@@ -58,10 +58,14 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 ## 发版
 
 1. 改版本号：`app/pubspec.yaml` 的 `version`、`app/lib/src/licenses.dart` 的 `appVersion`、`website/src/main.ts` 的 `VERSION`（这三处要一致）。
-2. 构建：`flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64`；`flutter build windows --release` 后运行 `ISCC.exe windows\installer.iss`，再把 Release 目录打成 zip。
+2. 安装包全部由 GitHub Actions 的 `release.yml` 构建，不在本机构建。改了构建相关的东西（依赖、Gradle、installer.iss 等）时，可以先手动运行 release.yml 并勾选“试运行”（`gh workflow run release.yml -R huxulm/guanxiang -f tag=<已有标签> -f dry_run=true`），只构建、不碰 Release。
 3. 写 Release 说明：`python tools/release_notes.py new <版本>` 从 `docs/releases/TEMPLATE.md` 生成 `docs/releases/v<版本>.md`（“已知限制”预填上一版），填好“更新”、核对“已知限制”后运行 `python tools/release_notes.py check <版本>`。说明和版本号一起提交，每个版本的说明都留在仓库里。
 4. 提交版本号和说明，推到两边的 main：`git push origin main`、`git push github main`（GitHub 镜像 `huxulm/guanxiang`，远程名 `github`，只推 main，不推本地标签）。
-5. 在 GitHub 上建 Release 并上传本机构建的 4 个包（Linux 包由 Actions 构建）：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --notes-file docs/releases/v<版本>.md <4 个包>`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml` 把标签提交里的 `docs/releases/v<版本>.md` 写回 Release 正文（以仓库为准，以后改说明就改这个文件再重跑 release.yml），同时在 ubuntu-22.04 上构建 Linux 包（`tools/package_linux.sh`，冒烟测试 `tools/smoke_linux.sh`）补传到 Release，再把 5 个包同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
+5. 在 GitHub 上建 Release（不带附件）：`gh release create v<版本> -R huxulm/guanxiang --target <版本提交> --title "观象 <版本>（Android · Windows · Linux）" --notes-file docs/releases/v<版本>.md`（标签由 gh 在 GitHub 上创建）。Release 发布后，Actions 的 `release.yml`：
+   - 把标签提交里的 `docs/releases/v<版本>.md` 写回 Release 正文（以仓库为准，以后改说明就改这个文件再重跑 release.yml）；
+   - 从 de440s 生成并校验裁剪星历，然后并行构建：Android（ubuntu-latest，NDK 30，用 Secrets 里的发布密钥签名，并核对证书 SHA-256）、Windows（windows-latest，Inno Setup 7.1.1 安装程序和 `tools/package_windows.py` 打的 zip）、Linux（ubuntu-22.04，`tools/package_linux.sh`，冒烟测试 `tools/smoke_linux.sh`），各自上传到 Release；
+   - 把 5 个包同步到 R2（`https://s2.huxulm.dev/guanxiang/<版本>/`）、生成 SHA256SUMS、校验公开地址，然后调用 `website.yml` 部署官网。
+   全程约 20 分钟，这期间 Release 页面上的附件是陆续出现的。
 6. 官网平时的改动推到 GitHub main 后由 `website.yml` 自动部署；如果 R2 上还没有官网 `VERSION` 对应的包，会跳过部署，避免出现失效的下载链接。
 7. GitLab 上可以照旧推 `v*` 标签、建 GitLab Release（可选，GitLab CI 现在只做检查）。
 8. GitHub 的 `ci.yml` 跑的检查与 GitLab CI 相同，另加 `flutter analyze`/`flutter test`。
@@ -70,5 +74,5 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 ## 安全
 
 - 不要提交密钥：`app/android/key.properties`、签名密钥（`~/.android/guanxiang-upload.jks`）、各种 token 都不进 Git，也不要打印到日志里。
-- 调用 GitLab API 时，`GITLAB_TOKEN` 只放在单次请求的请求头里，不要写进 `.git/config`。`CLOUDFLARE_API_TOKEN`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY` 存在 GitHub 仓库的 Actions Secrets 里（GitLab 上也还留有同名的受保护变量，现在不再使用）。
+- 调用 GitLab API 时，`GITLAB_TOKEN` 只放在单次请求的请求头里，不要写进 `.git/config`。`CLOUDFLARE_API_TOKEN`、`R2_ACCESS_KEY_ID`、`R2_SECRET_ACCESS_KEY` 存在 GitHub 仓库的 Actions Secrets 里（GitLab 上也还留有同名的受保护变量，现在不再使用）。Android 发布签名也存在 Actions Secrets 里：`ANDROID_KEYSTORE_BASE64`（jks 的 base64）、`ANDROID_STORE_PASSWORD`、`ANDROID_KEY_ALIAS`、`ANDROID_KEY_PASSWORD`；release.yml 只把它们写到本次运行的临时目录，用完删除。换密钥时要同时更新这四项。
 - 涉及观测太阳的界面和文档，都要保留安全提示（ISO 12312-2 滤光膜）。

@@ -32,26 +32,30 @@ debug 包请用 `flutter run` 启动；直接在设备上点开 debug 包会停�
 
 ## Android 发布
 
+发布用的 APK 由 GitHub Actions 的 `release.yml` 构建和签名（见 `AGENTS.md` 的“发版”）。本机构建：
+
 ```sh
 flutter build apk --release --split-per-abi --target-platform android-arm64,android-x64
 ```
 
-- 签名配置在 `android/key.properties`（不进 Git），指向仓库外的上传密钥 `~/.android/guanxiang-upload.jks`（别名 `upload`，RSA 4096，有效期 10000 天）。**密钥文件和 key.properties 里的密码务必另行备份**，丢失后无法再发布同一应用的更新。
-- 没有 key.properties 时 release 包退回调试签名，只能自己测试。
+- 本机的签名配置在 `android/key.properties`（不进 Git），指向仓库外的上传密钥 `~/.android/guanxiang-upload.jks`（别名 `upload`，RSA 4096，有效期 10000 天）。CI 用的是同一把密钥，存在 GitHub 仓库的 Actions Secrets 里（`ANDROID_KEYSTORE_BASE64` 等四项）。**密钥文件和 key.properties 里的密码务必另行备份**，丢失后无法再发布同一应用的更新。
+- 没有 key.properties 时 release 包退回调试签名，只能自己测试；CI 缺少签名 Secrets 时直接失败，不会发出调试签名的包。
 - 包名（applicationId）是 `dev.huxulm.guanxiang`（0.1.4 及以前是 `cn.ac.xao.guanxiang`，两者在系统里是不同的应用，不能互相覆盖升级）。高德等地图 SDK 的 Key 按包名和签名证书 SHA1 绑定，发布证书 SHA1 为 `29:D5:27:97:04:24:E8:FC:FF:9D:E5:ED:E2:0F:E0:EE:F6:A4:09:F3`。
 - 版本号在 `pubspec.yaml` 的 `version`；分 ABI 打包时 versionCode 自动加 1000 × ABI 序号。
 - 校验：`apksigner verify --print-certs <apk>`、`zipalign -c -P 16 4 <apk>`（16 KB 页对齐）。
 
 ## Windows 发布
 
+发布用的安装包由 GitHub Actions 的 `release.yml` 在 windows-latest 上构建（Inno Setup 7.1.1）。本机构建：
+
 ```sh
 flutter build windows --release
 "C:\Program Files\Inno Setup 7\ISCC.exe" windows\installer.iss
 # 安装程序：build\windows\installer\guanxiang-<版本>-windows-x64-setup.exe
-# 免安装包：把 build\windows\x64\runner\Release\ 整个目录打成 zip
+# 免安装包（在仓库根目录）：python tools/package_windows.py app/build/windows/x64/runner/Release guanxiang-<版本>-windows-x64.zip
 ```
 
-- 需要 Visual Studio 的“使用 C++ 的桌面开发”和 Inno Setup 7；CI 的 runner 是 Linux，Windows 包在本机构建。
+- 本机需要 Visual Studio 的“使用 C++ 的桌面开发”和 Inno Setup 7。
 - 安装程序默认装到当前用户目录（`%LOCALAPPDATA%\Programs\Guanxiang`），不需要管理员权限，向导里可改为所有用户。版本号取自 exe 的 ProductVersion（即 `pubspec.yaml`），`installer.iss` 里不用改；`AppId` 固定，升级时覆盖安装。
 - 卸载时询问是否删除用户数据（`%APPDATA%\cn.ac.xao\guanxiang` 等，路径由 Runner.rc 的 CompanyName/ProductName 决定，改这两项会换数据目录）。
 - `windows/runner/*.cpp`、`*.rc` 只能用 ASCII：MSVC 按系统代码页读没有 BOM 的源文件，中文会让编译失败或变成乱码。窗口标题“观象”用 `\u` 转义写在 `main.cpp`。
