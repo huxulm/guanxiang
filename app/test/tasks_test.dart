@@ -51,6 +51,19 @@ void main() {
   });
   tearDown(() => dir.delete(recursive: true));
 
+  test('中心线落不到地面（距离无穷大）的事件也能存取', () {
+    final e = item(t0, distanceKm: double.infinity);
+    final text = jsonEncode(satItemToJson(e));
+    final back = satItemFromJson(jsonDecode(text) as Map<String, dynamic>);
+    expect(back.distanceToCenterlineKm, double.infinity);
+    expect(
+      satItemFromJson(
+        jsonDecode(jsonEncode(satItemToJson(item(t0)))) as Map<String, dynamic>,
+      ).distanceToCenterlineKm,
+      100,
+    );
+  });
+
   SatTask longTask({
     bool stopOnHit = false,
     double days = 30,

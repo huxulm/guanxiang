@@ -188,7 +188,10 @@ Map<String, Object?> satItemToJson(SatTransitItem e) => {
   'details': [
     for (final d in e.details) [d.label, d.value],
   ],
-  'distanceToCenterlineKm': e.distanceToCenterlineKm,
+  // 中心线落不到地面时距离为无穷大，JSON 不能表示，存成 null
+  'distanceToCenterlineKm': e.distanceToCenterlineKm.isFinite
+      ? e.distanceToCenterlineKm
+      : null,
   'bandHalfWidthKm': e.bandHalfWidthKm,
   'elementsAgeDays': e.elementsAgeDays,
   'centerline': [
@@ -223,7 +226,9 @@ SatTransitItem satItemFromJson(Map<String, dynamic> j) {
       for (final x in j['details'] as List)
         Detail(label: (x as List)[0] as String, value: x[1] as String),
     ],
-    distanceToCenterlineKm: d(j['distanceToCenterlineKm']),
+    distanceToCenterlineKm: j['distanceToCenterlineKm'] == null
+        ? double.infinity
+        : d(j['distanceToCenterlineKm']),
     bandHalfWidthKm: d(j['bandHalfWidthKm']),
     elementsAgeDays: d(j['elementsAgeDays']),
     centerline: [for (final p in j['centerline'] as List) g(p)],

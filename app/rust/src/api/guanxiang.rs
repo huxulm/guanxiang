@@ -1394,6 +1394,8 @@ fn sat_item(e: &SatTransit, old: Option<&[SatTransit]>, l: Lang) -> SatTransitIt
     }
 
     let body_name = l.body(e.body);
+    // 这段时间卫星与日月的连线落不到地面上时，core 给出的中心线距离为无穷大
+    let has_line = e.distance_to_centerline_km.is_finite();
     let mut details = vec![
         detail(l.s("最近时刻（UTC）", "Closest (UTC)"), utc_ms(&e.closest)),
         detail(
@@ -1426,32 +1428,40 @@ fn sat_item(e: &SatTransit, old: Option<&[SatTransit]>, l: Lang) -> SatTransitIt
         ),
         detail(
             l.s("离中心线", "Distance to centre line"),
-            match l {
-                Lang::Zh => format!(
+            match (l, has_line) {
+                (_, false) => l
+                    .s(
+                        "中心线这段时间不落在地面上",
+                        "The centre line does not reach the ground",
+                    )
+                    .to_string(),
+                (Lang::Zh, true) => format!(
                     "{:.2} km（可见带半宽约 {:.2} km）",
                     e.distance_to_centerline_km, e.band_half_width_km
                 ),
-                Lang::En => format!(
+                (Lang::En, true) => format!(
                     "{:.2} km (visibility half-width ≈ {:.2} km)",
                     e.distance_to_centerline_km, e.band_half_width_km
                 ),
             },
         ),
-        detail(
+    ]);
+    if has_line {
+        details.push(detail(
             l.s("中心线最近点", "Nearest centre-line point"),
             format!(
                 "{:.4}°, {:.4}°",
                 e.centerline_nearest.0, e.centerline_nearest.1
             ),
-        ),
-        detail(
-            l.s("根数龄期", "Elements age"),
-            match l {
-                Lang::Zh => format!("{:.1} 天", e.elements_age_days),
-                Lang::En => format!("{:.1} days", e.elements_age_days),
-            },
-        ),
-    ]);
+        ));
+    }
+    details.extend([detail(
+        l.s("根数龄期", "Elements age"),
+        match l {
+            Lang::Zh => format!("{:.1} 天", e.elements_age_days),
+            Lang::En => format!("{:.1} days", e.elements_age_days),
+        },
+    )]);
     if let Some(dt) = previous_shift_s {
         details.push(detail(
             l.s("与旧根数相比（时刻）", "Change vs previous (time)"),
@@ -1479,17 +1489,19 @@ fn sat_item(e: &SatTransit, old: Option<&[SatTransit]>, l: Lang) -> SatTransitIt
         },
         utc: utc(&e.closest),
         tt_jd: e.closest.tt_jd(),
-        summary: match l {
-            Lang::Zh => format!(
+        summary: match (l, has_line) {
+            (Lang::Zh, true) => format!(
                 "角距 {:.2}′，离中心线 {:.1} km",
                 arcmin(e.min_separation),
                 e.distance_to_centerline_km
             ),
-            Lang::En => format!(
+            (Lang::En, true) => format!(
                 "Separation {:.2}′, {:.1} km from centre line",
                 arcmin(e.min_separation),
                 e.distance_to_centerline_km
             ),
+            (Lang::Zh, false) => format!("角距 {:.2}′", arcmin(e.min_separation)),
+            (Lang::En, false) => format!("Separation {:.2}′", arcmin(e.min_separation)),
         },
         details,
         distance_to_centerline_km: e.distance_to_centerline_km,
