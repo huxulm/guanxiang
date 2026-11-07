@@ -63,7 +63,7 @@ class DashboardPage extends StatelessWidget {
               text: l.curatedHighlights,
             ),
             const SizedBox(height: 6),
-            _UpcomingEvents(engine: engine),
+            _UpcomingEvents(engine: engine, settings: settings),
             const SizedBox(height: 24),
             _SectionTitle(
               icon: Icons.grid_view_rounded,
@@ -418,9 +418,10 @@ class _HeroCardState extends State<_HeroCard> {
 ///
 /// 内容全部来自计算核心（标题、摘要由 Rust 按语言生成），不写死任何日期或数值。
 class _UpcomingEvents extends StatefulWidget {
-  const _UpcomingEvents({required this.engine});
+  const _UpcomingEvents({required this.engine, required this.settings});
 
   final Engine engine;
+  final Settings settings;
 
   @override
   State<_UpcomingEvents> createState() => _UpcomingEventsState();
@@ -551,7 +552,11 @@ class _UpcomingEventsState extends State<_UpcomingEvents> {
               columns: (w) => w >= 720 ? 2 : 1,
               children: [
                 for (final e in items)
-                  UpcomingEventCard(event: e, engine: widget.engine),
+                  UpcomingEventCard(
+                    event: e,
+                    engine: widget.engine,
+                    settings: widget.settings,
+                  ),
               ],
             );
           },
@@ -563,12 +568,20 @@ class _UpcomingEventsState extends State<_UpcomingEvents> {
 
 /// 近期天象的一条：类型图标、标题、本地时间、摘要，右侧是倒计时。
 class UpcomingEventCard extends StatelessWidget {
-  const UpcomingEventCard({super.key, required this.event, this.engine});
+  const UpcomingEventCard({
+    super.key,
+    required this.event,
+    this.engine,
+    this.settings,
+  });
 
   final EventItem event;
 
   /// 打开详情页时用来画日月食示意图
   final Engine? engine;
+
+  /// 打开月食详情时用其中的观测地
+  final Settings? settings;
 
   @override
   Widget build(BuildContext context) {
@@ -584,7 +597,11 @@ class UpcomingEventCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (_) => EventDetailPage(event: event, engine: engine),
+            builder: (_) => EventDetailPage(
+              event: event,
+              engine: engine,
+              settings: settings,
+            ),
           ),
         ),
         child: Padding(

@@ -160,6 +160,7 @@ class SearchPageState extends State<SearchPage> {
     final kind = _kind;
     final session = SearchSession(
       engine: widget.engine,
+      settings: widget.settings,
       title: (l) => '${kindLabel(l, kind)} · $from–$to',
     )..addListener(_sessionChanged);
     session.start(

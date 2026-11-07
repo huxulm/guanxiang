@@ -8,6 +8,7 @@ import 'event_detail_page.dart';
 import 'event_style.dart';
 import 'layout.dart';
 import 'rust/api/guanxiang.dart';
+import 'settings.dart';
 import 'time_format.dart';
 
 /// 窄于这个宽度（逻辑像素）时按手机布局：搜索结果单独一页。
@@ -18,10 +19,13 @@ bool isNarrow(BuildContext context) =>
 
 /// 一次正在进行或已结束的搜索。搜索页和结果页共用。
 class SearchSession extends ChangeNotifier {
-  SearchSession({required this.title, this.engine});
+  SearchSession({required this.title, this.engine, this.settings});
 
   /// 打开详情页时用来画日月食示意图
   final Engine? engine;
+
+  /// 打开月食详情时用其中的观测地
+  final Settings? settings;
 
   /// 结果页标题，在 build 时按当前语言生成
   final String Function(AppLocalizations) title;
@@ -117,7 +121,11 @@ class EventResultsList extends StatelessWidget {
             itemCount: rows.length,
             itemBuilder: (context, i) => switch (rows[i]) {
               final int y => _YearHeader(year: y),
-              final EventItem e => EventResultTile(event: e, engine: s.engine),
+              final EventItem e => EventResultTile(
+                event: e,
+                engine: s.engine,
+                settings: s.settings,
+              ),
               _ => const SizedBox.shrink(),
             },
           ),
@@ -150,10 +158,16 @@ class _YearHeader extends StatelessWidget {
 
 /// 结果列表的一行：类型图标、标题，下面两行是时间和摘要。
 class EventResultTile extends StatelessWidget {
-  const EventResultTile({super.key, required this.event, this.engine});
+  const EventResultTile({
+    super.key,
+    required this.event,
+    this.engine,
+    this.settings,
+  });
 
   final EventItem event;
   final Engine? engine;
+  final Settings? settings;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +184,8 @@ class EventResultTile extends StatelessWidget {
       trailing: const Icon(Icons.chevron_right),
       onTap: () => Navigator.of(context).push(
         MaterialPageRoute(
-          builder: (_) => EventDetailPage(event: e, engine: engine),
+          builder: (_) =>
+              EventDetailPage(event: e, engine: engine, settings: settings),
         ),
       ),
     );

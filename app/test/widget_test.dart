@@ -70,6 +70,8 @@ void main() {
       'conjunction': accents.conjunction,
       'transit': accents.transit,
       'satellite': accents.satellite,
+      'bloodMoon': accents.bloodMoon,
+      'moonLit': accents.moonLit,
     };
     colors.forEach((name, c) {
       expect(c.g, lessThanOrEqualTo(c.r * 0.4), reason: name);

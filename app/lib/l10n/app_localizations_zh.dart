@@ -757,4 +757,110 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get upcomingNone => '没有找到';
+
+  @override
+  String get lunarPhasesTitle => '食相';
+
+  @override
+  String lunarDurationTotal(String duration) {
+    return '全食 $duration';
+  }
+
+  @override
+  String lunarDurationUmbral(String duration) {
+    return '本影食 $duration';
+  }
+
+  @override
+  String lunarDurationPenumbral(String duration) {
+    return '半影食 $duration';
+  }
+
+  @override
+  String durationHm(int hours, int minutes) {
+    return '$hours 小时 $minutes 分';
+  }
+
+  @override
+  String durationM(int minutes) {
+    return '$minutes 分钟';
+  }
+
+  @override
+  String lunarSaros(String saros) {
+    return '沙罗序列 $saros';
+  }
+
+  @override
+  String get lunarHorizonHint => '斜线部分月亮在地平线以下';
+
+  @override
+  String get lunarLocalTitle => '在你所在地';
+
+  @override
+  String get lunarTimesTitle => '各食相时刻';
+
+  @override
+  String get lunarVisFull => '全程可见';
+
+  @override
+  String get lunarVisRises => '月出时月食已经开始';
+
+  @override
+  String get lunarVisSets => '月落时月食还没结束';
+
+  @override
+  String get lunarVisRisesAndSets => '食中月亮有出有落，只能看到一部分';
+
+  @override
+  String get lunarVisHidden => '月亮在地平线以下，看不到';
+
+  @override
+  String get lunarTotalityVisible => '全食阶段月亮在地平线以上';
+
+  @override
+  String get lunarTotalityHidden => '全食阶段月亮在地平线以下';
+
+  @override
+  String lunarMoonrise(String time) {
+    return '月出 $time';
+  }
+
+  @override
+  String lunarMoonset(String time) {
+    return '月落 $time';
+  }
+
+  @override
+  String get lunarColPhase => '食相';
+
+  @override
+  String lunarColTime(String zone) {
+    return '时刻（$zone）';
+  }
+
+  @override
+  String get lunarColAlt => '高度';
+
+  @override
+  String get lunarColAz => '方位';
+
+  @override
+  String get lunarColSky => '天色';
+
+  @override
+  String get lunarSkyDay => '白天';
+
+  @override
+  String get lunarSkyTwilight => '晨昏';
+
+  @override
+  String get lunarSkyNight => '夜间';
+
+  @override
+  String get compassPoints =>
+      '北 北东北 东北 东东北 东 东东南 东南 南东南 南 南西南 西南 西西南 西 西西北 西北 北西北';
+
+  @override
+  String get lunarNeedsLocation => '设置观测地后，这里显示每个食相时月亮的高度和方向，以及在你那里能不能看到';
 }

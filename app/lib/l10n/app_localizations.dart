@@ -1387,6 +1387,180 @@ abstract class AppLocalizations {
   /// In zh, this message translates to:
   /// **'没有找到'**
   String get upcomingNone;
+
+  /// No description provided for @lunarPhasesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'食相'**
+  String get lunarPhasesTitle;
+
+  /// No description provided for @lunarDurationTotal.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食 {duration}'**
+  String lunarDurationTotal(String duration);
+
+  /// No description provided for @lunarDurationUmbral.
+  ///
+  /// In zh, this message translates to:
+  /// **'本影食 {duration}'**
+  String lunarDurationUmbral(String duration);
+
+  /// No description provided for @lunarDurationPenumbral.
+  ///
+  /// In zh, this message translates to:
+  /// **'半影食 {duration}'**
+  String lunarDurationPenumbral(String duration);
+
+  /// No description provided for @durationHm.
+  ///
+  /// In zh, this message translates to:
+  /// **'{hours} 小时 {minutes} 分'**
+  String durationHm(int hours, int minutes);
+
+  /// No description provided for @durationM.
+  ///
+  /// In zh, this message translates to:
+  /// **'{minutes} 分钟'**
+  String durationM(int minutes);
+
+  /// No description provided for @lunarSaros.
+  ///
+  /// In zh, this message translates to:
+  /// **'沙罗序列 {saros}'**
+  String lunarSaros(String saros);
+
+  /// No description provided for @lunarHorizonHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'斜线部分月亮在地平线以下'**
+  String get lunarHorizonHint;
+
+  /// No description provided for @lunarLocalTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'在你所在地'**
+  String get lunarLocalTitle;
+
+  /// No description provided for @lunarTimesTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'各食相时刻'**
+  String get lunarTimesTitle;
+
+  /// No description provided for @lunarVisFull.
+  ///
+  /// In zh, this message translates to:
+  /// **'全程可见'**
+  String get lunarVisFull;
+
+  /// No description provided for @lunarVisRises.
+  ///
+  /// In zh, this message translates to:
+  /// **'月出时月食已经开始'**
+  String get lunarVisRises;
+
+  /// No description provided for @lunarVisSets.
+  ///
+  /// In zh, this message translates to:
+  /// **'月落时月食还没结束'**
+  String get lunarVisSets;
+
+  /// No description provided for @lunarVisRisesAndSets.
+  ///
+  /// In zh, this message translates to:
+  /// **'食中月亮有出有落，只能看到一部分'**
+  String get lunarVisRisesAndSets;
+
+  /// No description provided for @lunarVisHidden.
+  ///
+  /// In zh, this message translates to:
+  /// **'月亮在地平线以下，看不到'**
+  String get lunarVisHidden;
+
+  /// No description provided for @lunarTotalityVisible.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食阶段月亮在地平线以上'**
+  String get lunarTotalityVisible;
+
+  /// No description provided for @lunarTotalityHidden.
+  ///
+  /// In zh, this message translates to:
+  /// **'全食阶段月亮在地平线以下'**
+  String get lunarTotalityHidden;
+
+  /// No description provided for @lunarMoonrise.
+  ///
+  /// In zh, this message translates to:
+  /// **'月出 {time}'**
+  String lunarMoonrise(String time);
+
+  /// No description provided for @lunarMoonset.
+  ///
+  /// In zh, this message translates to:
+  /// **'月落 {time}'**
+  String lunarMoonset(String time);
+
+  /// No description provided for @lunarColPhase.
+  ///
+  /// In zh, this message translates to:
+  /// **'食相'**
+  String get lunarColPhase;
+
+  /// No description provided for @lunarColTime.
+  ///
+  /// In zh, this message translates to:
+  /// **'时刻（{zone}）'**
+  String lunarColTime(String zone);
+
+  /// No description provided for @lunarColAlt.
+  ///
+  /// In zh, this message translates to:
+  /// **'高度'**
+  String get lunarColAlt;
+
+  /// No description provided for @lunarColAz.
+  ///
+  /// In zh, this message translates to:
+  /// **'方位'**
+  String get lunarColAz;
+
+  /// No description provided for @lunarColSky.
+  ///
+  /// In zh, this message translates to:
+  /// **'天色'**
+  String get lunarColSky;
+
+  /// No description provided for @lunarSkyDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'白天'**
+  String get lunarSkyDay;
+
+  /// No description provided for @lunarSkyTwilight.
+  ///
+  /// In zh, this message translates to:
+  /// **'晨昏'**
+  String get lunarSkyTwilight;
+
+  /// No description provided for @lunarSkyNight.
+  ///
+  /// In zh, this message translates to:
+  /// **'夜间'**
+  String get lunarSkyNight;
+
+  /// No description provided for @compassPoints.
+  ///
+  /// In zh, this message translates to:
+  /// **'北 北东北 东北 东东北 东 东东南 东南 南东南 南 南西南 西南 西西南 西 西西北 西北 北西北'**
+  String get compassPoints;
+
+  /// No description provided for @lunarNeedsLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置观测地后，这里显示每个食相时月亮的高度和方向，以及在你那里能不能看到'**
+  String get lunarNeedsLocation;
 }
 
 class _AppLocalizationsDelegate

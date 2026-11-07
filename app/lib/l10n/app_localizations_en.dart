@@ -792,4 +792,114 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get upcomingNone => 'Nothing found';
+
+  @override
+  String get lunarPhasesTitle => 'Eclipse phases';
+
+  @override
+  String lunarDurationTotal(String duration) {
+    return 'Totality $duration';
+  }
+
+  @override
+  String lunarDurationUmbral(String duration) {
+    return 'Umbral $duration';
+  }
+
+  @override
+  String lunarDurationPenumbral(String duration) {
+    return 'Penumbral $duration';
+  }
+
+  @override
+  String durationHm(int hours, int minutes) {
+    return '$hours h $minutes min';
+  }
+
+  @override
+  String durationM(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String lunarSaros(String saros) {
+    return 'Saros $saros';
+  }
+
+  @override
+  String get lunarHorizonHint => 'Hatched: the Moon is below the horizon';
+
+  @override
+  String get lunarLocalTitle => 'From your location';
+
+  @override
+  String get lunarTimesTitle => 'Phase times';
+
+  @override
+  String get lunarVisFull => 'Visible from start to end';
+
+  @override
+  String get lunarVisRises => 'The Moon rises with the eclipse under way';
+
+  @override
+  String get lunarVisSets => 'The Moon sets before the eclipse ends';
+
+  @override
+  String get lunarVisRisesAndSets =>
+      'The Moon rises and sets during the eclipse; only part is visible';
+
+  @override
+  String get lunarVisHidden => 'Not visible: the Moon is below the horizon';
+
+  @override
+  String get lunarTotalityVisible =>
+      'The Moon is above the horizon during totality';
+
+  @override
+  String get lunarTotalityHidden =>
+      'The Moon is below the horizon during totality';
+
+  @override
+  String lunarMoonrise(String time) {
+    return 'Moonrise $time';
+  }
+
+  @override
+  String lunarMoonset(String time) {
+    return 'Moonset $time';
+  }
+
+  @override
+  String get lunarColPhase => 'Phase';
+
+  @override
+  String lunarColTime(String zone) {
+    return 'Time ($zone)';
+  }
+
+  @override
+  String get lunarColAlt => 'Alt';
+
+  @override
+  String get lunarColAz => 'Az';
+
+  @override
+  String get lunarColSky => 'Sky';
+
+  @override
+  String get lunarSkyDay => 'Day';
+
+  @override
+  String get lunarSkyTwilight => 'Twilight';
+
+  @override
+  String get lunarSkyNight => 'Night';
+
+  @override
+  String get compassPoints =>
+      'N NNE NE ENE E ESE SE SSE S SSW SW WSW W WNW NW NNW';
+
+  @override
+  String get lunarNeedsLocation =>
+      'Set your location to see the Moon\'s altitude and direction at each phase, and whether the eclipse is visible from there';
 }

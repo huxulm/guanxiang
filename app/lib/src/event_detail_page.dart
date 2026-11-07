@@ -5,16 +5,26 @@ import '../l10n/app_localizations.dart';
 import 'eclipse_diagram.dart';
 import 'event_style.dart';
 import 'layout.dart';
+import 'lunar_eclipse_detail.dart';
 import 'rust/api/guanxiang.dart';
+import 'settings.dart';
 import 'time_format.dart';
 
 class EventDetailPage extends StatelessWidget {
-  const EventDetailPage({super.key, required this.event, this.engine});
+  const EventDetailPage({
+    super.key,
+    required this.event,
+    this.engine,
+    this.settings,
+  });
 
   final EventItem event;
 
-  /// 有星历时，日月食详情显示示意图
+  /// 有星历时，日月食详情显示示意图；月食另有时间轴、本地可见情况等
   final Engine? engine;
+
+  /// 月食详情用其中的观测地
+  final Settings? settings;
 
   /// 复制用的纯文本：标题、时间、摘要和全部参数。
   String _plainText() {
@@ -36,6 +46,7 @@ class EventDetailPage extends StatelessWidget {
     final utcLine = formatUtcLine(event.utc);
     final t = parseUtc(event.utc);
     final left = t == null ? null : countdown(l, t);
+    final lunar = engine != null && event.kind == EventKind.lunarEclipse;
     return Scaffold(
       appBar: AppBar(
         title: Text(event.title),
@@ -112,6 +123,14 @@ class EventDetailPage extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 16),
+          if (lunar) ...[
+            LunarEclipseSections(
+              engine: engine!,
+              event: event,
+              settings: settings,
+            ),
+            const SizedBox(height: 16),
+          ],
           Card(
             child: Column(
               children: [
@@ -126,7 +145,9 @@ class EventDetailPage extends StatelessWidget {
               ],
             ),
           ),
-          if (engine != null && EclipseDiagramCard.supports(event.kind)) ...[
+          if (!lunar &&
+              engine != null &&
+              EclipseDiagramCard.supports(event.kind)) ...[
             const SizedBox(height: 16),
             EclipseDiagramCard(engine: engine!, event: event),
           ],

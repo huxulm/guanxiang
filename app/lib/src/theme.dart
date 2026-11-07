@@ -44,6 +44,8 @@ class AstroTheme {
       conjunction: Color(0xFF6EA8FF),
       transit: Color(0xFFFF8A65),
       satellite: Color(0xFF4DB6AC),
+      bloodMoon: Color(0xFFC4532F),
+      moonLit: Color(0xFFE9E4D6),
     ),
   );
 
@@ -76,6 +78,8 @@ class AstroTheme {
       conjunction: Color(0xFFD03030),
       transit: Color(0xFFD03030),
       satellite: Color(0xFFD03030),
+      bloodMoon: Color(0xFF6A1010),
+      moonLit: Color(0xFFD04A4A),
       nightVision: true,
     ),
     dimFilledButtons: true,
@@ -109,6 +113,8 @@ class AstroTheme {
       conjunction: Color(0xFF2558A8),
       transit: Color(0xFFD84315),
       satellite: Color(0xFF00796B),
+      bloodMoon: Color(0xFFA63E1C),
+      moonLit: Color(0xFFDCD6C4),
     ),
   );
 
@@ -342,6 +348,8 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
     required this.conjunction,
     required this.transit,
     required this.satellite,
+    required this.bloodMoon,
+    required this.moonLit,
     this.nightVision = false,
   });
 
@@ -349,6 +357,12 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
   final Color conjunction;
   final Color transit;
   final Color satellite;
+
+  /// 月全食时进入本影的月面（古铜红）
+  final Color bloodMoon;
+
+  /// 没有被地影遮住的月面
+  final Color moonLit;
 
   /// 红光（夜视）模式：地图等图片内容也要压暗成红色
   final bool nightVision;
@@ -361,6 +375,8 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
     conjunction: Color(0xFF6EA8FF),
     transit: Color(0xFFFF8A65),
     satellite: Color(0xFF4DB6AC),
+    bloodMoon: Color(0xFFC4532F),
+    moonLit: Color(0xFFE9E4D6),
   );
 
   @override
@@ -369,11 +385,15 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
     Color? conjunction,
     Color? transit,
     Color? satellite,
+    Color? bloodMoon,
+    Color? moonLit,
   }) => AstroAccents(
     eclipse: eclipse ?? this.eclipse,
     conjunction: conjunction ?? this.conjunction,
     transit: transit ?? this.transit,
     satellite: satellite ?? this.satellite,
+    bloodMoon: bloodMoon ?? this.bloodMoon,
+    moonLit: moonLit ?? this.moonLit,
     nightVision: nightVision,
   );
 
@@ -385,6 +405,8 @@ class AstroAccents extends ThemeExtension<AstroAccents> {
       conjunction: Color.lerp(conjunction, other.conjunction, t)!,
       transit: Color.lerp(transit, other.transit, t)!,
       satellite: Color.lerp(satellite, other.satellite, t)!,
+      bloodMoon: Color.lerp(bloodMoon, other.bloodMoon, t)!,
+      moonLit: Color.lerp(moonLit, other.moonLit, t)!,
       nightVision: t < 0.5 ? nightVision : other.nightVision,
     );
   }

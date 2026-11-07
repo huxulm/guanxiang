@@ -122,6 +122,12 @@ class Settings extends ChangeNotifier {
   Place get manual => _manual;
   Place? get gpsFix => _gpsFix;
 
+  /// 显示本地信息（今晚、月食详情）用的位置：手动模式用手动位置，GPS 模式用缓存的定位。
+  /// 不会触发定位；都没有时为 null。
+  Place? get knownPlace => _mode == LocationMode.manual
+      ? (_manual.isValid ? _manual : null)
+      : _gpsFix;
+
   /// 上次定位成功的时间（本地时间）
   DateTime? get gpsTime => _gpsTime;
 

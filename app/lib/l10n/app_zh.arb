@@ -592,5 +592,100 @@
   "curatedHighlights": "近期天象",
   "upcomingHint": "未来一年多的日月食和亮行星相合（角距 ≤ 3°），由本机星历计算；日月食为全球情况，不含肉眼几乎看不出的半影月食。",
   "upcomingLoading": "正在计算…",
-  "upcomingNone": "没有找到"
+  "upcomingNone": "没有找到",
+  "lunarPhasesTitle": "食相",
+  "lunarDurationTotal": "全食 {duration}",
+  "@lunarDurationTotal": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "lunarDurationUmbral": "本影食 {duration}",
+  "@lunarDurationUmbral": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "lunarDurationPenumbral": "半影食 {duration}",
+  "@lunarDurationPenumbral": {
+    "placeholders": {
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "durationHm": "{hours} 小时 {minutes} 分",
+  "@durationHm": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "durationM": "{minutes} 分钟",
+  "@durationM": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "lunarSaros": "沙罗序列 {saros}",
+  "@lunarSaros": {
+    "placeholders": {
+      "saros": {
+        "type": "String"
+      }
+    }
+  },
+  "lunarHorizonHint": "斜线部分月亮在地平线以下",
+  "lunarLocalTitle": "在你所在地",
+  "lunarTimesTitle": "各食相时刻",
+  "lunarVisFull": "全程可见",
+  "lunarVisRises": "月出时月食已经开始",
+  "lunarVisSets": "月落时月食还没结束",
+  "lunarVisRisesAndSets": "食中月亮有出有落，只能看到一部分",
+  "lunarVisHidden": "月亮在地平线以下，看不到",
+  "lunarTotalityVisible": "全食阶段月亮在地平线以上",
+  "lunarTotalityHidden": "全食阶段月亮在地平线以下",
+  "lunarMoonrise": "月出 {time}",
+  "@lunarMoonrise": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "lunarMoonset": "月落 {time}",
+  "@lunarMoonset": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "lunarColPhase": "食相",
+  "lunarColTime": "时刻（{zone}）",
+  "@lunarColTime": {
+    "placeholders": {
+      "zone": {
+        "type": "String"
+      }
+    }
+  },
+  "lunarColAlt": "高度",
+  "lunarColAz": "方位",
+  "lunarColSky": "天色",
+  "lunarSkyDay": "白天",
+  "lunarSkyTwilight": "晨昏",
+  "lunarSkyNight": "夜间",
+  "compassPoints": "北 北东北 东北 东东北 东 东东南 东南 南东南 南 南西南 西南 西西南 西 西西北 西北 北西北",
+  "lunarNeedsLocation": "设置观测地后，这里显示每个食相时月亮的高度和方向，以及在你那里能不能看到"
 }

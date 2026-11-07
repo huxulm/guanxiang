@@ -61,19 +61,13 @@ class _TonightCardState extends State<TonightCard> {
     super.dispose();
   }
 
-  Place? _place(Settings s) {
-    return s.mode == LocationMode.manual
-        ? (s.manual.isValid ? s.manual : null)
-        : s.gpsFix;
-  }
-
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: widget.settings,
       builder: (context, _) {
         final l = AppLocalizations.of(context);
-        final place = _place(widget.settings);
+        final place = widget.settings.knownPlace;
         if (place == null) return _needsLocation(context, l);
         final start = tonightStart(DateTime.now());
         final lang = rustLang(context);
