@@ -7,8 +7,8 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `eclipse_span`, `finished`, `found`, `geo`, `is_cancelled`, `lat_lon`, `moon_phase_name`, `progress`, `s`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
+// These functions are ignored because they are not marked as `pub`: `arcsec`, `blank`, `body`, `body`, `detail`, `distance_label`, `distance_to_polyline_km`, `eclipse_span`, `find_lunar_eclipse`, `finished`, `found`, `geo`, `is_cancelled`, `l_phase`, `lat_lon`, `local_lunar_view`, `lunar_diagram`, `moon_phase_name`, `progress`, `s`, `saros_label`, `sat_item`, `search_span`, `send`, `star_name_en`, `star`, `target`, `utc_ms`, `utc`, `year_start`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `from`
 
 /// 支持的天体，供界面列出：label = 英文键名（传回 Rust 用），value = 显示名。
 List<Detail> bodyNames({required Lang lang}) =>
@@ -41,6 +41,19 @@ Future<LunarEclipseDiagram> lunarEclipseDiagram({
 }) => RustLib.instance.api.crateApiGuanxiangLunarEclipseDiagram(
   engine: engine,
   ttJd: ttJd,
+  lang: lang,
+);
+
+/// 月食详情。`tt_jd` 为搜索结果里该次月食的食甚；`site` 为空时不算本地可见情况。
+Future<LunarEclipseDetail> lunarEclipseDetail({
+  required Engine engine,
+  required double ttJd,
+  Site? site,
+  required Lang lang,
+}) => RustLib.instance.api.crateApiGuanxiangLunarEclipseDetail(
+  engine: engine,
+  ttJd: ttJd,
+  site: site,
   lang: lang,
 );
 
@@ -177,6 +190,49 @@ class DiagramPoint {
           label == other.label;
 }
 
+/// 月食的一个食相。
+class EclipsePhase {
+  /// P1、U1、U2、Max、U3、U4、P4
+  final String code;
+
+  /// 显示名称，如“食既”
+  final String name;
+  final String utc;
+
+  /// 月下点：此刻月亮在天顶的地方
+  final GeoPoint sublunar;
+
+  /// 有观测地点时才有
+  final HorizonPoint? horizon;
+
+  const EclipsePhase({
+    required this.code,
+    required this.name,
+    required this.utc,
+    required this.sublunar,
+    this.horizon,
+  });
+
+  @override
+  int get hashCode =>
+      code.hashCode ^
+      name.hashCode ^
+      utc.hashCode ^
+      sublunar.hashCode ^
+      horizon.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is EclipsePhase &&
+          runtimeType == other.runtimeType &&
+          code == other.code &&
+          name == other.name &&
+          utc == other.utc &&
+          sublunar == other.sublunar &&
+          horizon == other.horizon;
+}
+
 /// 一个事件，已整理成界面显示用的文字。
 class EventItem {
   final EventKind kind;
@@ -253,8 +309,124 @@ class GeoPoint {
           longitudeDeg == other.longitudeDeg;
 }
 
+/// 某一时刻在观测地看到的日月（度；高度含大气折射，方位从北向东量）。
+class HorizonPoint {
+  final double moonAltitudeDeg;
+  final double moonAzimuthDeg;
+  final double sunAltitudeDeg;
+
+  const HorizonPoint({
+    required this.moonAltitudeDeg,
+    required this.moonAzimuthDeg,
+    required this.sunAltitudeDeg,
+  });
+
+  @override
+  int get hashCode =>
+      moonAltitudeDeg.hashCode ^
+      moonAzimuthDeg.hashCode ^
+      sunAltitudeDeg.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is HorizonPoint &&
+          runtimeType == other.runtimeType &&
+          moonAltitudeDeg == other.moonAltitudeDeg &&
+          moonAzimuthDeg == other.moonAzimuthDeg &&
+          sunAltitudeDeg == other.sunAltitudeDeg;
+}
+
 /// 显示语言。
 enum Lang { zh, en }
+
+/// 观测地的可见情况。
+class LocalLunarView {
+  final LunarVisibility verdict;
+
+  /// 全食阶段能否看到（至少有一部分时间月亮在地平线以上）；没有全食时为 false
+  final bool totalityVisible;
+
+  /// 月亮视高度（度），与 `diagram.path` 逐点对应，滑块用
+  final Float64List trackAltitudeDeg;
+
+  /// P1 前 1 小时到 P4 后 1 小时之间的月出、月落
+  final List<SkyEventItem> moonEvents;
+
+  const LocalLunarView({
+    required this.verdict,
+    required this.totalityVisible,
+    required this.trackAltitudeDeg,
+    required this.moonEvents,
+  });
+
+  @override
+  int get hashCode =>
+      verdict.hashCode ^
+      totalityVisible.hashCode ^
+      trackAltitudeDeg.hashCode ^
+      moonEvents.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LocalLunarView &&
+          runtimeType == other.runtimeType &&
+          verdict == other.verdict &&
+          totalityVisible == other.totalityVisible &&
+          trackAltitudeDeg == other.trackAltitudeDeg &&
+          moonEvents == other.moonEvents;
+}
+
+/// 月食详情页的全部数据。
+class LunarEclipseDetail {
+  final LunarEclipseDiagram diagram;
+
+  /// 按时间顺序，没有的接触跳过
+  final List<EclipsePhase> phases;
+
+  /// 半影食（P1–P4）、本影食（U1–U4）、全食（U2–U3）的持续时间（分钟）
+  final double penumbralMinutes;
+  final double? partialMinutes;
+  final double? totalMinutes;
+
+  /// 沙罗序列，如“128（第 41 次，共 71 次）”；星历范围外为空
+  final String saros;
+  final LocalLunarView? local;
+
+  const LunarEclipseDetail({
+    required this.diagram,
+    required this.phases,
+    required this.penumbralMinutes,
+    this.partialMinutes,
+    this.totalMinutes,
+    required this.saros,
+    this.local,
+  });
+
+  @override
+  int get hashCode =>
+      diagram.hashCode ^
+      phases.hashCode ^
+      penumbralMinutes.hashCode ^
+      partialMinutes.hashCode ^
+      totalMinutes.hashCode ^
+      saros.hashCode ^
+      local.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LunarEclipseDetail &&
+          runtimeType == other.runtimeType &&
+          diagram == other.diagram &&
+          phases == other.phases &&
+          penumbralMinutes == other.penumbralMinutes &&
+          partialMinutes == other.partialMinutes &&
+          totalMinutes == other.totalMinutes &&
+          saros == other.saros &&
+          local == other.local;
+}
 
 /// 月食示意图（NASA 星表的月食图）。
 class LunarEclipseDiagram {
@@ -295,6 +467,24 @@ class LunarEclipseDiagram {
           moonSemidiameterDeg == other.moonSemidiameterDeg &&
           path == other.path &&
           marks == other.marks;
+}
+
+/// 在观测地能看到多少（月偏食、月全食按本影食 U1–U4 判断，半影月食按 P1–P4 判断）。
+enum LunarVisibility {
+  /// 全程月亮都在地平线以上
+  full,
+
+  /// 月出时已在食中
+  rises,
+
+  /// 月落时仍在食中
+  sets,
+
+  /// 食中既有月出又有月落（高纬度才会出现）
+  risesAndSets,
+
+  /// 全程月亮都在地平线以下
+  hidden,
 }
 
 /// 月相。
@@ -608,6 +798,32 @@ class SearchUpdate {
           count == other.count &&
           cancelled == other.cancelled &&
           elapsedMs == other.elapsedMs;
+}
+
+/// 观测地点（只用于本地可见情况，不做可见性过滤）。
+class Site {
+  final double latitudeDeg;
+  final double longitudeDeg;
+  final double heightM;
+
+  const Site({
+    required this.latitudeDeg,
+    required this.longitudeDeg,
+    required this.heightM,
+  });
+
+  @override
+  int get hashCode =>
+      latitudeDeg.hashCode ^ longitudeDeg.hashCode ^ heightM.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is Site &&
+          runtimeType == other.runtimeType &&
+          latitudeDeg == other.latitudeDeg &&
+          longitudeDeg == other.longitudeDeg &&
+          heightM == other.heightM;
 }
 
 /// 一次出没或晨昏，时刻为 UTC（"2026-11-07 09:12:34"）。

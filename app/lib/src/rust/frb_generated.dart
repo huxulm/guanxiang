@@ -69,7 +69,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -264907309;
+  int get rustContentHash => 439089841;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -92,6 +92,13 @@ abstract class RustLibApi extends BaseApi {
   List<Detail> crateApiGuanxiangBodyNames({required Lang lang});
 
   Future<void> crateApiGuanxiangInitApp();
+
+  Future<LunarEclipseDetail> crateApiGuanxiangLunarEclipseDetail({
+    required Engine engine,
+    required double ttJd,
+    Site? site,
+    required Lang lang,
+  });
 
   Future<LunarEclipseDiagram> crateApiGuanxiangLunarEclipseDiagram({
     required Engine engine,
@@ -320,6 +327,48 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_app", argNames: []);
 
   @override
+  Future<LunarEclipseDetail> crateApiGuanxiangLunarEclipseDetail({
+    required Engine engine,
+    required double ttJd,
+    Site? site,
+    required Lang lang,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_Auto_Ref_RustOpaque_flutter_rust_bridgefor_generatedRustAutoOpaqueInnerEngine(
+            engine,
+            serializer,
+          );
+          sse_encode_f_64(ttJd, serializer);
+          sse_encode_opt_box_autoadd_site(site, serializer);
+          sse_encode_lang(lang, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 7,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_lunar_eclipse_detail,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiGuanxiangLunarEclipseDetailConstMeta,
+        argValues: [engine, ttJd, site, lang],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiGuanxiangLunarEclipseDetailConstMeta =>
+      const TaskConstMeta(
+        debugName: "lunar_eclipse_detail",
+        argNames: ["engine", "ttJd", "site", "lang"],
+      );
+
+  @override
   Future<LunarEclipseDiagram> crateApiGuanxiangLunarEclipseDiagram({
     required Engine engine,
     required double ttJd,
@@ -338,7 +387,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -366,7 +415,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(json, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_satellite_info,
@@ -417,7 +466,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -487,7 +536,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 10,
+              funcId: 11,
               port: port_,
             );
           },
@@ -528,7 +577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 12,
             port: port_,
           );
         },
@@ -556,7 +605,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_lang(lang, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_String,
@@ -599,7 +648,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 13,
+            funcId: 14,
             port: port_,
           );
         },
@@ -744,6 +793,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  HorizonPoint dco_decode_box_autoadd_horizon_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_horizon_point(raw);
+  }
+
+  @protected
+  LocalLunarView dco_decode_box_autoadd_local_lunar_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_local_lunar_view(raw);
+  }
+
+  @protected
   ObserverInput dco_decode_box_autoadd_observer_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_observer_input(raw);
@@ -753,6 +814,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   SearchRequest dco_decode_box_autoadd_search_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_search_request(raw);
+  }
+
+  @protected
+  Site dco_decode_box_autoadd_site(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_site(raw);
   }
 
   @protected
@@ -778,6 +845,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       y: dco_decode_f_64(arr[1]),
       utc: dco_decode_String(arr[2]),
       label: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  EclipsePhase dco_decode_eclipse_phase(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return EclipsePhase(
+      code: dco_decode_String(arr[0]),
+      name: dco_decode_String(arr[1]),
+      utc: dco_decode_String(arr[2]),
+      sublunar: dco_decode_geo_point(arr[3]),
+      horizon: dco_decode_opt_box_autoadd_horizon_point(arr[4]),
     );
   }
 
@@ -823,6 +905,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  HorizonPoint dco_decode_horizon_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return HorizonPoint(
+      moonAltitudeDeg: dco_decode_f_64(arr[0]),
+      moonAzimuthDeg: dco_decode_f_64(arr[1]),
+      sunAltitudeDeg: dco_decode_f_64(arr[2]),
+    );
+  }
+
+  @protected
   int dco_decode_i_32(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -847,9 +942,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<EclipsePhase> dco_decode_list_eclipse_phase(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_eclipse_phase).toList();
+  }
+
+  @protected
   List<GeoPoint> dco_decode_list_geo_point(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_geo_point).toList();
+  }
+
+  @protected
+  Float64List dco_decode_list_prim_f_64_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Float64List;
   }
 
   @protected
@@ -889,6 +996,37 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  LocalLunarView dco_decode_local_lunar_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return LocalLunarView(
+      verdict: dco_decode_lunar_visibility(arr[0]),
+      totalityVisible: dco_decode_bool(arr[1]),
+      trackAltitudeDeg: dco_decode_list_prim_f_64_strict(arr[2]),
+      moonEvents: dco_decode_list_sky_event_item(arr[3]),
+    );
+  }
+
+  @protected
+  LunarEclipseDetail dco_decode_lunar_eclipse_detail(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return LunarEclipseDetail(
+      diagram: dco_decode_lunar_eclipse_diagram(arr[0]),
+      phases: dco_decode_list_eclipse_phase(arr[1]),
+      penumbralMinutes: dco_decode_f_64(arr[2]),
+      partialMinutes: dco_decode_opt_box_autoadd_f_64(arr[3]),
+      totalMinutes: dco_decode_opt_box_autoadd_f_64(arr[4]),
+      saros: dco_decode_String(arr[5]),
+      local: dco_decode_opt_box_autoadd_local_lunar_view(arr[6]),
+    );
+  }
+
+  @protected
   LunarEclipseDiagram dco_decode_lunar_eclipse_diagram(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -901,6 +1039,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       path: dco_decode_list_diagram_point(arr[3]),
       marks: dco_decode_list_diagram_point(arr[4]),
     );
+  }
+
+  @protected
+  LunarVisibility dco_decode_lunar_visibility(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LunarVisibility.values[raw as int];
   }
 
   @protected
@@ -952,9 +1096,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  HorizonPoint? dco_decode_opt_box_autoadd_horizon_point(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_horizon_point(raw);
+  }
+
+  @protected
+  LocalLunarView? dco_decode_opt_box_autoadd_local_lunar_view(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_local_lunar_view(raw);
+  }
+
+  @protected
   ObserverInput? dco_decode_opt_box_autoadd_observer_input(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_box_autoadd_observer_input(raw);
+  }
+
+  @protected
+  Site? dco_decode_opt_box_autoadd_site(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_site(raw);
   }
 
   @protected
@@ -1029,6 +1191,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       count: dco_decode_u_32(arr[3]),
       cancelled: dco_decode_bool(arr[4]),
       elapsedMs: dco_decode_u_64(arr[5]),
+    );
+  }
+
+  @protected
+  Site dco_decode_site(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return Site(
+      latitudeDeg: dco_decode_f_64(arr[0]),
+      longitudeDeg: dco_decode_f_64(arr[1]),
+      heightM: dco_decode_f_64(arr[2]),
     );
   }
 
@@ -1227,6 +1402,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  HorizonPoint sse_decode_box_autoadd_horizon_point(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_horizon_point(deserializer));
+  }
+
+  @protected
+  LocalLunarView sse_decode_box_autoadd_local_lunar_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_local_lunar_view(deserializer));
+  }
+
+  @protected
   ObserverInput sse_decode_box_autoadd_observer_input(
     SseDeserializer deserializer,
   ) {
@@ -1240,6 +1431,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_search_request(deserializer));
+  }
+
+  @protected
+  Site sse_decode_box_autoadd_site(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_site(deserializer));
   }
 
   @protected
@@ -1258,6 +1455,23 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_utc = sse_decode_String(deserializer);
     var var_label = sse_decode_String(deserializer);
     return DiagramPoint(x: var_x, y: var_y, utc: var_utc, label: var_label);
+  }
+
+  @protected
+  EclipsePhase sse_decode_eclipse_phase(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_code = sse_decode_String(deserializer);
+    var var_name = sse_decode_String(deserializer);
+    var var_utc = sse_decode_String(deserializer);
+    var var_sublunar = sse_decode_geo_point(deserializer);
+    var var_horizon = sse_decode_opt_box_autoadd_horizon_point(deserializer);
+    return EclipsePhase(
+      code: var_code,
+      name: var_name,
+      utc: var_utc,
+      sublunar: var_sublunar,
+      horizon: var_horizon,
+    );
   }
 
   @protected
@@ -1306,6 +1520,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  HorizonPoint sse_decode_horizon_point(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_moonAltitudeDeg = sse_decode_f_64(deserializer);
+    var var_moonAzimuthDeg = sse_decode_f_64(deserializer);
+    var var_sunAltitudeDeg = sse_decode_f_64(deserializer);
+    return HorizonPoint(
+      moonAltitudeDeg: var_moonAltitudeDeg,
+      moonAzimuthDeg: var_moonAzimuthDeg,
+      sunAltitudeDeg: var_sunAltitudeDeg,
+    );
+  }
+
+  @protected
   int sse_decode_i_32(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getInt32();
@@ -1345,6 +1572,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<EclipsePhase> sse_decode_list_eclipse_phase(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <EclipsePhase>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_eclipse_phase(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<GeoPoint> sse_decode_list_geo_point(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1354,6 +1595,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_geo_point(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  Float64List sse_decode_list_prim_f_64_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getFloat64List(len_);
   }
 
   @protected
@@ -1420,6 +1668,44 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  LocalLunarView sse_decode_local_lunar_view(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_verdict = sse_decode_lunar_visibility(deserializer);
+    var var_totalityVisible = sse_decode_bool(deserializer);
+    var var_trackAltitudeDeg = sse_decode_list_prim_f_64_strict(deserializer);
+    var var_moonEvents = sse_decode_list_sky_event_item(deserializer);
+    return LocalLunarView(
+      verdict: var_verdict,
+      totalityVisible: var_totalityVisible,
+      trackAltitudeDeg: var_trackAltitudeDeg,
+      moonEvents: var_moonEvents,
+    );
+  }
+
+  @protected
+  LunarEclipseDetail sse_decode_lunar_eclipse_detail(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_diagram = sse_decode_lunar_eclipse_diagram(deserializer);
+    var var_phases = sse_decode_list_eclipse_phase(deserializer);
+    var var_penumbralMinutes = sse_decode_f_64(deserializer);
+    var var_partialMinutes = sse_decode_opt_box_autoadd_f_64(deserializer);
+    var var_totalMinutes = sse_decode_opt_box_autoadd_f_64(deserializer);
+    var var_saros = sse_decode_String(deserializer);
+    var var_local = sse_decode_opt_box_autoadd_local_lunar_view(deserializer);
+    return LunarEclipseDetail(
+      diagram: var_diagram,
+      phases: var_phases,
+      penumbralMinutes: var_penumbralMinutes,
+      partialMinutes: var_partialMinutes,
+      totalMinutes: var_totalMinutes,
+      saros: var_saros,
+      local: var_local,
+    );
+  }
+
+  @protected
   LunarEclipseDiagram sse_decode_lunar_eclipse_diagram(
     SseDeserializer deserializer,
   ) {
@@ -1436,6 +1722,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       path: var_path,
       marks: var_marks,
     );
+  }
+
+  @protected
+  LunarVisibility sse_decode_lunar_visibility(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return LunarVisibility.values[inner];
   }
 
   @protected
@@ -1508,6 +1801,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  HorizonPoint? sse_decode_opt_box_autoadd_horizon_point(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_horizon_point(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  LocalLunarView? sse_decode_opt_box_autoadd_local_lunar_view(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_local_lunar_view(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
   ObserverInput? sse_decode_opt_box_autoadd_observer_input(
     SseDeserializer deserializer,
   ) {
@@ -1515,6 +1834,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
     if (sse_decode_bool(deserializer)) {
       return (sse_decode_box_autoadd_observer_input(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  Site? sse_decode_opt_box_autoadd_site(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_site(deserializer));
     } else {
       return null;
     }
@@ -1615,6 +1945,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       count: var_count,
       cancelled: var_cancelled,
       elapsedMs: var_elapsedMs,
+    );
+  }
+
+  @protected
+  Site sse_decode_site(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_latitudeDeg = sse_decode_f_64(deserializer);
+    var var_longitudeDeg = sse_decode_f_64(deserializer);
+    var var_heightM = sse_decode_f_64(deserializer);
+    return Site(
+      latitudeDeg: var_latitudeDeg,
+      longitudeDeg: var_longitudeDeg,
+      heightM: var_heightM,
     );
   }
 
@@ -1833,6 +2176,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_horizon_point(
+    HorizonPoint self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_horizon_point(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_local_lunar_view(
+    LocalLunarView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_local_lunar_view(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_observer_input(
     ObserverInput self,
     SseSerializer serializer,
@@ -1851,6 +2212,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_site(Site self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_site(self, serializer);
+  }
+
+  @protected
   void sse_encode_detail(Detail self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.label, serializer);
@@ -1864,6 +2231,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_f_64(self.y, serializer);
     sse_encode_String(self.utc, serializer);
     sse_encode_String(self.label, serializer);
+  }
+
+  @protected
+  void sse_encode_eclipse_phase(EclipsePhase self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.code, serializer);
+    sse_encode_String(self.name, serializer);
+    sse_encode_String(self.utc, serializer);
+    sse_encode_geo_point(self.sublunar, serializer);
+    sse_encode_opt_box_autoadd_horizon_point(self.horizon, serializer);
   }
 
   @protected
@@ -1895,6 +2272,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_f_64(self.latitudeDeg, serializer);
     sse_encode_f_64(self.longitudeDeg, serializer);
+  }
+
+  @protected
+  void sse_encode_horizon_point(HorizonPoint self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.moonAltitudeDeg, serializer);
+    sse_encode_f_64(self.moonAzimuthDeg, serializer);
+    sse_encode_f_64(self.sunAltitudeDeg, serializer);
   }
 
   @protected
@@ -1931,6 +2316,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_eclipse_phase(
+    List<EclipsePhase> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_eclipse_phase(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_geo_point(
     List<GeoPoint> self,
     SseSerializer serializer,
@@ -1940,6 +2337,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_geo_point(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_list_prim_f_64_strict(
+    Float64List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putFloat64List(self);
   }
 
   @protected
@@ -2011,6 +2418,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_local_lunar_view(
+    LocalLunarView self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_lunar_visibility(self.verdict, serializer);
+    sse_encode_bool(self.totalityVisible, serializer);
+    sse_encode_list_prim_f_64_strict(self.trackAltitudeDeg, serializer);
+    sse_encode_list_sky_event_item(self.moonEvents, serializer);
+  }
+
+  @protected
+  void sse_encode_lunar_eclipse_detail(
+    LunarEclipseDetail self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_lunar_eclipse_diagram(self.diagram, serializer);
+    sse_encode_list_eclipse_phase(self.phases, serializer);
+    sse_encode_f_64(self.penumbralMinutes, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.partialMinutes, serializer);
+    sse_encode_opt_box_autoadd_f_64(self.totalMinutes, serializer);
+    sse_encode_String(self.saros, serializer);
+    sse_encode_opt_box_autoadd_local_lunar_view(self.local, serializer);
+  }
+
+  @protected
   void sse_encode_lunar_eclipse_diagram(
     LunarEclipseDiagram self,
     SseSerializer serializer,
@@ -2021,6 +2455,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_f_64(self.moonSemidiameterDeg, serializer);
     sse_encode_list_diagram_point(self.path, serializer);
     sse_encode_list_diagram_point(self.marks, serializer);
+  }
+
+  @protected
+  void sse_encode_lunar_visibility(
+    LunarVisibility self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -2077,6 +2520,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_opt_box_autoadd_horizon_point(
+    HorizonPoint? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_horizon_point(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_local_lunar_view(
+    LocalLunarView? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_local_lunar_view(self, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_opt_box_autoadd_observer_input(
     ObserverInput? self,
     SseSerializer serializer,
@@ -2086,6 +2555,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self != null, serializer);
     if (self != null) {
       sse_encode_box_autoadd_observer_input(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_site(Site? self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_site(self, serializer);
     }
   }
 
@@ -2145,6 +2624,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_u_32(self.count, serializer);
     sse_encode_bool(self.cancelled, serializer);
     sse_encode_u_64(self.elapsedMs, serializer);
+  }
+
+  @protected
+  void sse_encode_site(Site self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_f_64(self.latitudeDeg, serializer);
+    sse_encode_f_64(self.longitudeDeg, serializer);
+    sse_encode_f_64(self.heightM, serializer);
   }
 
   @protected

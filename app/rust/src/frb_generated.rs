@@ -40,7 +40,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -264907309;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 439089841;
 
 // Section: executor
 
@@ -269,6 +269,67 @@ fn wire__crate__api__guanxiang__init_app_impl(
                     })?;
                     std::result::Result::Ok(output_ok)
                 })())
+            }
+        },
+    )
+}
+fn wire__crate__api__guanxiang__lunar_eclipse_detail_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "lunar_eclipse_detail",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_engine = <RustOpaqueMoi<
+                flutter_rust_bridge::for_generated::RustAutoOpaqueInner<Engine>,
+            >>::sse_decode(&mut deserializer);
+            let api_tt_jd = <f64>::sse_decode(&mut deserializer);
+            let api_site = <Option<crate::api::guanxiang::Site>>::sse_decode(&mut deserializer);
+            let api_lang = <crate::api::guanxiang::Lang>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let mut api_engine_guard = None;
+                        let decode_indices_ =
+                            flutter_rust_bridge::for_generated::lockable_compute_decode_order(
+                                vec![flutter_rust_bridge::for_generated::LockableOrderInfo::new(
+                                    &api_engine,
+                                    0,
+                                    false,
+                                )],
+                            );
+                        for i in decode_indices_ {
+                            match i {
+                                0 => api_engine_guard = Some(api_engine.lockable_decode_sync_ref()),
+                                _ => unreachable!(),
+                            }
+                        }
+                        let api_engine_guard = api_engine_guard.unwrap();
+                        let output_ok = crate::api::guanxiang::lunar_eclipse_detail(
+                            &*api_engine_guard,
+                            api_tt_jd,
+                            api_site,
+                            api_lang,
+                        )?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
             }
         },
     )
@@ -783,6 +844,25 @@ impl SseDecode for crate::api::guanxiang::DiagramPoint {
     }
 }
 
+impl SseDecode for crate::api::guanxiang::EclipsePhase {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_code = <String>::sse_decode(deserializer);
+        let mut var_name = <String>::sse_decode(deserializer);
+        let mut var_utc = <String>::sse_decode(deserializer);
+        let mut var_sublunar = <crate::api::guanxiang::GeoPoint>::sse_decode(deserializer);
+        let mut var_horizon =
+            <Option<crate::api::guanxiang::HorizonPoint>>::sse_decode(deserializer);
+        return crate::api::guanxiang::EclipsePhase {
+            code: var_code,
+            name: var_name,
+            utc: var_utc,
+            sublunar: var_sublunar,
+            horizon: var_horizon,
+        };
+    }
+}
+
 impl SseDecode for crate::api::guanxiang::EventItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -841,6 +921,20 @@ impl SseDecode for crate::api::guanxiang::GeoPoint {
     }
 }
 
+impl SseDecode for crate::api::guanxiang::HorizonPoint {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_moonAltitudeDeg = <f64>::sse_decode(deserializer);
+        let mut var_moonAzimuthDeg = <f64>::sse_decode(deserializer);
+        let mut var_sunAltitudeDeg = <f64>::sse_decode(deserializer);
+        return crate::api::guanxiang::HorizonPoint {
+            moon_altitude_deg: var_moonAltitudeDeg,
+            moon_azimuth_deg: var_moonAzimuthDeg,
+            sun_altitude_deg: var_sunAltitudeDeg,
+        };
+    }
+}
+
 impl SseDecode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -886,6 +980,20 @@ impl SseDecode for Vec<crate::api::guanxiang::DiagramPoint> {
     }
 }
 
+impl SseDecode for Vec<crate::api::guanxiang::EclipsePhase> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::guanxiang::EclipsePhase>::sse_decode(
+                deserializer,
+            ));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::guanxiang::GeoPoint> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -893,6 +1001,18 @@ impl SseDecode for Vec<crate::api::guanxiang::GeoPoint> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::guanxiang::GeoPoint>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<f64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<f64>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -964,6 +1084,47 @@ impl SseDecode for Vec<crate::api::guanxiang::SkyEventItem> {
     }
 }
 
+impl SseDecode for crate::api::guanxiang::LocalLunarView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_verdict = <crate::api::guanxiang::LunarVisibility>::sse_decode(deserializer);
+        let mut var_totalityVisible = <bool>::sse_decode(deserializer);
+        let mut var_trackAltitudeDeg = <Vec<f64>>::sse_decode(deserializer);
+        let mut var_moonEvents =
+            <Vec<crate::api::guanxiang::SkyEventItem>>::sse_decode(deserializer);
+        return crate::api::guanxiang::LocalLunarView {
+            verdict: var_verdict,
+            totality_visible: var_totalityVisible,
+            track_altitude_deg: var_trackAltitudeDeg,
+            moon_events: var_moonEvents,
+        };
+    }
+}
+
+impl SseDecode for crate::api::guanxiang::LunarEclipseDetail {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_diagram =
+            <crate::api::guanxiang::LunarEclipseDiagram>::sse_decode(deserializer);
+        let mut var_phases = <Vec<crate::api::guanxiang::EclipsePhase>>::sse_decode(deserializer);
+        let mut var_penumbralMinutes = <f64>::sse_decode(deserializer);
+        let mut var_partialMinutes = <Option<f64>>::sse_decode(deserializer);
+        let mut var_totalMinutes = <Option<f64>>::sse_decode(deserializer);
+        let mut var_saros = <String>::sse_decode(deserializer);
+        let mut var_local =
+            <Option<crate::api::guanxiang::LocalLunarView>>::sse_decode(deserializer);
+        return crate::api::guanxiang::LunarEclipseDetail {
+            diagram: var_diagram,
+            phases: var_phases,
+            penumbral_minutes: var_penumbralMinutes,
+            partial_minutes: var_partialMinutes,
+            total_minutes: var_totalMinutes,
+            saros: var_saros,
+            local: var_local,
+        };
+    }
+}
+
 impl SseDecode for crate::api::guanxiang::LunarEclipseDiagram {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -978,6 +1139,21 @@ impl SseDecode for crate::api::guanxiang::LunarEclipseDiagram {
             moon_semidiameter_deg: var_moonSemidiameterDeg,
             path: var_path,
             marks: var_marks,
+        };
+    }
+}
+
+impl SseDecode for crate::api::guanxiang::LunarVisibility {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::guanxiang::LunarVisibility::Full,
+            1 => crate::api::guanxiang::LunarVisibility::Rises,
+            2 => crate::api::guanxiang::LunarVisibility::Sets,
+            3 => crate::api::guanxiang::LunarVisibility::RisesAndSets,
+            4 => crate::api::guanxiang::LunarVisibility::Hidden,
+            _ => unreachable!("Invalid variant for LunarVisibility: {}", inner),
         };
     }
 }
@@ -1051,6 +1227,32 @@ impl SseDecode for Option<f64> {
     }
 }
 
+impl SseDecode for Option<crate::api::guanxiang::HorizonPoint> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::guanxiang::HorizonPoint>::sse_decode(
+                deserializer,
+            ));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::guanxiang::LocalLunarView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::guanxiang::LocalLunarView>::sse_decode(
+                deserializer,
+            ));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<crate::api::guanxiang::ObserverInput> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1058,6 +1260,17 @@ impl SseDecode for Option<crate::api::guanxiang::ObserverInput> {
             return Some(<crate::api::guanxiang::ObserverInput>::sse_decode(
                 deserializer,
             ));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::guanxiang::Site> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::guanxiang::Site>::sse_decode(deserializer));
         } else {
             return None;
         }
@@ -1163,6 +1376,20 @@ impl SseDecode for crate::api::guanxiang::SearchUpdate {
             count: var_count,
             cancelled: var_cancelled,
             elapsed_ms: var_elapsedMs,
+        };
+    }
+}
+
+impl SseDecode for crate::api::guanxiang::Site {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_latitudeDeg = <f64>::sse_decode(deserializer);
+        let mut var_longitudeDeg = <f64>::sse_decode(deserializer);
+        let mut var_heightM = <f64>::sse_decode(deserializer);
+        return crate::api::guanxiang::Site {
+            latitude_deg: var_latitudeDeg,
+            longitude_deg: var_longitudeDeg,
+            height_m: var_heightM,
         };
     }
 }
@@ -1288,23 +1515,29 @@ fn pde_ffi_dispatcher_primary_impl(
     match func_id {
         4 => wire__crate__api__guanxiang__Engine_from_bytes_impl(port, ptr, rust_vec_len, data_len),
         6 => wire__crate__api__guanxiang__init_app_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__guanxiang__lunar_eclipse_diagram_impl(
+        7 => wire__crate__api__guanxiang__lunar_eclipse_detail_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        9 => {
+        8 => wire__crate__api__guanxiang__lunar_eclipse_diagram_impl(
+            port,
+            ptr,
+            rust_vec_len,
+            data_len,
+        ),
+        10 => {
             wire__crate__api__guanxiang__satellite_transits_impl(port, ptr, rust_vec_len, data_len)
         }
-        10 => wire__crate__api__guanxiang__search_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__guanxiang__solar_eclipse_diagram_impl(
+        11 => wire__crate__api__guanxiang__search_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__guanxiang__solar_eclipse_diagram_impl(
             port,
             ptr,
             rust_vec_len,
             data_len,
         ),
-        13 => wire__crate__api__guanxiang__tonight_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__guanxiang__tonight_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1321,8 +1554,8 @@ fn pde_ffi_dispatcher_sync_impl(
         2 => wire__crate__api__guanxiang__CancelToken_new_impl(ptr, rust_vec_len, data_len),
         3 => wire__crate__api__guanxiang__Engine_coverage_years_impl(ptr, rust_vec_len, data_len),
         5 => wire__crate__api__guanxiang__body_names_impl(ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__guanxiang__parse_omm_impl(ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__guanxiang__sun_safety_notice_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__guanxiang__parse_omm_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__guanxiang__sun_safety_notice_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1401,6 +1634,30 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::DiagramPoint>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::EclipsePhase {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.code.into_into_dart().into_dart(),
+            self.name.into_into_dart().into_dart(),
+            self.utc.into_into_dart().into_dart(),
+            self.sublunar.into_into_dart().into_dart(),
+            self.horizon.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::guanxiang::EclipsePhase
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::EclipsePhase>
+    for crate::api::guanxiang::EclipsePhase
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::EclipsePhase {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::EventItem {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1474,6 +1731,28 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::GeoPoint>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::HorizonPoint {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.moon_altitude_deg.into_into_dart().into_dart(),
+            self.moon_azimuth_deg.into_into_dart().into_dart(),
+            self.sun_altitude_deg.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::guanxiang::HorizonPoint
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::HorizonPoint>
+    for crate::api::guanxiang::HorizonPoint
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::HorizonPoint {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::Lang {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         match self {
@@ -1488,6 +1767,55 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::Lang>
     for crate::api::guanxiang::Lang
 {
     fn into_into_dart(self) -> crate::api::guanxiang::Lang {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::LocalLunarView {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.verdict.into_into_dart().into_dart(),
+            self.totality_visible.into_into_dart().into_dart(),
+            self.track_altitude_deg.into_into_dart().into_dart(),
+            self.moon_events.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::guanxiang::LocalLunarView
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::LocalLunarView>
+    for crate::api::guanxiang::LocalLunarView
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::LocalLunarView {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::LunarEclipseDetail {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.diagram.into_into_dart().into_dart(),
+            self.phases.into_into_dart().into_dart(),
+            self.penumbral_minutes.into_into_dart().into_dart(),
+            self.partial_minutes.into_into_dart().into_dart(),
+            self.total_minutes.into_into_dart().into_dart(),
+            self.saros.into_into_dart().into_dart(),
+            self.local.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::guanxiang::LunarEclipseDetail
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::LunarEclipseDetail>
+    for crate::api::guanxiang::LunarEclipseDetail
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::LunarEclipseDetail {
         self
     }
 }
@@ -1512,6 +1840,30 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::LunarEclipseDiagra
     for crate::api::guanxiang::LunarEclipseDiagram
 {
     fn into_into_dart(self) -> crate::api::guanxiang::LunarEclipseDiagram {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::LunarVisibility {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Full => 0.into_dart(),
+            Self::Rises => 1.into_dart(),
+            Self::Sets => 2.into_dart(),
+            Self::RisesAndSets => 3.into_dart(),
+            Self::Hidden => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for crate::api::guanxiang::LunarVisibility
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::LunarVisibility>
+    for crate::api::guanxiang::LunarVisibility
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::LunarVisibility {
         self
     }
 }
@@ -1671,6 +2023,25 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::SearchUpdate>
     for crate::api::guanxiang::SearchUpdate
 {
     fn into_into_dart(self) -> crate::api::guanxiang::SearchUpdate {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::guanxiang::Site {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.latitude_deg.into_into_dart().into_dart(),
+            self.longitude_deg.into_into_dart().into_dart(),
+            self.height_m.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::guanxiang::Site {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::guanxiang::Site>
+    for crate::api::guanxiang::Site
+{
+    fn into_into_dart(self) -> crate::api::guanxiang::Site {
         self
     }
 }
@@ -1878,6 +2249,17 @@ impl SseEncode for crate::api::guanxiang::DiagramPoint {
     }
 }
 
+impl SseEncode for crate::api::guanxiang::EclipsePhase {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.code, serializer);
+        <String>::sse_encode(self.name, serializer);
+        <String>::sse_encode(self.utc, serializer);
+        <crate::api::guanxiang::GeoPoint>::sse_encode(self.sublunar, serializer);
+        <Option<crate::api::guanxiang::HorizonPoint>>::sse_encode(self.horizon, serializer);
+    }
+}
+
 impl SseEncode for crate::api::guanxiang::EventItem {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1927,6 +2309,15 @@ impl SseEncode for crate::api::guanxiang::GeoPoint {
     }
 }
 
+impl SseEncode for crate::api::guanxiang::HorizonPoint {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <f64>::sse_encode(self.moon_altitude_deg, serializer);
+        <f64>::sse_encode(self.moon_azimuth_deg, serializer);
+        <f64>::sse_encode(self.sun_altitude_deg, serializer);
+    }
+}
+
 impl SseEncode for i32 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1970,12 +2361,32 @@ impl SseEncode for Vec<crate::api::guanxiang::DiagramPoint> {
     }
 }
 
+impl SseEncode for Vec<crate::api::guanxiang::EclipsePhase> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::guanxiang::EclipsePhase>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::guanxiang::GeoPoint> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::guanxiang::GeoPoint>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<f64> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <f64>::sse_encode(item, serializer);
         }
     }
 }
@@ -2030,6 +2441,29 @@ impl SseEncode for Vec<crate::api::guanxiang::SkyEventItem> {
     }
 }
 
+impl SseEncode for crate::api::guanxiang::LocalLunarView {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::guanxiang::LunarVisibility>::sse_encode(self.verdict, serializer);
+        <bool>::sse_encode(self.totality_visible, serializer);
+        <Vec<f64>>::sse_encode(self.track_altitude_deg, serializer);
+        <Vec<crate::api::guanxiang::SkyEventItem>>::sse_encode(self.moon_events, serializer);
+    }
+}
+
+impl SseEncode for crate::api::guanxiang::LunarEclipseDetail {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::guanxiang::LunarEclipseDiagram>::sse_encode(self.diagram, serializer);
+        <Vec<crate::api::guanxiang::EclipsePhase>>::sse_encode(self.phases, serializer);
+        <f64>::sse_encode(self.penumbral_minutes, serializer);
+        <Option<f64>>::sse_encode(self.partial_minutes, serializer);
+        <Option<f64>>::sse_encode(self.total_minutes, serializer);
+        <String>::sse_encode(self.saros, serializer);
+        <Option<crate::api::guanxiang::LocalLunarView>>::sse_encode(self.local, serializer);
+    }
+}
+
 impl SseEncode for crate::api::guanxiang::LunarEclipseDiagram {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2038,6 +2472,25 @@ impl SseEncode for crate::api::guanxiang::LunarEclipseDiagram {
         <f64>::sse_encode(self.moon_semidiameter_deg, serializer);
         <Vec<crate::api::guanxiang::DiagramPoint>>::sse_encode(self.path, serializer);
         <Vec<crate::api::guanxiang::DiagramPoint>>::sse_encode(self.marks, serializer);
+    }
+}
+
+impl SseEncode for crate::api::guanxiang::LunarVisibility {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::guanxiang::LunarVisibility::Full => 0,
+                crate::api::guanxiang::LunarVisibility::Rises => 1,
+                crate::api::guanxiang::LunarVisibility::Sets => 2,
+                crate::api::guanxiang::LunarVisibility::RisesAndSets => 3,
+                crate::api::guanxiang::LunarVisibility::Hidden => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 
@@ -2093,12 +2546,42 @@ impl SseEncode for Option<f64> {
     }
 }
 
+impl SseEncode for Option<crate::api::guanxiang::HorizonPoint> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::guanxiang::HorizonPoint>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::guanxiang::LocalLunarView> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::guanxiang::LocalLunarView>::sse_encode(value, serializer);
+        }
+    }
+}
+
 impl SseEncode for Option<crate::api::guanxiang::ObserverInput> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <crate::api::guanxiang::ObserverInput>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::guanxiang::Site> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::guanxiang::Site>::sse_encode(value, serializer);
         }
     }
 }
@@ -2159,6 +2642,15 @@ impl SseEncode for crate::api::guanxiang::SearchUpdate {
         <u32>::sse_encode(self.count, serializer);
         <bool>::sse_encode(self.cancelled, serializer);
         <u64>::sse_encode(self.elapsed_ms, serializer);
+    }
+}
+
+impl SseEncode for crate::api::guanxiang::Site {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <f64>::sse_encode(self.latitude_deg, serializer);
+        <f64>::sse_encode(self.longitude_deg, serializer);
+        <f64>::sse_encode(self.height_m, serializer);
     }
 }
 

@@ -12,15 +12,16 @@ use flutter_rust_bridge::frb;
 use guanxiang_core::events::almanac::{self, SkyEventKind};
 use guanxiang_core::events::local_eclipse::{self, LocalSolarKind};
 use guanxiang_core::events::longitude::{self, Aspect};
-use guanxiang_core::events::lunar_eclipse::{self, LunarEclipseKind, ShadowModel};
+use guanxiang_core::events::lunar_eclipse::{self, LunarEclipse, LunarEclipseKind, ShadowModel};
 use guanxiang_core::events::occultation::{self, Target};
+use guanxiang_core::events::saros;
 use guanxiang_core::events::sat_transit::{self, SatTransit};
 use guanxiang_core::events::solar_eclipse::{self, SolarEclipseKind};
 use guanxiang_core::events::visibility::{apparent_altitude, VisibilityFilter};
 use guanxiang_core::events::{separation, transit, Span};
 use guanxiang_core::satellite::Satellite;
 use guanxiang_core::stars::Star;
-use guanxiang_core::{stars, AniseEphemeris, Body, DateTime, Observer, Time};
+use guanxiang_core::{astrometry, stars, AniseEphemeris, Body, DateTime, Observer, Time};
 
 use crate::frb_generated::StreamSink;
 
@@ -694,6 +695,9 @@ fn search_span(
                         format!("{:.4}", e.umbral_magnitude),
                     ),
                 ];
+                if let Some(sr) = saros::lunar_saros(&e.greatest) {
+                    details.push(detail(l.s("沙罗序列", "Saros series"), saros_label(sr, l)));
+                }
                 for (label, c) in labels.iter().zip(&e.contacts) {
                     if let Some(c) = c {
                         details.push(detail(*label, utc(c)));
@@ -1018,16 +1022,28 @@ pub fn lunar_eclipse_diagram(
     tt_jd: f64,
     lang: Lang,
 ) -> anyhow::Result<LunarEclipseDiagram> {
-    let eph = &engine.eph;
-    let e = lunar_eclipse::search(eph, eclipse_span(tt_jd)?, ShadowModel::Danjon)?
+    let e = find_lunar_eclipse(engine, tt_jd, lang)?;
+    lunar_diagram(engine, &e, lang)
+}
+
+/// 按食甚的 TT 儒略日找回那次月食。
+fn find_lunar_eclipse(engine: &Engine, tt_jd: f64, lang: Lang) -> anyhow::Result<LunarEclipse> {
+    lunar_eclipse::search(&engine.eph, eclipse_span(tt_jd)?, ShadowModel::Danjon)?
         .into_iter()
         .min_by(|a, b| {
             (a.greatest.tt_jd() - tt_jd)
                 .abs()
                 .total_cmp(&(b.greatest.tt_jd() - tt_jd).abs())
         })
-        .ok_or_else(|| anyhow::anyhow!("{}", lang.s("找不到这次月食", "Eclipse not found")))?;
-    let d = lunar_eclipse::diagram(eph, &e, ShadowModel::Danjon, DIAGRAM_STEP_S)?;
+        .ok_or_else(|| anyhow::anyhow!("{}", lang.s("找不到这次月食", "Eclipse not found")))
+}
+
+fn lunar_diagram(
+    engine: &Engine,
+    e: &LunarEclipse,
+    lang: Lang,
+) -> anyhow::Result<LunarEclipseDiagram> {
+    let d = lunar_eclipse::diagram(&engine.eph, e, ShadowModel::Danjon, DIAGRAM_STEP_S)?;
     let point = |p: &lunar_eclipse::ShadowPoint, label: &str| DiagramPoint {
         x: p.x_deg,
         y: p.y_deg,
@@ -1048,6 +1064,257 @@ pub fn lunar_eclipse_diagram(
         moon_semidiameter_deg: d.moon_semidiameter_deg,
         path: d.path.iter().map(|p| point(p, "")).collect(),
         marks,
+    })
+}
+
+/// 沙罗序列，如“128（第 41 次，共 71 次）”。
+fn saros_label(s: saros::Saros, l: Lang) -> String {
+    match l {
+        Lang::Zh => format!("{}（第 {} 次，共 {} 次）", s.series, s.member, s.count),
+        Lang::En => format!("{} ({} of {})", s.series, s.member, s.count),
+    }
+}
+
+/// 观测地点（只用于本地可见情况，不做可见性过滤）。
+#[derive(Debug, Clone, Copy)]
+pub struct Site {
+    pub latitude_deg: f64,
+    pub longitude_deg: f64,
+    pub height_m: f64,
+}
+
+/// 某一时刻在观测地看到的日月（度；高度含大气折射，方位从北向东量）。
+#[derive(Debug, Clone, Copy)]
+pub struct HorizonPoint {
+    pub moon_altitude_deg: f64,
+    pub moon_azimuth_deg: f64,
+    pub sun_altitude_deg: f64,
+}
+
+/// 月食的一个食相。
+#[derive(Debug, Clone)]
+pub struct EclipsePhase {
+    /// P1、U1、U2、Max、U3、U4、P4
+    pub code: String,
+    /// 显示名称，如“食既”
+    pub name: String,
+    pub utc: String,
+    /// 月下点：此刻月亮在天顶的地方
+    pub sublunar: GeoPoint,
+    /// 有观测地点时才有
+    pub horizon: Option<HorizonPoint>,
+}
+
+/// 在观测地能看到多少（月偏食、月全食按本影食 U1–U4 判断，半影月食按 P1–P4 判断）。
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LunarVisibility {
+    /// 全程月亮都在地平线以上
+    Full,
+    /// 月出时已在食中
+    Rises,
+    /// 月落时仍在食中
+    Sets,
+    /// 食中既有月出又有月落（高纬度才会出现）
+    RisesAndSets,
+    /// 全程月亮都在地平线以下
+    Hidden,
+}
+
+/// 观测地的可见情况。
+#[derive(Debug, Clone)]
+pub struct LocalLunarView {
+    pub verdict: LunarVisibility,
+    /// 全食阶段能否看到（至少有一部分时间月亮在地平线以上）；没有全食时为 false
+    pub totality_visible: bool,
+    /// 月亮视高度（度），与 `diagram.path` 逐点对应，滑块用
+    pub track_altitude_deg: Vec<f64>,
+    /// P1 前 1 小时到 P4 后 1 小时之间的月出、月落
+    pub moon_events: Vec<SkyEventItem>,
+}
+
+/// 月食详情页的全部数据。
+#[derive(Debug, Clone)]
+pub struct LunarEclipseDetail {
+    pub diagram: LunarEclipseDiagram,
+    /// 按时间顺序，没有的接触跳过
+    pub phases: Vec<EclipsePhase>,
+    /// 半影食（P1–P4）、本影食（U1–U4）、全食（U2–U3）的持续时间（分钟）
+    pub penumbral_minutes: f64,
+    pub partial_minutes: Option<f64>,
+    pub total_minutes: Option<f64>,
+    /// 沙罗序列，如“128（第 41 次，共 71 次）”；星历范围外为空
+    pub saros: String,
+    pub local: Option<LocalLunarView>,
+}
+
+/// 月食详情。`tt_jd` 为搜索结果里该次月食的食甚；`site` 为空时不算本地可见情况。
+pub fn lunar_eclipse_detail(
+    engine: &Engine,
+    tt_jd: f64,
+    site: Option<Site>,
+    lang: Lang,
+) -> anyhow::Result<LunarEclipseDetail> {
+    let eph = &engine.eph;
+    let e = find_lunar_eclipse(engine, tt_jd, lang)?;
+    let diagram = lunar_diagram(engine, &e, lang)?;
+    let obs = site
+        .map(|s| Observer::from_degrees(s.latitude_deg, s.longitude_deg, s.height_m))
+        .transpose()?;
+
+    let c = e.contacts;
+    let moments = [
+        ("P1", l_phase(lang, 0), c[0]),
+        ("U1", l_phase(lang, 1), c[1]),
+        ("U2", l_phase(lang, 2), c[2]),
+        ("Max", l_phase(lang, 3), Some(e.greatest)),
+        ("U3", l_phase(lang, 4), c[3]),
+        ("U4", l_phase(lang, 5), c[4]),
+        ("P4", l_phase(lang, 6), c[5]),
+    ];
+    let mut phases = Vec::new();
+    for (code, name, t) in moments {
+        let Some(t) = t else { continue };
+        let (lat, lon) = astrometry::sub_body_point(eph, Body::Moon, &t)?;
+        let horizon = obs
+            .as_ref()
+            .map(|o| -> anyhow::Result<HorizonPoint> {
+                Ok(HorizonPoint {
+                    moon_altitude_deg: apparent_altitude(eph, Body::Moon, &t, o)?.to_degrees(),
+                    moon_azimuth_deg: astrometry::topocentric(eph, Body::Moon, &t, o)?
+                        .horizontal
+                        .azimuth
+                        .to_degrees(),
+                    sun_altitude_deg: apparent_altitude(eph, Body::Sun, &t, o)?.to_degrees(),
+                })
+            })
+            .transpose()?;
+        phases.push(EclipsePhase {
+            code: code.to_string(),
+            name: name.to_string(),
+            utc: utc(&t),
+            sublunar: geo((lat.to_degrees(), lon.to_degrees())),
+            horizon,
+        });
+    }
+
+    let minutes = |a: Option<Time>, b: Option<Time>| match (a, b) {
+        (Some(a), Some(b)) => Some((b.tt_seconds() - a.tt_seconds()) / 60.0),
+        _ => None,
+    };
+    let local = match &obs {
+        Some(o) => Some(local_lunar_view(engine, &e, o)?),
+        None => None,
+    };
+    Ok(LunarEclipseDetail {
+        diagram,
+        phases,
+        penumbral_minutes: minutes(c[0], c[5]).unwrap_or(0.0),
+        partial_minutes: minutes(c[1], c[4]),
+        total_minutes: minutes(c[2], c[3]),
+        saros: saros::lunar_saros(&e.greatest)
+            .map(|s| saros_label(s, lang))
+            .unwrap_or_default(),
+        local,
+    })
+}
+
+/// 食相名称，顺序：P1、U1、U2、食甚、U3、U4、P4。
+fn l_phase(l: Lang, i: usize) -> &'static str {
+    const ZH: [&str; 7] = [
+        "半影食始",
+        "初亏",
+        "食既",
+        "食甚",
+        "生光",
+        "复圆",
+        "半影食终",
+    ];
+    const EN: [&str; 7] = [
+        "Penumbral begins",
+        "Partial begins",
+        "Total begins",
+        "Greatest",
+        "Total ends",
+        "Partial ends",
+        "Penumbral ends",
+    ];
+    match l {
+        Lang::Zh => ZH[i],
+        Lang::En => EN[i],
+    }
+}
+
+/// 观测地的可见情况：沿示意图的轨迹时刻（每 5 分钟）和各接触时刻取月亮视高度。
+fn local_lunar_view(
+    engine: &Engine,
+    e: &LunarEclipse,
+    obs: &Observer,
+) -> anyhow::Result<LocalLunarView> {
+    let eph = &engine.eph;
+    let d = lunar_eclipse::diagram(eph, e, ShadowModel::Danjon, DIAGRAM_STEP_S)?;
+    let alt = |t: &Time| -> anyhow::Result<f64> {
+        Ok(apparent_altitude(eph, Body::Moon, t, obs)?.to_degrees())
+    };
+    let track = d
+        .path
+        .iter()
+        .map(|p| alt(&p.time))
+        .collect::<anyhow::Result<Vec<_>>>()?;
+
+    // [from, to] 内各取样点的高度（两端用接触时刻本身）
+    let c = e.contacts;
+    let samples = |from: Time, to: Time| -> anyhow::Result<Vec<f64>> {
+        let (a, b) = (from.tt_seconds(), to.tt_seconds());
+        let mut v = vec![alt(&from)?];
+        for (p, h) in d.path.iter().zip(&track) {
+            let t = p.time.tt_seconds();
+            if t > a && t < b {
+                v.push(*h);
+            }
+        }
+        v.push(alt(&to)?);
+        Ok(v)
+    };
+    let (from, to) = match (c[1], c[4]) {
+        (Some(u1), Some(u4)) => (u1, u4),
+        _ => (c[0].unwrap_or(e.greatest), c[5].unwrap_or(e.greatest)),
+    };
+    let window = samples(from, to)?;
+    let up: Vec<bool> = window.iter().map(|h| *h > 0.0).collect();
+    let verdict = match (
+        up.first(),
+        up.last(),
+        up.iter().any(|u| *u),
+        up.iter().all(|u| *u),
+    ) {
+        (_, _, _, true) => LunarVisibility::Full,
+        (_, _, false, _) => LunarVisibility::Hidden,
+        (Some(false), Some(true), _, _) => LunarVisibility::Rises,
+        (Some(true), Some(false), _, _) => LunarVisibility::Sets,
+        _ => LunarVisibility::RisesAndSets,
+    };
+    let totality_visible = match (c[2], c[3]) {
+        (Some(u2), Some(u3)) => samples(u2, u3)?.iter().any(|h| *h > 0.0),
+        _ => false,
+    };
+
+    let span = Span::new(
+        c[0].unwrap_or(e.greatest).add_seconds(-3600.0),
+        c[5].unwrap_or(e.greatest).add_seconds(3600.0),
+    )?;
+    let moon_events = almanac::rise_set_twilight(eph, obs, span, None)?
+        .into_iter()
+        .filter(|x| matches!(x.kind, SkyEventKind::Moonrise | SkyEventKind::Moonset))
+        .map(|x| SkyEventItem {
+            kind: x.kind.into(),
+            utc: utc(&x.time),
+        })
+        .collect();
+    Ok(LocalLunarView {
+        verdict,
+        totality_visible,
+        track_altitude_deg: track,
+        moon_events,
     })
 }
 
@@ -1557,6 +1824,61 @@ mod tests {
             s.greatest.utc
         );
         assert!(s.umbra_radius < 0.0 && s.track.len() > 20);
+    }
+
+    /// 2025-09-07 月全食：北京全程可见，伦敦月出时已在食中，纽约看不到
+    #[test]
+    fn lunar_eclipse_detail_2025_09_07() {
+        let Some(engine) = test_engine() else { return };
+        let beijing = Site {
+            latitude_deg: 39.9042,
+            longitude_deg: 116.4074,
+            height_m: 44.0,
+        };
+        let d = lunar_eclipse_detail(&engine, 2_460_926.259, Some(beijing), Lang::Zh).unwrap();
+        let codes: Vec<&str> = d.phases.iter().map(|p| p.code.as_str()).collect();
+        assert_eq!(codes, ["P1", "U1", "U2", "Max", "U3", "U4", "P4"]);
+        assert_eq!(d.saros, "128（第 41 次，共 71 次）");
+        // NASA：半影 326.7、本影 209.4、全食 82.1 分钟
+        assert!((d.total_minutes.unwrap() - 82.1).abs() < 0.5);
+        assert!((d.partial_minutes.unwrap() - 209.4).abs() < 0.5);
+        assert!((d.penumbral_minutes - 326.7).abs() < 0.5);
+        // NASA 星表：食甚时月亮在 6°S、87°E 的天顶
+        let max = &d.phases[3];
+        assert!((max.sublunar.latitude_deg + 6.0).abs() < 1.0);
+        assert!(
+            (max.sublunar.longitude_deg - 87.0).abs() < 1.0,
+            "{:?}",
+            max.sublunar
+        );
+        let local = d.local.unwrap();
+        assert_eq!(local.verdict, LunarVisibility::Full);
+        assert!(local.totality_visible);
+        assert_eq!(local.track_altitude_deg.len(), d.diagram.path.len());
+        assert!(max.horizon.unwrap().moon_altitude_deg > 20.0);
+
+        // 伦敦：月出约 18:30 UTC，晚于初亏（16:27），月出时已在食中
+        let london = Site {
+            latitude_deg: 51.5074,
+            longitude_deg: -0.1278,
+            height_m: 11.0,
+        };
+        let d = lunar_eclipse_detail(&engine, 2_460_926.259, Some(london), Lang::En).unwrap();
+        let v = d.local.unwrap();
+        assert_eq!(v.verdict, LunarVisibility::Rises);
+        assert!(v.moon_events.iter().any(|e| e.kind == SkyKind::Moonrise));
+        // 纽约：全程在地平线以下
+        let new_york = Site {
+            latitude_deg: 40.7128,
+            longitude_deg: -74.006,
+            height_m: 10.0,
+        };
+        let d = lunar_eclipse_detail(&engine, 2_460_926.259, Some(new_york), Lang::En).unwrap();
+        assert_eq!(d.local.unwrap().verdict, LunarVisibility::Hidden);
+        assert!(lunar_eclipse_detail(&engine, 2_460_926.259, None, Lang::En)
+            .unwrap()
+            .local
+            .is_none());
     }
 
     #[test]
