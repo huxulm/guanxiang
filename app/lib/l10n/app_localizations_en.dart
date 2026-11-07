@@ -85,6 +85,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get tonightSetLocation => 'Set location';
 
   @override
+  String get diagramTitle => 'Diagram';
+
+  @override
+  String get diagramLunarCaption =>
+      'North up, east left (as seen in the sky). The outer circle is Earth\'s penumbra, the inner one the umbra. The small circles show the Moon at each contact (P1 penumbral begins, U1 partial begins, U2 total begins, U3 total ends, U4 partial ends, P4 penumbral ends) and at greatest eclipse; the arrow shows its motion.';
+
+  @override
+  String get diagramSolarCaption =>
+      'Earth seen from the Sun, north up. The solid line is the path of the shadow axis (local times marked); the dashed circle is the penumbra at greatest eclipse, inside which the eclipse is partial. The black dot is the umbra: where it falls on Earth, the eclipse is total.';
+
+  @override
+  String get diagramSolarCaptionAnnular =>
+      'Earth seen from the Sun, north up. The solid line is the path of the shadow axis (local times marked); the dashed circle is the penumbra at greatest eclipse, inside which the eclipse is partial. The black dot is the antumbra: where it falls on Earth, the eclipse is annular.';
+
+  @override
   String get today => 'Today';
 
   @override

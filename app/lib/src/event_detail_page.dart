@@ -2,15 +2,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../l10n/app_localizations.dart';
+import 'eclipse_diagram.dart';
 import 'event_style.dart';
 import 'layout.dart';
 import 'rust/api/guanxiang.dart';
 import 'time_format.dart';
 
 class EventDetailPage extends StatelessWidget {
-  const EventDetailPage({super.key, required this.event});
+  const EventDetailPage({super.key, required this.event, this.engine});
 
   final EventItem event;
+
+  /// 有星历时，日月食详情显示示意图
+  final Engine? engine;
 
   /// 复制用的纯文本：标题、时间、摘要和全部参数。
   String _plainText() {
@@ -122,6 +126,10 @@ class EventDetailPage extends StatelessWidget {
               ],
             ),
           ),
+          if (engine != null && EclipseDiagramCard.supports(event.kind)) ...[
+            const SizedBox(height: 16),
+            EclipseDiagramCard(engine: engine!, event: event),
+          ],
           const SizedBox(height: 16),
           Text(
             l.detailFooter(event.ttJd.toStringAsFixed(6)),

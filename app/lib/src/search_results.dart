@@ -18,7 +18,10 @@ bool isNarrow(BuildContext context) =>
 
 /// 一次正在进行或已结束的搜索。搜索页和结果页共用。
 class SearchSession extends ChangeNotifier {
-  SearchSession({required this.title});
+  SearchSession({required this.title, this.engine});
+
+  /// 打开详情页时用来画日月食示意图
+  final Engine? engine;
 
   /// 结果页标题，在 build 时按当前语言生成
   final String Function(AppLocalizations) title;
@@ -114,7 +117,7 @@ class EventResultsList extends StatelessWidget {
             itemCount: rows.length,
             itemBuilder: (context, i) => switch (rows[i]) {
               final int y => _YearHeader(year: y),
-              final EventItem e => EventResultTile(event: e),
+              final EventItem e => EventResultTile(event: e, engine: s.engine),
               _ => const SizedBox.shrink(),
             },
           ),
@@ -147,9 +150,10 @@ class _YearHeader extends StatelessWidget {
 
 /// 结果列表的一行：类型图标、标题，下面两行是时间和摘要。
 class EventResultTile extends StatelessWidget {
-  const EventResultTile({super.key, required this.event});
+  const EventResultTile({super.key, required this.event, this.engine});
 
   final EventItem event;
+  final Engine? engine;
 
   @override
   Widget build(BuildContext context) {
@@ -164,8 +168,11 @@ class EventResultTile extends StatelessWidget {
       subtitle: Text('$time\n$summary'),
       isThreeLine: true,
       trailing: const Icon(Icons.chevron_right),
-      onTap: () => Navigator.of(context)
-          .push(MaterialPageRoute(builder: (_) => EventDetailPage(event: e))),
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => EventDetailPage(event: e, engine: engine),
+        ),
+      ),
     );
   }
 }

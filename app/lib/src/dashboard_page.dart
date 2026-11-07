@@ -549,7 +549,10 @@ class _UpcomingEventsState extends State<_UpcomingEvents> {
             if (items.isEmpty) return Text(l.upcomingNone);
             return _Grid(
               columns: (w) => w >= 720 ? 2 : 1,
-              children: [for (final e in items) UpcomingEventCard(event: e)],
+              children: [
+                for (final e in items)
+                  UpcomingEventCard(event: e, engine: widget.engine),
+              ],
             );
           },
         ),
@@ -560,9 +563,12 @@ class _UpcomingEventsState extends State<_UpcomingEvents> {
 
 /// 近期天象的一条：类型图标、标题、本地时间、摘要，右侧是倒计时。
 class UpcomingEventCard extends StatelessWidget {
-  const UpcomingEventCard({super.key, required this.event});
+  const UpcomingEventCard({super.key, required this.event, this.engine});
 
   final EventItem event;
+
+  /// 打开详情页时用来画日月食示意图
+  final Engine? engine;
 
   @override
   Widget build(BuildContext context) {
@@ -577,7 +583,9 @@ class UpcomingEventCard extends StatelessWidget {
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => EventDetailPage(event: event)),
+          MaterialPageRoute(
+            builder: (_) => EventDetailPage(event: event, engine: engine),
+          ),
         ),
         child: Padding(
           padding: const EdgeInsets.all(12),

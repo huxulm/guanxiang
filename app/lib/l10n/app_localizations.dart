@@ -224,6 +224,30 @@ abstract class AppLocalizations {
   /// **'设置观测地'**
   String get tonightSetLocation;
 
+  /// No description provided for @diagramTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'示意图'**
+  String get diagramTitle;
+
+  /// No description provided for @diagramLunarCaption.
+  ///
+  /// In zh, this message translates to:
+  /// **'北在上、东在左（抬头所见）。外圈是地球的半影，内圈是本影；小圆是月球在各接触时刻（P1 半影食始、U1 初亏、U2 食既、U3 生光、U4 复圆、P4 半影食终）和食甚时的位置，箭头是月球运动的方向。'**
+  String get diagramLunarCaption;
+
+  /// No description provided for @diagramSolarCaption.
+  ///
+  /// In zh, this message translates to:
+  /// **'从太阳方向看地球，北在上。实线是影子中心扫过的轨迹（标注本地时间），虚线圆是食甚时的半影范围，圆内能看到偏食；黑点是本影，落在地球上时，经过的地方能看到全食。'**
+  String get diagramSolarCaption;
+
+  /// No description provided for @diagramSolarCaptionAnnular.
+  ///
+  /// In zh, this message translates to:
+  /// **'从太阳方向看地球，北在上。实线是影子中心扫过的轨迹（标注本地时间），虚线圆是食甚时的半影范围，圆内能看到偏食；黑点是伪本影，落在地球上时，经过的地方能看到环食。'**
+  String get diagramSolarCaptionAnnular;
+
   /// No description provided for @today.
   ///
   /// In zh, this message translates to:

@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guanxiang/l10n/app_localizations.dart';
 import 'package:guanxiang/src/app.dart';
 import 'package:guanxiang/src/dashboard_page.dart';
+import 'package:guanxiang/src/eclipse_diagram.dart';
 import 'package:guanxiang/src/licenses.dart';
 import 'package:guanxiang/src/rust/api/guanxiang.dart';
 import 'package:guanxiang/src/rust/frb_generated.dart';
@@ -304,5 +305,44 @@ void main() {
     );
     await tester.pumpWidget(const SizedBox());
     await dir.delete(recursive: true);
+  });
+
+  testWidgets('详情页：日月食示意图能画出来', (tester) async {
+    for (final kind in [EventKind.lunarEclipse, EventKind.solarEclipse]) {
+      final updates = await search(
+        engine: engine,
+        request: SearchRequest(
+          kind: kind,
+          bodyA: '',
+          bodyB: '',
+          fromYear: 2027,
+          toYear: 2028,
+          maxSeparationDeg: 0,
+          lang: Lang.zh,
+        ),
+        token: CancelToken(),
+      ).toList();
+      final event = updates.firstWhere((u) => u.kind == UpdateKind.found).item!;
+      await tester.pumpWidget(
+        MaterialApp(
+          locale: const Locale('zh'),
+          supportedLocales: const [Locale('en'), Locale('zh')],
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: EclipseDiagramCard(engine: engine, event: event),
+            ),
+          ),
+        ),
+      );
+      final title = find.text('示意图');
+      for (var i = 0; i < 200 && title.evaluate().isEmpty; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(title, findsOneWidget, reason: '${event.title} 的示意图没有出来');
+      // ignore: avoid_print
+      print('示意图：${event.title} ${event.utc}');
+    }
+    await tester.pumpWidget(const SizedBox());
   });
 }
