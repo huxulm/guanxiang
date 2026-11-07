@@ -14,6 +14,12 @@ void main() {
     expect(roundedPlace(0.4, -0.4), '0°N 0°W');
   });
 
+  test('日食图比月食图高，多出来的是全宽地图', () {
+    expect(posterSize.aspectRatio, closeTo(0.8, 1e-9));
+    expect(solarPosterSize.width, posterSize.width);
+    expect(solarPosterSize.height, greaterThan(posterSize.height));
+  });
+
   testWidgets('分享图：打开“显示观测地”才写位置', (tester) async {
     const event = EventItem(
       kind: EventKind.lunarEclipse,

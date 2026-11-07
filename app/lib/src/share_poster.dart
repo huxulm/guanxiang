@@ -21,8 +21,13 @@ import 'solar_eclipse_detail.dart';
 import 'theme.dart';
 import 'time_format.dart';
 
-/// 分享图的逻辑尺寸（4:5），按 3 倍导出为 1080 × 1350。
+/// 分享图的逻辑尺寸，按 3 倍导出：月食 4:5（1080 × 1350）；日食多一张全宽的食带地图，
+/// 改为 9:14（1080 × 1680）。
 const posterSize = Size(360, 450);
+const solarPosterSize = Size(360, 560);
+
+Size posterSizeFor(Object detail) =>
+    detail is SolarEclipseDetail ? solarPosterSize : posterSize;
 const _posterPixelRatio = 3.0;
 
 /// 官网地址（分享文字里写它，分享图右下角是它的二维码）
@@ -186,7 +191,7 @@ class _EclipseSharePageState extends State<EclipseSharePage> {
           final poster = RepaintBoundary(
             key: _boundary,
             child: SizedBox.fromSize(
-              size: posterSize,
+              size: posterSizeFor(d),
               child: EclipsePoster(
                 event: widget.event,
                 detail: d,
@@ -337,6 +342,184 @@ class _PosterBody extends StatelessWidget {
       color: cs.onSurfaceVariant,
     );
     final p = place;
+    final solarDetail = detail is SolarEclipseDetail
+        ? detail as SolarEclipseDetail
+        : null;
+
+    final pill = left == null
+        ? null
+        : Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: cs.secondaryContainer,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              left,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: cs.onSecondaryContainer,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          );
+    Widget brand({bool withPill = true}) => Row(
+      children: [
+        KindBadge(kind: event.kind, size: 26),
+        const SizedBox(width: 8),
+        Text('观象 · Guanxiang', style: muted),
+        const Spacer(),
+        if (withPill) ?pill,
+      ],
+    );
+    final titleBlock = Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          event.title,
+          style: theme.textTheme.headlineMedium?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: cs.onSurface,
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          date,
+          style: theme.textTheme.bodyMedium?.copyWith(color: cs.onSurface),
+        ),
+      ],
+    );
+    final locationLine = p == null
+        ? null
+        : Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: Row(
+              children: [
+                Icon(Icons.place_outlined, size: 16, color: cs.primary),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    [
+                      l.posterSeenFrom(roundedPlace(p.lat, p.lon)),
+                      ?verdict,
+                    ].join(' · '),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurface,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+    final statsRow = Row(
+      children: [
+        for (final (i, s) in stats.indexed) ...[
+          if (i > 0) const SizedBox(width: 8),
+          Expanded(
+            child: _StatTile(stat: s, accent: accents.eclipse),
+          ),
+        ],
+      ],
+    );
+    // 页脚：左边是安全提示和沙罗序列，右边是官网二维码
+    final footer = Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (solar)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Text(
+                    l.posterSolarSafety,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: cs.error,
+                    ),
+                  ),
+                ),
+              if (saros.isNotEmpty)
+                Text(
+                  l.lunarSaros(saros),
+                  style: muted,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              Text(l.posterScan, style: muted, overflow: TextOverflow.ellipsis),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        const _SiteQr(size: 76),
+      ],
+    );
+
+    final Widget content;
+    if (solarDetail == null) {
+      content = Padding(
+        padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            brand(),
+            const SizedBox(height: 14),
+            titleBlock,
+            Expanded(
+              child: Center(
+                child: SizedBox.square(dimension: 170, child: hero),
+              ),
+            ),
+            ?locationLine,
+            statsRow,
+            const SizedBox(height: 12),
+            footer,
+          ],
+        ),
+      );
+    } else {
+      // 日食：太阳面缩小放在标题右侧，下面是左右贴边的食带地图
+      content = Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(22, 20, 14, 0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      brand(withPill: false),
+                      const SizedBox(height: 14),
+                      titleBlock,
+                      if (pill != null) ...[const SizedBox(height: 8), pill],
+                    ],
+                  ),
+                ),
+                SizedBox.square(dimension: 112, child: hero),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          SolarPathMap(detail: solarDetail, place: p),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(22, 12, 22, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  ?locationLine,
+                  const Spacer(),
+                  statsRow,
+                  const SizedBox(height: 12),
+                  footer,
+                ],
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return DecoratedBox(
       decoration: BoxDecoration(
@@ -354,129 +537,7 @@ class _PosterBody extends StatelessWidget {
           seed: (event.ttJd * 1000).round(),
           color: cs.onSurface,
         ),
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(22, 20, 22, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  KindBadge(kind: event.kind, size: 26),
-                  const SizedBox(width: 8),
-                  Text('观象 · Guanxiang', style: muted),
-                  const Spacer(),
-                  if (left != null)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: cs.secondaryContainer,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        left,
-                        style: theme.textTheme.labelMedium?.copyWith(
-                          color: cs.onSecondaryContainer,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Text(
-                event.title,
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: cs.onSurface,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                date,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: cs.onSurface,
-                ),
-              ),
-              Expanded(
-                child: Center(
-                  child: SizedBox.square(dimension: 170, child: hero),
-                ),
-              ),
-              if (p != null)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 10),
-                  child: Row(
-                    children: [
-                      Icon(Icons.place_outlined, size: 16, color: cs.primary),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: Text(
-                          [
-                            l.posterSeenFrom(roundedPlace(p.lat, p.lon)),
-                            ?verdict,
-                          ].join(' · '),
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: cs.onSurface,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              Row(
-                children: [
-                  for (final (i, s) in stats.indexed) ...[
-                    if (i > 0) const SizedBox(width: 8),
-                    Expanded(
-                      child: _StatTile(stat: s, accent: accents.eclipse),
-                    ),
-                  ],
-                ],
-              ),
-              const SizedBox(height: 12),
-              // 页脚：左边是安全提示和沙罗序列，右边是官网二维码
-              Row(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        if (solar)
-                          Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text(
-                              l.posterSolarSafety,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                color: cs.error,
-                              ),
-                            ),
-                          ),
-                        if (saros.isNotEmpty)
-                          Text(
-                            l.lunarSaros(saros),
-                            style: muted,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        Text(
-                          l.posterScan,
-                          style: muted,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  const _SiteQr(size: 76),
-                ],
-              ),
-            ],
-          ),
-        ),
+        child: content,
       ),
     );
   }

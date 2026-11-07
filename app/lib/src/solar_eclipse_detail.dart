@@ -820,17 +820,35 @@ class _SunFacePainter extends CustomPainter {
 // 全球食况地图
 // ---------------------------------------------------------------------------
 
-class _SolarMapCard extends StatefulWidget {
-  const _SolarMapCard({required this.detail, this.place});
+/// 食分分档的填色：食分越大越不透明。
+Color solarMagnitudeShade(AstroAccents a, double m) =>
+    a.eclipse.withValues(alpha: 0.12 + 0.5 * m.clamp(0.0, 1.0));
+
+/// 全食带画成接近黑色，环食带用强调色。
+Color solarBandColor(ThemeData theme, AstroAccents a, bool annular) => annular
+    ? a.eclipse
+    : (theme.brightness == Brightness.dark
+          ? Colors.black
+          : theme.colorScheme.onSurface.withValues(alpha: 0.85));
+
+/// 日食的全球食况地图（只有地图本身，2:1）：最大食分填色、等值线、食带、食甚点和观测地。
+/// 详情页和分享图共用。
+class SolarPathMap extends StatefulWidget {
+  const SolarPathMap({super.key, required this.detail, this.place});
 
   final SolarEclipseDetail detail;
+
+  /// 在地图上标出的观测地（null 时不标）
   final Place? place;
 
+  /// 有没有食带（中心食）
+  static bool hasBand(SolarEclipseDetail d) => d.centralLine.length >= 2;
+
   @override
-  State<_SolarMapCard> createState() => _SolarMapCardState();
+  State<SolarPathMap> createState() => _SolarPathMapState();
 }
 
-class _SolarMapCardState extends State<_SolarMapCard> {
+class _SolarPathMapState extends State<SolarPathMap> {
   static const _levels = [0.001, 0.2, 0.5, 0.8];
   late List<double> _values;
   late Map<double, List<((double, double), (double, double))>> _contours;
@@ -844,7 +862,7 @@ class _SolarMapCardState extends State<_SolarMapCard> {
   }
 
   @override
-  void didUpdateWidget(_SolarMapCard old) {
+  void didUpdateWidget(SolarPathMap old) {
     super.didUpdateWidget(old);
     if (old.detail != widget.detail) _prepare();
   }
@@ -877,23 +895,12 @@ class _SolarMapCardState extends State<_SolarMapCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final cs = theme.colorScheme;
-    final l = AppLocalizations.of(context);
     final accents = AstroAccents.of(context);
     final d = widget.detail;
     final place = widget.place;
-    final annular = d.diagram.umbraRadius > 0;
-    final bandColor = annular
-        ? accents.eclipse
-        : (theme.brightness == Brightness.dark
-              ? Colors.black
-              : cs.onSurface.withValues(alpha: 0.85));
-    Color shade(double m) =>
-        accents.eclipse.withValues(alpha: 0.12 + 0.5 * m.clamp(0.0, 1.0));
+    final bandColor = solarBandColor(theme, accents, d.diagram.umbraRadius > 0);
     final label = (theme.textTheme.labelSmall ?? const TextStyle(fontSize: 11))
         .copyWith(color: cs.onSurface, fontWeight: FontWeight.w600);
-    final muted = theme.textTheme.bodySmall?.copyWith(
-      color: cs.onSurfaceVariant,
-    );
 
     void fill(Canvas canvas, MapProjection p) {
       // 食分按 0.1 分档，同一档的格子并成一条路径
@@ -915,7 +922,7 @@ class _SolarMapCardState extends State<_SolarMapCard> {
         canvas.drawPath(
           bands[i],
           Paint()
-            ..color = shade((i + 0.5) / 10)
+            ..color = solarMagnitudeShade(accents, (i + 0.5) / 10)
             ..isAntiAlias = false,
         );
       }
@@ -958,6 +965,26 @@ class _SolarMapCardState extends State<_SolarMapCard> {
       }
     }
 
+    return WorldMap(centerLon: _center, fill: fill, marks: marks);
+  }
+}
+
+class _SolarMapCard extends StatelessWidget {
+  const _SolarMapCard({required this.detail, this.place});
+
+  final SolarEclipseDetail detail;
+  final Place? place;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final cs = theme.colorScheme;
+    final l = AppLocalizations.of(context);
+    final accents = AstroAccents.of(context);
+    final annular = detail.diagram.umbraRadius > 0;
+    final muted = theme.textTheme.bodySmall?.copyWith(
+      color: cs.onSurfaceVariant,
+    );
     Widget legend(Color c, String text) => Row(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -990,7 +1017,7 @@ class _SolarMapCardState extends State<_SolarMapCard> {
             const SizedBox(height: 8),
             ClipRRect(
               borderRadius: BorderRadius.circular(8),
-              child: WorldMap(centerLon: _center, fill: fill, marks: marks),
+              child: SolarPathMap(detail: detail, place: place),
             ),
             const SizedBox(height: 8),
             Wrap(
@@ -1001,14 +1028,18 @@ class _SolarMapCardState extends State<_SolarMapCard> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     for (final m in [0.1, 0.4, 0.7, 1.0])
-                      Container(width: 14, height: 14, color: shade(m)),
+                      Container(
+                        width: 14,
+                        height: 14,
+                        color: solarMagnitudeShade(accents, m),
+                      ),
                     const SizedBox(width: 6),
                     Text(l.solarMapMagnitude, style: theme.textTheme.bodySmall),
                   ],
                 ),
-                if (_band.isNotEmpty)
+                if (SolarPathMap.hasBand(detail))
                   legend(
-                    bandColor,
+                    solarBandColor(theme, accents, annular),
                     annular ? l.solarMapAnnularPath : l.solarMapTotalPath,
                   ),
               ],
