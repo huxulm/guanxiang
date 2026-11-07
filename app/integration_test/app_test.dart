@@ -16,6 +16,7 @@ import 'package:guanxiang/src/licenses.dart';
 import 'package:guanxiang/src/rust/api/guanxiang.dart';
 import 'package:guanxiang/src/rust/frb_generated.dart';
 import 'package:guanxiang/src/settings.dart';
+import 'package:guanxiang/src/tonight_card.dart';
 import 'package:integration_test/integration_test.dart';
 
 void main() {
@@ -268,6 +269,39 @@ void main() {
       // ignore: avoid_print
       print('近期天象：${e.title} | ${e.utc} | ${e.summary}');
     }
+    await tester.pumpWidget(const SizedBox());
+    await dir.delete(recursive: true);
+  });
+
+  testWidgets('看板：今晚的日月出没和月相（手动观测地）', (tester) async {
+    final dir = await Directory.systemTemp.createTemp('guanxiang_tonight');
+    final settings = await Settings.openFile(File('${dir.path}/settings.json'));
+    await settings.setMode(LocationMode.manual);
+    await settings.setManual(Place.beijing);
+    await tester.pumpWidget(
+      MaterialApp(
+        locale: const Locale('zh'),
+        supportedLocales: const [Locale('en'), Locale('zh')],
+        localizationsDelegates: AppLocalizations.localizationsDelegates,
+        home: Scaffold(
+          body: TonightCard(engine: engine, settings: settings),
+        ),
+      ),
+    );
+    final moon = find.byType(MoonPhaseIcon);
+    for (var i = 0; i < 200 && moon.evaluate().isEmpty; i++) {
+      await tester.pump(const Duration(milliseconds: 100));
+    }
+    expect(moon, findsOneWidget);
+    // 北京每晚都有日落、天黑、天亮、日出：四个时刻都不是“—”
+    final times = find.byWidgetPredicate(
+      (w) => w is Text && RegExp(r'^\d\d:\d\d$').hasMatch(w.data ?? ''),
+    );
+    expect(times.evaluate().length, greaterThanOrEqualTo(4));
+    // ignore: avoid_print
+    print(
+      '今晚：${times.evaluate().map((e) => (e.widget as Text).data).join(' ')}',
+    );
     await tester.pumpWidget(const SizedBox());
     await dir.delete(recursive: true);
   });

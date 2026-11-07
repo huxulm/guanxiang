@@ -122,6 +122,108 @@ abstract class AppLocalizations {
   /// **'星历加载失败：{error}'**
   String ephemerisLoadFailed(String error);
 
+  /// No description provided for @tonightTitle.
+  ///
+  /// In zh, this message translates to:
+  /// **'今晚'**
+  String get tonightTitle;
+
+  /// No description provided for @tonightSunset.
+  ///
+  /// In zh, this message translates to:
+  /// **'日落'**
+  String get tonightSunset;
+
+  /// No description provided for @tonightDusk.
+  ///
+  /// In zh, this message translates to:
+  /// **'天黑'**
+  String get tonightDusk;
+
+  /// No description provided for @tonightDawn.
+  ///
+  /// In zh, this message translates to:
+  /// **'天亮'**
+  String get tonightDawn;
+
+  /// No description provided for @tonightSunrise.
+  ///
+  /// In zh, this message translates to:
+  /// **'日出'**
+  String get tonightSunrise;
+
+  /// No description provided for @tonightMoonrise.
+  ///
+  /// In zh, this message translates to:
+  /// **'月出'**
+  String get tonightMoonrise;
+
+  /// No description provided for @tonightMoonset.
+  ///
+  /// In zh, this message translates to:
+  /// **'月落'**
+  String get tonightMoonset;
+
+  /// No description provided for @tonightDark.
+  ///
+  /// In zh, this message translates to:
+  /// **'完全天黑 {hours} 小时 {minutes} 分'**
+  String tonightDark(int hours, int minutes);
+
+  /// No description provided for @tonightDarkHint.
+  ///
+  /// In zh, this message translates to:
+  /// **'天黑、天亮指天文晨昏：太阳在地平线下 18°'**
+  String get tonightDarkHint;
+
+  /// No description provided for @tonightPolarDay.
+  ///
+  /// In zh, this message translates to:
+  /// **'极昼：太阳整天不落'**
+  String get tonightPolarDay;
+
+  /// No description provided for @tonightPolarNight.
+  ///
+  /// In zh, this message translates to:
+  /// **'极夜：太阳整天不升起'**
+  String get tonightPolarNight;
+
+  /// No description provided for @tonightWhiteNight.
+  ///
+  /// In zh, this message translates to:
+  /// **'整晚都没有完全天黑'**
+  String get tonightWhiteNight;
+
+  /// No description provided for @tonightIllumination.
+  ///
+  /// In zh, this message translates to:
+  /// **'照亮 {percent}%'**
+  String tonightIllumination(int percent);
+
+  /// No description provided for @tonightNextFull.
+  ///
+  /// In zh, this message translates to:
+  /// **'满月：{when}'**
+  String tonightNextFull(String when);
+
+  /// No description provided for @tonightNextNew.
+  ///
+  /// In zh, this message translates to:
+  /// **'新月：{when}'**
+  String tonightNextNew(String when);
+
+  /// No description provided for @tonightNeedsLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置观测地后，这里显示今晚的日月出没和月相'**
+  String get tonightNeedsLocation;
+
+  /// No description provided for @tonightSetLocation.
+  ///
+  /// In zh, this message translates to:
+  /// **'设置观测地'**
+  String get tonightSetLocation;
+
   /// No description provided for @today.
   ///
   /// In zh, this message translates to:

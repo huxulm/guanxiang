@@ -13,6 +13,7 @@ import 'rust/api/guanxiang.dart';
 import 'settings.dart';
 import 'theme.dart';
 import 'time_format.dart';
+import 'tonight_card.dart';
 
 /// 首页看板：当前时间和观测地、观测太阳的安全提示、近期天象（本机计算）、快捷入口。
 class DashboardPage extends StatelessWidget {
@@ -47,6 +48,12 @@ class DashboardPage extends StatelessWidget {
           bottom: 24,
           children: [
             _HeroCard(settings: settings, onTap: () => onSelectTab?.call(3)),
+            const SizedBox(height: 12),
+            TonightCard(
+              engine: engine,
+              settings: settings,
+              onSetLocation: () => onSelectTab?.call(3),
+            ),
             const SizedBox(height: 12),
             _SafetyCard(text: sunSafetyNotice(lang: rustLang(context))),
             const SizedBox(height: 20),

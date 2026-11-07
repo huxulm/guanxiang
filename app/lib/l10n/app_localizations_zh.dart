@@ -24,6 +24,65 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get tonightTitle => '今晚';
+
+  @override
+  String get tonightSunset => '日落';
+
+  @override
+  String get tonightDusk => '天黑';
+
+  @override
+  String get tonightDawn => '天亮';
+
+  @override
+  String get tonightSunrise => '日出';
+
+  @override
+  String get tonightMoonrise => '月出';
+
+  @override
+  String get tonightMoonset => '月落';
+
+  @override
+  String tonightDark(int hours, int minutes) {
+    return '完全天黑 $hours 小时 $minutes 分';
+  }
+
+  @override
+  String get tonightDarkHint => '天黑、天亮指天文晨昏：太阳在地平线下 18°';
+
+  @override
+  String get tonightPolarDay => '极昼：太阳整天不落';
+
+  @override
+  String get tonightPolarNight => '极夜：太阳整天不升起';
+
+  @override
+  String get tonightWhiteNight => '整晚都没有完全天黑';
+
+  @override
+  String tonightIllumination(int percent) {
+    return '照亮 $percent%';
+  }
+
+  @override
+  String tonightNextFull(String when) {
+    return '满月：$when';
+  }
+
+  @override
+  String tonightNextNew(String when) {
+    return '新月：$when';
+  }
+
+  @override
+  String get tonightNeedsLocation => '设置观测地后，这里显示今晚的日月出没和月相';
+
+  @override
+  String get tonightSetLocation => '设置观测地';
+
+  @override
   String get today => '今天';
 
   @override

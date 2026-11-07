@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:guanxiang/l10n/app_localizations.dart';
 import 'package:guanxiang/src/event_style.dart';
 import 'package:guanxiang/src/time_format.dart';
+import 'package:guanxiang/src/tonight_card.dart';
 
 void main() {
   final zh = lookupAppLocalizations(const Locale('zh'));
@@ -31,6 +32,14 @@ void main() {
     expect(timeAgo(zh, const Duration(minutes: 768)), '12 小时前');
     expect(timeAgo(en, const Duration(hours: 1)), '1 hour ago');
     expect(timeAgo(zh, const Duration(days: 3, hours: 5)), '3 天前');
+  });
+
+  test('今晚从本地中午起；凌晨 6 点前算前一晚', () {
+    expect(tonightStart(DateTime(2026, 11, 7, 9)), DateTime(2026, 11, 7, 12));
+    expect(tonightStart(DateTime(2026, 11, 7, 23)), DateTime(2026, 11, 7, 12));
+    expect(tonightStart(DateTime(2026, 11, 7, 3)), DateTime(2026, 11, 6, 12));
+    // 跨月
+    expect(tonightStart(DateTime(2026, 12, 1, 1)), DateTime(2026, 11, 30, 12));
   });
 
   test('根数历元只留到分钟', () {

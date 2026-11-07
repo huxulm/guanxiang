@@ -11,6 +11,54 @@
       }
     }
   },
+  "tonightTitle": "今晚",
+  "tonightSunset": "日落",
+  "tonightDusk": "天黑",
+  "tonightDawn": "天亮",
+  "tonightSunrise": "日出",
+  "tonightMoonrise": "月出",
+  "tonightMoonset": "月落",
+  "tonightDark": "完全天黑 {hours} 小时 {minutes} 分",
+  "@tonightDark": {
+    "placeholders": {
+      "hours": {
+        "type": "int"
+      },
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "tonightDarkHint": "天黑、天亮指天文晨昏：太阳在地平线下 18°",
+  "tonightPolarDay": "极昼：太阳整天不落",
+  "tonightPolarNight": "极夜：太阳整天不升起",
+  "tonightWhiteNight": "整晚都没有完全天黑",
+  "tonightIllumination": "照亮 {percent}%",
+  "@tonightIllumination": {
+    "placeholders": {
+      "percent": {
+        "type": "int"
+      }
+    }
+  },
+  "tonightNextFull": "满月：{when}",
+  "@tonightNextFull": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "tonightNextNew": "新月：{when}",
+  "@tonightNextNew": {
+    "placeholders": {
+      "when": {
+        "type": "String"
+      }
+    }
+  },
+  "tonightNeedsLocation": "设置观测地后，这里显示今晚的日月出没和月相",
+  "tonightSetLocation": "设置观测地",
   "today": "今天",
   "tomorrow": "明天",
   "inDays": "{n} 天后",

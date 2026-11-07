@@ -24,6 +24,67 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get tonightTitle => 'Tonight';
+
+  @override
+  String get tonightSunset => 'Sunset';
+
+  @override
+  String get tonightDusk => 'Dark';
+
+  @override
+  String get tonightDawn => 'Dawn';
+
+  @override
+  String get tonightSunrise => 'Sunrise';
+
+  @override
+  String get tonightMoonrise => 'Moonrise';
+
+  @override
+  String get tonightMoonset => 'Moonset';
+
+  @override
+  String tonightDark(int hours, int minutes) {
+    return 'Fully dark for $hours h $minutes min';
+  }
+
+  @override
+  String get tonightDarkHint =>
+      'Dark and dawn mean astronomical twilight: the Sun 18° below the horizon';
+
+  @override
+  String get tonightPolarDay => 'Midnight sun: the Sun does not set';
+
+  @override
+  String get tonightPolarNight => 'Polar night: the Sun does not rise';
+
+  @override
+  String get tonightWhiteNight => 'It never gets fully dark tonight';
+
+  @override
+  String tonightIllumination(int percent) {
+    return '$percent% lit';
+  }
+
+  @override
+  String tonightNextFull(String when) {
+    return 'Full moon: $when';
+  }
+
+  @override
+  String tonightNextNew(String when) {
+    return 'New moon: $when';
+  }
+
+  @override
+  String get tonightNeedsLocation =>
+      'Set your location to see tonight\'s sunset, moonrise and moon phase here';
+
+  @override
+  String get tonightSetLocation => 'Set location';
+
+  @override
   String get today => 'Today';
 
   @override
