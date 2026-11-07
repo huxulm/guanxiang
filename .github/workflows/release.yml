@@ -177,7 +177,10 @@ jobs:
           mkdir -p dist
           for abi in arm64-v8a x86_64; do
             apk="app/build/app/outputs/flutter-apk/app-$abi-release.apk"
-            digest=$("$apksigner" verify --print-certs "$apk" | sed -n 's/^Signer #1 certificate SHA-256 digest: //p')
+            # 不同版本的 apksigner 行首写法不同（Signer #1 / Signer (minSdkVersion=…)），只认“SHA-256 digest:”
+            certs=$("$apksigner" verify --print-certs "$apk" 2>&1) || { echo "$certs"; exit 1; }
+            echo "$certs"
+            digest=$(echo "$certs" | grep -m1 'certificate SHA-256 digest:' | sed 's/.*digest: *//' | tr -d '[:space:]')
             [ "$digest" = "$CERT_SHA256" ] || { echo "::error::$abi 的签名证书不对：$digest"; exit 1; }
             cp "$apk" "dist/guanxiang-$VERSION-$abi.apk"
           done
