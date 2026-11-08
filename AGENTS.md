@@ -33,6 +33,78 @@ flutter_rust_bridge_codegen generate    # 改了 app/rust/src/api/ 之后
 npm ci && npm run build                 # tsc 类型检查 + vite 构建
 ```
 
+## 调试与验证
+
+### 改了什么，就验证什么
+
+| 改动 | 至少要做 |
+|---|---|
+| 计算逻辑（`crates/guanxiang-core`） | `cargo test`；用 `tools/` 下的独立来源重新对照，差别写进 `docs/PLAN.md`；可用 CLI 快速核对单个事件（见下） |
+| 桥接（`app/rust/src/api/`） | `flutter_rust_bridge_codegen generate`，生成的文件一起提交；`cargo clippy`、`flutter analyze` |
+| 界面（`app/lib/`） | `flutter analyze`、`flutter test`；**截图**看三套主题（浅色、深空、红光）和窄屏、宽屏；新文案中英文都要有 |
+| 平台相关（权限、通知、定位、高德地图、后台任务） | 在 Android 模拟器上跑 `flutter test integration_test`，看 logcat |
+| 构建、依赖、打包（Gradle、installer.iss、`tools/package_*`） | 手动运行 release.yml 并勾选试运行（见“发版”第 2 步） |
+| 官网（`website/`） | `npm run build`；本地预览后用浏览器截窄屏和宽屏 |
+
+推送后用 `gh run list -R huxulm/guanxiang -L 3`、`gh run watch <id> -R huxulm/guanxiang --exit-status` 确认 GitHub CI 通过（含 Linux）；官网改动再用 `curl -s https://guanx.huxulm.dev/ | grep …` 确认线上已更新。
+
+### 选哪台设备
+
+- **Windows 桌面（`-d windows`）**：最快，纯界面和布局问题首选，截图脚本也在这上面跑。拖动窗口宽度可以看窄屏和宽屏两种布局（分界 600）。
+- **Android 模拟器 `guanxiang_api35_16k_hi`**（Android 15、16 KB 页，配置见 `app/README.md`）：权限、通知、高德地图、16 KB 对齐、性能。
+- **Linux**：本机不编译，只看 GitHub Actions 的 `linux`、`linux-smoke` 任务。
+
+### 截图
+
+`app/integration_test/screenshots_test.dart` 把首页、月食详情（2025-09-07，北京）、日食详情（2027-08-02，卢克索）、分享页按三套主题 × 窄屏（412×915）、宽屏（1280×860）截下来，长页面一屏一张往下滚。没给 `SHOT_DIR` 时整个文件跳过，所以 CI 不受影响。
+
+```sh
+cd app
+rm -rf build/screenshots            # 每次先清空，免得混进上次的图
+flutter test integration_test/screenshots_test.dart -d windows \
+  --dart-define=SHOT_DIR="$(cygpath -w "$PWD/build/screenshots")"   # Git Bash；PowerShell 写 "$PWD\build\screenshots"
+#   --dart-define=SHOT_FILTER=solar-red    只截名字里含这个字符串的图
+#   --dart-define=SHOT_LOCALE=en           英文界面
+```
+
+输出 `app/build/screenshots/<页面>-<主题>-<尺寸>-<序号>.png`（不进 Git），全部约 60 张、2 分钟。要截新页面，在文件里的 `_pages` 加一项。智能体可以直接读这些 PNG 检查效果。
+
+Android 上截真实画面：`adb -s emulator-5554 exec-out screencap -p > shot.png`。
+
+### 运行与日志
+
+```sh
+# Windows 桌面上跑应用（热重载：终端里按 r）
+cd app && flutter run -d windows
+
+# Android 模拟器
+emulator -avd guanxiang_api35_16k_hi -no-snapshot-load -no-boot-anim &
+flutter run -d emulator-5554             # debug 包要用 flutter run 启动，直接点开会停在启动画面
+adb -s emulator-5554 logcat -d -v brief | grep -iE "flutter|guanxiang|AndroidRuntime"
+
+# 集成测试（Android 上前要去掉 HTTP_PROXY/HTTPS_PROXY）
+flutter test integration_test/app_test.dart -d windows
+flutter test integration_test/app_test.dart -d emulator-5554 --plain-name "月食"   # 只跑名字匹配的
+```
+
+### 不开界面核对计算
+
+CLI 和 App 用同一个核心，查单个事件比开界面快（在仓库根目录，需要 `data/de440s.bsp`）：
+
+```sh
+cargo run -q -p guanxiang-cli -- eclipse --from 2027 --to 2028 --kind solar --details
+cargo run -q -p guanxiang-cli -- eclipse --from 2025-09-01 --to 2025-09-30 --kind lunar --at 39.9,116.4
+cargo run -q -p guanxiang-cli -- search --help        # 合、冲、凌日；其余子命令见 --help
+```
+
+### 官网
+
+```sh
+cd website && npm run dev                # http://localhost:5173 ，改动即时刷新
+```
+
+用 Playwright（或 Chrome DevTools）打开本地地址，分别在 390 和 1280 宽度下截图，并检查控制台没有报错；页面右上角可切换中英文。
+
 ## 约定
 
 - **语言**：注释、文档、提交信息、界面文案都用中文。界面文字一律走 ARB（`app/lib/l10n/app_zh.arb` 是模板，`app_en.arb` 是英文），两个文件的键必须一致（有测试检查），改完运行 `flutter gen-l10n`，生成的文件要提交。Rust 输出的文字按 `Lang { Zh, En }` 区分。

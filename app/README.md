@@ -30,6 +30,8 @@ flutter test                              # 主机上的单元测试（CelesTrak
 
 debug 包请用 `flutter run` 启动；直接在设备上点开 debug 包会停在启动画面。
 
+界面截图（三套主题 × 窄屏、宽屏）用 `integration_test/screenshots_test.dart`，命令和选项见根目录 `AGENTS.md` 的“调试与验证”。
+
 ## Android 发布
 
 发布用的 APK 由 GitHub Actions 的 `release.yml` 构建和签名（见 `AGENTS.md` 的“发版”）。本机构建：
