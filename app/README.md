@@ -22,7 +22,7 @@ flutter_rust_bridge_codegen generate
 
 ```sh
 flutter run -d <设备>
-flutter test integration_test -d <设备>   # 设备上的集成测试：凌日、合冲耗时、日月食、月掩星、卫星、取消
+flutter test integration_test/app_test.dart -d <设备>   # 设备上的集成测试：凌日、合冲耗时、日月食、月掩星、卫星、取消
 flutter test                              # 主机上的单元测试（CelesTrak 缓存与频率限制，用模拟的 HTTP）
 ```
 

@@ -1,6 +1,6 @@
 // 界面截图：浅色、深空、红光三套主题 × 窄屏、宽屏，供改界面时核对效果。
 //
-// 只在给了 SHOT_DIR 时运行，否则整个文件跳过（CI 的 `flutter test integration_test` 不受影响）。
+// 只在给了 SHOT_DIR 时运行，否则整个文件跳过。CI 和日常集成测试只跑 app_test.dart，不会启动这个文件。
 // 推荐在 Windows 桌面上跑，最快：
 //
 //   cd app

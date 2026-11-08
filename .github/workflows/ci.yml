@@ -135,7 +135,7 @@ jobs:
           cache: true
       - run: flutter pub get
       - name: 集成测试（Linux 桌面）
-        run: xvfb-run -a flutter test integration_test -d linux
+        run: xvfb-run -a flutter test integration_test/app_test.dart -d linux
       - run: flutter build linux --release
       - name: 打包 .deb
         run: bash ../tools/package_linux.sh "$GITHUB_WORKSPACE/dist"

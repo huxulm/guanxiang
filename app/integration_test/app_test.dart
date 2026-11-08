@@ -1,4 +1,4 @@
-// 在设备或模拟器上运行：flutter test integration_test -d <设备>
+// 在设备或模拟器上运行：flutter test integration_test/app_test.dart -d <设备>
 //
 // 验证：星历能从 asset 加载、各类搜索能在设备上跑通且结果正确、取消能让搜索提前结束、
 // 许可声明打进了安装包。性能数据请用 profile 模式：

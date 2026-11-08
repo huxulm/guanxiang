@@ -26,7 +26,7 @@ cargo test --workspace --locked        # 需要 data/de440s.bsp，否则星历�
 # Flutter（在 app/ 下）
 flutter analyze
 flutter test                            # 主机单元测试
-flutter test integration_test -d <设备>  # 设备上的集成测试
+flutter test integration_test/app_test.dart -d <设备>  # 设备上的集成测试（只跑这个文件：整个目录会把截图脚本也启动一遍）
 flutter_rust_bridge_codegen generate    # 改了 app/rust/src/api/ 之后
 
 # 官网（在 website/ 下）
@@ -42,7 +42,7 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 | 计算逻辑（`crates/guanxiang-core`） | `cargo test`；用 `tools/` 下的独立来源重新对照，差别写进 `docs/PLAN.md`；可用 CLI 快速核对单个事件（见下） |
 | 桥接（`app/rust/src/api/`） | `flutter_rust_bridge_codegen generate`，生成的文件一起提交；`cargo clippy`、`flutter analyze` |
 | 界面（`app/lib/`） | `flutter analyze`、`flutter test`；**截图**看三套主题（浅色、深空、红光）和窄屏、宽屏；新文案中英文都要有 |
-| 平台相关（权限、通知、定位、高德地图、后台任务） | 在 Android 模拟器上跑 `flutter test integration_test`，看 logcat |
+| 平台相关（权限、通知、定位、高德地图、后台任务） | 在 Android 模拟器上跑 `flutter test integration_test/app_test.dart`，看 logcat |
 | 构建、依赖、打包（Gradle、installer.iss、`tools/package_*`） | 手动运行 release.yml 并勾选试运行（见“发版”第 2 步） |
 | 官网（`website/`） | `npm run build`；本地预览后用浏览器截窄屏和宽屏 |
 
