@@ -718,7 +718,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get legalese =>
-      'Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun.';
+      'Astronomical event search. Results are for reference only. Always protect your eyes when observing the Sun.\n© 2026 Huxulm. Open source under MIT or Apache-2.0: https://github.com/huxulm/guanxiang';
 
   @override
   String get navDashboard => 'Dashboard';

@@ -80,7 +80,7 @@ const en: Record<string, string> = {
     'Ephemeris: JPL DE440. Precession, nutation and related algorithms: IAU SOFA. Satellite elements: CelesTrak. Maps: © OpenStreetMap contributors. Full licences and acknowledgements are in the app under Settings → About & licences.',
   disclaimer: 'Results are for reference only.',
   privacyLink: 'Privacy policy',
-  sourceLink: 'Source code (GitHub)',
+  sourceLink: 'Source code (GitHub, MIT / Apache-2.0)',
 };
 
 const zhText = new Map<Element, string>();

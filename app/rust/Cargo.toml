@@ -4,6 +4,8 @@ description = "观象 Flutter 桥接层（flutter_rust_bridge），只做类型�
 version.workspace = true
 edition = "2021"
 publish = false
+license.workspace = true
+repository.workspace = true
 
 [lib]
 crate-type = ["cdylib", "staticlib"]

@@ -2,6 +2,8 @@
 
 观象（Guanxiang）：跨平台天文事件搜索。Rust 计算核心 + Flutter 界面（Android、Windows、Linux），另有一个静态官网。计划与进度见 `docs/PLAN.md`，各子目录的细节见对应的 README。
 
+本项目以 MIT 或 Apache-2.0 双许可开源（`LICENSE-MIT`、`LICENSE-APACHE`），版权人 Huxulm；新增的 crate 用 `license.workspace = true`。
+
 ## 目录
 
 | 路径 | 内容 |

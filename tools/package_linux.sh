@@ -32,12 +32,15 @@ cp -a "$packaging/icons/hicolor" "$stage/usr/share/icons/"
 cat > "$stage/usr/share/doc/guanxiang/copyright" <<'EOF'
 Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
 Upstream-Name: guanxiang
-Source: https://guanx.huxulm.dev
+Source: https://github.com/huxulm/guanxiang
 
 Files: *
-Copyright: Huxulm
-Comment: 第三方组件（Flutter、Dart 包、Rust crate）及数据来源的许可证见应用内“关于 → 许可证”。
+Copyright: 2026 Huxulm
+License: MIT or Apache-2.0
+Comment: 许可证全文见同目录的 LICENSE-MIT、LICENSE-APACHE。
+ 第三方组件（Flutter、Dart 包、Rust crate）及数据来源的许可证见应用内“关于 → 许可证”。
 EOF
+install -m 644 "$root/LICENSE-MIT" "$root/LICENSE-APACHE" "$stage/usr/share/doc/guanxiang/"
 
 # 目录 755、文件 644、可执行文件和 .so 755
 find "$stage" -type d -exec chmod 755 {} +

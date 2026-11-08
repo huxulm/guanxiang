@@ -1241,7 +1241,7 @@ abstract class AppLocalizations {
   /// No description provided for @legalese.
   ///
   /// In zh, this message translates to:
-  /// **'天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。'**
+  /// **'天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。\n© 2026 Huxulm，以 MIT 或 Apache-2.0 许可开源：https://github.com/huxulm/guanxiang'**
   String get legalese;
 
   /// No description provided for @navDashboard.

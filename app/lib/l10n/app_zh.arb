@@ -568,7 +568,7 @@
     }
   },
   "beyondTwoWeeks": "超过根数两周，仅供参考",
-  "legalese": "天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。",
+  "legalese": "天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。\n© 2026 Huxulm，以 MIT 或 Apache-2.0 许可开源：https://github.com/huxulm/guanxiang",
   "navDashboard": "看板",
   "navSearch": "搜索",
   "navSatellite": "卫星",

@@ -683,7 +683,8 @@ class AppLocalizationsZh extends AppLocalizations {
   String get beyondTwoWeeks => '超过根数两周，仅供参考';
 
   @override
-  String get legalese => '天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。';
+  String get legalese =>
+      '天文事件搜索。计算结果仅供参考，观测太阳时务必做好防护。\n© 2026 Huxulm，以 MIT 或 Apache-2.0 许可开源：https://github.com/huxulm/guanxiang';
 
   @override
   String get navDashboard => '看板';
