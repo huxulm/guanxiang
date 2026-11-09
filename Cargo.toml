@@ -20,6 +20,7 @@ sofars = "0.6.2"
 sgp4 = "2.4.0"
 thiserror = "2"
 clap = { version = "4", features = ["derive", "env"] }
+serde_json = "1"
 
 [workspace.lints.rust]
 unsafe_code = "forbid"
