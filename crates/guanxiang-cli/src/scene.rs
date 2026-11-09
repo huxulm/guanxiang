@@ -307,16 +307,32 @@ pub fn build_solar_eclipse_json(
                     LocalSolarKind::Annular => ("annular", "日环食"),
                     LocalSolarKind::Total => ("total", "日全食"),
                 };
-                let t0 = loc.contacts[0]
-                    .map_or(loc.maximum.tt_seconds() - 3600.0, |t| t.tt_seconds())
-                    - 300.0;
-                let t1 = loc.contacts[3]
-                    .map_or(loc.maximum.tt_seconds() + 3600.0, |t| t.tt_seconds())
-                    + 300.0;
+                let tm = loc.maximum.tt_seconds();
+                let t0 = loc.contacts[0].map_or(tm - 3600.0, |t| t.tt_seconds()) - 300.0;
+                let t1 = loc.contacts[3].map_or(tm + 3600.0, |t| t.tt_seconds()) + 300.0;
                 let n = ((t1 - t0) / step_s).ceil().max(1.0) as usize;
-                let sample_times: Vec<Time> = (0..=n)
-                    .map(|i| Time::from_tt_seconds((t0 + i as f64 * step_s).min(t1)))
-                    .collect();
+                let mut raw_tts: Vec<f64> =
+                    (0..=n).map(|i| (t0 + i as f64 * step_s).min(t1)).collect();
+                // 在食甚前后 5 分钟内加密至 ≤ 2 秒步长，并注入精确接触时刻
+                let fine_step = step_s.min(2.0);
+                let fine_n = (600.0 / fine_step).ceil() as usize;
+                for i in 0..=fine_n {
+                    let tt = (tm - 300.0 + i as f64 * fine_step).clamp(t0, t1);
+                    raw_tts.push(tt);
+                }
+                raw_tts.push(tm);
+                for ct in loc.contacts.into_iter().flatten() {
+                    raw_tts.push(ct.tt_seconds());
+                }
+                raw_tts.sort_by(|a, b| a.total_cmp(b));
+                let mut sample_times: Vec<Time> = Vec::with_capacity(raw_tts.len());
+                let mut prev_tt = f64::NEG_INFINITY;
+                for tt in raw_tts {
+                    if tt - prev_tt >= 0.05 {
+                        sample_times.push(Time::from_tt_seconds(tt));
+                        prev_tt = tt;
+                    }
+                }
                 let views = local_eclipse::solar_disk_views(eph, obs, &sample_times)?;
                 let frames: Vec<Value> = views
                     .iter()
@@ -356,7 +372,11 @@ pub fn build_solar_eclipse_json(
                             "t_rel_s": mt.tt_seconds() - tg,
                             "x_deg": first.map(|f| f.x.to_degrees()),
                             "y_deg": first.map(|f| f.y.to_degrees()),
+                            "sun_r_deg": first.map(|f| f.sun_radius.to_degrees()),
+                            "moon_r_deg": first.map(|f| f.moon_radius.to_degrees()),
+                            "obscuration": first.map(|f| f.obscuration),
                             "sun_alt_deg": first.map(|f| f.sun_altitude_deg),
+                            "zenith_angle_deg": first.map(|f| f.zenith_angle.to_degrees()),
                         }));
                     }
                 }
@@ -378,6 +398,8 @@ pub fn build_solar_eclipse_json(
         None => None,
     };
 
+    let (sub_sun_lat, sub_sun_lon) = astrometry::sub_body_point(eph, Body::Sun, &e.greatest)?;
+
     Ok(json!({
         "scene": "solar_eclipse",
         "kind": kind_en,
@@ -388,6 +410,12 @@ pub fn build_solar_eclipse_json(
         "gamma": e.gamma,
         "magnitude": e.magnitude,
         "saros": saros_val,
+        "greatest_point": e.greatest_point.map(|gp| json!({
+            "lat_deg": gp.latitude_deg,
+            "lon_deg": gp.longitude_deg,
+            "sun_alt_deg": gp.sun_altitude_deg,
+            "width_km": gp.path_width_km,
+        })),
         "observer": at.map(|o| json!({
             "lat_deg": o.latitude_deg(),
             "lon_deg": o.longitude_deg(),
@@ -397,6 +425,8 @@ pub fn build_solar_eclipse_json(
             "l1": diag.l1,
             "l2": diag.l2,
             "d_deg": diag.d.to_degrees(),
+            "sub_solar_lat_deg": sub_sun_lat.to_degrees(),
+            "sub_solar_lon_deg": sub_sun_lon.to_degrees(),
             "greatest": {
                 "x": diag.greatest.x,
                 "y": diag.greatest.y,

@@ -15,7 +15,8 @@
 | 路径 | 说明 |
 |---|---|
 | `common/theme.py` | 与 Flutter 客户端 [`theme.dart`](../../app/lib/src/theme.dart) 对齐的深空色板与中英文字体配置 |
-| `scenes/lunar_eclipse_scene.py` | 2025-09-07 北京月全食（本影食分 1.362，沙罗 128）双视窗演示场景 |
+| `scenes/lunar_eclipse_scene.py` | 通用月食演示场景库（支持月全食、月偏食、半影月食，内置北京 2025 与乌鲁木齐 3 场最近月食） |
+| `scenes/solar_eclipse_scene.py` | 通用日食演示场景库（贝塞尔基本面正射地球盘 + 天顶向上站心日面特写 + 时序曲线，支持日全食、日环食、日偏食） |
 | `render_check.py` | 一键渲染 + 关键帧九宫/六宫格拼图（Contact Sheet）生成脚本 |
 | `data/` | `guanxiang-cli scene` 导出的时序 JSON（已加入 `.gitignore`） |
 | `media/` | Manim 输出视频与关键帧拼图（已加入 `.gitignore`） |
@@ -66,6 +67,16 @@ cargo run -q -p guanxiang-cli -- scene ephem-track `
   tools/manim/scenes/lunar_eclipse_scene.py UrumqiNearestPartialScene -q m --gpu
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
   tools/manim/scenes/lunar_eclipse_scene.py UrumqiNearestTotalScene -q m --gpu
+
+# 渲染日食演示场景（卢克索世纪日全食 / 北京日全食 / 同江日环食 / 乌鲁木齐日偏食）
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py SolarEclipseScene -q m --gpu
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py BeijingTotalSolarScene -q m --gpu
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py ChinaAnnularSolarScene -q m --gpu
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py UrumqiNearestSolarScene -q m --gpu
 
 # 正式成片输出（-q h 1080p60 或 -q k 2160p60）
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
