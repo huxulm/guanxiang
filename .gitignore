@@ -5,3 +5,7 @@
 *.dll
 *.pdb
 .playwright-mcp/
+/tools/manim/.venv/
+/tools/manim/media/
+/tools/manim/data/*.json
+__pycache__/
