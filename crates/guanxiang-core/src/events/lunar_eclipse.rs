@@ -225,6 +225,29 @@ fn shadow_point(eph: &dyn Ephemeris, tt: f64) -> Result<ShadowPoint> {
     })
 }
 
+/// 某一时刻的月食几何状态（动画逐帧求值用）。
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct ShadowState {
+    /// 月心相对地影中心的位置，与 [`LunarDiagram::path`] 的点相同
+    pub point: ShadowPoint,
+    /// 该时刻的半影、本影半径和月球视半径（度）
+    pub penumbra_deg: f64,
+    pub umbra_deg: f64,
+    pub moon_semidiameter_deg: f64,
+}
+
+/// `t` 时刻月心在地影切平面上的位置和地影大小，任何时刻都可以求（不限于月食期间）。
+pub fn shadow_state(eph: &dyn Ephemeris, t: &Time, model: ShadowModel) -> Result<ShadowState> {
+    let tt = t.tt_seconds();
+    let g = geometry(eph, tt, model)?;
+    Ok(ShadowState {
+        point: shadow_point(eph, tt)?,
+        penumbra_deg: g.penumbra.to_degrees(),
+        umbra_deg: g.umbra.to_degrees(),
+        moon_semidiameter_deg: g.moon_semidiameter.to_degrees(),
+    })
+}
+
 /// 月食示意图数据，轨迹每隔 `step_s` 秒一个点。
 pub fn diagram(
     eph: &dyn Ephemeris,

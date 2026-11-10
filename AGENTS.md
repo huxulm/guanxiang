@@ -9,7 +9,8 @@
 | 路径 | 内容 |
 |---|---|
 | `crates/guanxiang-core/` | 计算核心：时间尺度、ΔT、星历（anise）、视位置（sofars）、事件搜索（`src/events/`）、卫星（sgp4） |
-| `crates/guanxiang-cli/` | 命令行：`info`、`distance`、`position`、`search`、`eclipse`、`occultation`、`satellite` |
+| `crates/guanxiang-view/` | 展示数据（CLI 和 wasm 共用）：日月食列表、动画场景 JSON（`scene`，`tools/manim` 读取）、逐帧状态 |
+| `crates/guanxiang-cli/` | 命令行：`info`、`distance`、`position`、`search`、`eclipse`、`occultation`、`satellite`、`scene` |
 | `crates/guanxiang-wasm/` | WebAssembly 接口（Web 应用，规划见 `docs/PLAN.md`“Web 应用”）：`wasm-pack build crates/guanxiang-wasm --release --target web` |
 | `app/` | Flutter 应用；`app/rust/` 是 flutter_rust_bridge 2.13 桥接层（工作区成员），`app/lib/src/rust/` 是生成的绑定 |
 | `website/` | 官网（Vite + TypeScript + Tailwind 4），Cloudflare Workers 静态资源托管，https://guanx.huxulm.dev |

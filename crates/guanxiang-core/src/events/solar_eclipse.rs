@@ -108,6 +108,12 @@ impl BesselianElements {
         Some(m + g * lambda)
     }
 
+    /// 影轴的格林尼治时角 μ（弧度，0..2π）：`t` 时刻的格林尼治视恒星时减影轴赤经。
+    /// 和 x、y、d 一起可以把基本面上的点换算成地面经纬度。
+    pub fn hour_angle(&self, t: &Time) -> f64 {
+        (gast(t) - self.a).rem_euclid(std::f64::consts::TAU)
+    }
+
     /// 地表点到基本面的距离 ζ（沿影轴方向）。
     fn zeta(&self, p: Vec3) -> f64 {
         p.dot(self.axis)
@@ -365,6 +371,16 @@ fn central_point(
 }
 
 impl SolarEclipse {
+    /// `t` 时刻的贝塞尔根数（动画逐帧求值用），与搜索、示意图使用同一个坐标旋转矩阵。
+    pub fn elements_at(&self, eph: &dyn Ephemeris, t: &Time) -> Result<BesselianElements> {
+        elements(eph, t.tt_seconds(), &self.elements_rot)
+    }
+
+    /// `t` 时刻影轴在地面的点（与 [`Self::central_line`] 的点相同）；影轴不与地球相交时返回 None。
+    pub fn central_point_at(&self, eph: &dyn Ephemeris, t: &Time) -> Result<Option<GroundPoint>> {
+        central_point(eph, self, t.tt_seconds(), None)
+    }
+
     /// 食甚时中心线的地面点，`delta_t` 指定 ΔT（秒）。非中心食返回 None。
     pub fn greatest_point_with_delta_t(
         &self,

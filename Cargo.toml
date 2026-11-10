@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/guanxiang-core", "crates/guanxiang-cli", "crates/guanxiang-wasm", "app/rust"]
+members = ["crates/guanxiang-core", "crates/guanxiang-view", "crates/guanxiang-cli", "crates/guanxiang-wasm", "app/rust"]
 
 [workspace.package]
 version = "0.1.0"
@@ -12,6 +12,7 @@ repository = "https://github.com/huxulm/guanxiang"
 
 [workspace.dependencies]
 guanxiang-core = { path = "crates/guanxiang-core" }
+guanxiang-view = { path = "crates/guanxiang-view" }
 # D2：只用 anise 读星历。关掉默认 feature（metaload 会引入 ureq/TLS，analysis 会引入 rayon 等）。
 anise = { version = "1.0.0-beta", default-features = false }
 # D3：时间尺度、岁差章动、坐标变换。

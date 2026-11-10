@@ -610,6 +610,7 @@ version = "0.1.0"
 dependencies = [
  "clap",
  "guanxiang-core",
+ "guanxiang-view",
  "serde_json",
 ]
 
@@ -627,10 +628,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "guanxiang-view"
+version = "0.1.0"
+dependencies = [
+ "guanxiang-core",
+ "serde_json",
+]
+
+[[package]]
 name = "guanxiang-wasm"
 version = "0.1.0"
 dependencies = [
  "guanxiang-core",
+ "guanxiang-view",
  "serde_json",
  "wasm-bindgen",
 ]
