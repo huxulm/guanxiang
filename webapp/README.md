@@ -38,4 +38,12 @@ npm run build    # svelte-check（警告也算失败）+ 红光主题检查 + vi
 
 ## 部署
 
-`wrangler.jsonc` 已配置为单页应用（`app.guanx.huxulm.dev`）。部署和 R2 上的星历上传、CORS 设置属于 P4，尚未执行。
+线上地址 https://app.guanx.huxulm.dev （Cloudflare Workers 静态资源，单页应用，见 `wrangler.jsonc`）。目前手动发布（需要 `CLOUDFLARE_API_TOKEN`）：
+
+```sh
+cd webapp
+npm run wasm && npm run data && npm run build
+npx wrangler deploy
+```
+
+星历放在 R2 存储桶 `huxulm-asia` 的 `guanxiang/ephem/de440s_1900_2100-1b7ff150.bsp`，经 https://s2.huxulm.dev 公开（`Cache-Control: public, max-age=31536000, immutable`）；地址写在 `.env.production`。存储桶的 CORS 只允许 `https://app.guanx.huxulm.dev` 和 `http://localhost:4173`（`vite preview`）以 GET、HEAD 读取。星历换版本时上传新文件名，同时改 `.env.production` 和 `src/lib/config.ts` 的 `sha256`、`bytes`。

@@ -375,6 +375,14 @@ guanxiang/
 - 体积：JS 133 KB（gzip 48 KB，含两种语言的全部 ARB 文案），CSS 29 KB（gzip 5 KB），wasm gzip 297 KB；星历 21 MB 只在第一次需要计算时下载。
 - 已知问题：时间按浏览器所在时区（或 UTC）显示，不按观测地时区；“未找到”靠匹配 Rust 返回的中文错误信息判断，以后改成错误码。GitLab runner 没有外网，webapp 只在 GitHub CI 构建。
 
+**P4 部署记录（2026-11-10，部分）：**
+
+- 星历上传到 R2 存储桶 `huxulm-asia`：`guanxiang/ephem/de440s_1900_2100-1b7ff150.bsp`（文件名带 SHA-256 前 8 位，`Cache-Control: immutable`），从公开地址 `s2.huxulm.dev` 下载回来 SHA-256 一致。
+- 存储桶原来没有 CORS 配置，新设一条：只允许 `https://app.guanx.huxulm.dev` 和 `http://localhost:4173` 以 GET、HEAD 读取，暴露 `Content-Length`、`ETag`；其他来源拿不到 CORS 头。
+- `webapp/.env.production` 写入线上星历地址；`vite preview` 本地验证生产包能跨域下载并校验星历。
+- `npx wrangler deploy` 发布到 https://app.guanx.huxulm.dev （Workers 静态资源，单页应用回退）。线上核对：各路由 200，wasm 为 `application/wasm`，2027-08-02 卢克索的接触时刻与本地一致，控制台没有错误。
+- 还没做：GitHub Actions 自动部署（目前手动发布）、发版流程里同步更新 webapp。
+
 ## 6. 验证方法
 
 | 对象 | 对照来源 |
