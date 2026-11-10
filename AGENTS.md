@@ -13,6 +13,7 @@
 | `crates/guanxiang-cli/` | 命令行：`info`、`distance`、`position`、`search`、`eclipse`、`occultation`、`satellite`、`scene` |
 | `crates/guanxiang-wasm/` | WebAssembly 接口（Web 应用，规划见 `docs/PLAN.md`“Web 应用”）：`wasm-pack build crates/guanxiang-wasm --release --target web` |
 | `app/` | Flutter 应用；`app/rust/` 是 flutter_rust_bridge 2.13 桥接层（工作区成员），`app/lib/src/rust/` 是生成的绑定 |
+| `webapp/` | Web 应用（Vite + Svelte 5 + TypeScript + Tailwind 4），浏览器里用 wasm 计算日月食，见 `webapp/README.md`；计划部署到 https://app.guanx.huxulm.dev |
 | `website/` | 官网（Vite + TypeScript + Tailwind 4），Cloudflare Workers 静态资源托管，https://guanx.huxulm.dev |
 | `tools/` | 脚本：Release 说明（`release_notes.py`）、Linux 打包和冒烟测试，以及生成对照数据（Skyfield、Horizons、NASA 星表）、沙罗序列表、ΔT 表、恒星表、地图陆地轮廓、许可证清单、应用图标 |
 | `data/` | 星历（不进 Git），获取方法见 `data/README.md` |
@@ -46,6 +47,7 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 | 界面（`app/lib/`） | `flutter analyze`、`flutter test`；**截图**看三套主题（浅色、深空、红光）和窄屏、宽屏；新文案中英文都要有 |
 | 平台相关（权限、通知、定位、高德地图、后台任务） | 在 Android 模拟器上跑 `flutter test integration_test/app_test.dart`，看 logcat |
 | 构建、依赖、打包（Gradle、installer.iss、`tools/package_*`） | 手动运行 release.yml 并勾选试运行（见“发版”第 2 步） |
+| Web 应用（`webapp/`、`crates/guanxiang-view`、`crates/guanxiang-wasm`） | `npm run wasm && npm run build`（含 svelte-check 和红光主题检查）；`npm run dev` 后用浏览器截三套主题、390 和 1280 宽度、中英文，控制台没有报错 |
 | 官网（`website/`） | `npm run build`；本地预览后用浏览器截窄屏和宽屏 |
 
 推送后用 `gh run list -R huxulm/guanxiang -L 3`、`gh run watch <id> -R huxulm/guanxiang --exit-status` 确认 GitHub CI 通过（含 Linux）；官网改动再用 `curl -s https://guanx.huxulm.dev/ | grep …` 确认线上已更新。

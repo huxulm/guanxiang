@@ -1,0 +1,16 @@
+// 观象 Web 应用：纯静态单页应用，用 Workers 静态资源托管（没有 Worker 脚本）。
+// 发布：npm run build 后 npx wrangler deploy（需要 CLOUDFLARE_API_TOKEN）。星历不在这里，从 R2 下载。
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "guanxiang-webapp",
+  "account_id": "945740d1b097841869dbae6bba8f8353",
+  "compatibility_date": "2026-11-01",
+  "assets": {
+    "directory": "./dist",
+    // 前端路由：/lunar/2025-09-07 这类地址都返回 index.html
+    "not_found_handling": "single-page-application"
+  },
+  "routes": [{ "pattern": "app.guanx.huxulm.dev", "zone_name": "huxulm.dev", "custom_domain": true }],
+  "workers_dev": false,
+  "preview_urls": false
+}

@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.wrangler/
+# 由 npm run wasm 生成（wasm-pack 也会在里面写一个忽略全部的 .gitignore）
+src/wasm/pkg/
+# 由 npm run data 生成
+public/data/

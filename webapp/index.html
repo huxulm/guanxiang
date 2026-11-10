@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="观象 Web 版：日食、月食的全球与本地情况，在浏览器里用 JPL DE440 星历实时计算。" />
+    <meta name="color-scheme" content="dark light" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <title>观象 · 日月食</title>
+    <script>
+      // 在样式加载前定下主题，避免闪烁（与 src/lib/settings.svelte.ts 的存储键一致）
+      try {
+        var t = localStorage.getItem('gx.theme');
+        if (t !== 'light' && t !== 'deep' && t !== 'red') {
+          t = matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'deep';
+        }
+        document.documentElement.dataset.theme = t;
+      } catch (e) {
+        document.documentElement.dataset.theme = 'deep';
+      }
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

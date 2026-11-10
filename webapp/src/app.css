@@ -1,0 +1,175 @@
+@import 'tailwindcss';
+
+/*
+ * 三套主题的色值与 App（app/lib/src/theme.dart）一致。界面里不写死颜色，一律用这些变量。
+ * 红光模式：所有颜色都以红色分量为主，实心按钮用暗红底。
+ */
+:root,
+:root[data-theme='deep'] {
+  color-scheme: dark;
+  --gx-bg: #0b0e14;
+  --gx-surface: #131924;
+  --gx-surface-container: #1b2332;
+  --gx-surface-high: #242e40;
+  --gx-outline: #263246;
+  --gx-outline-variant: #1c2534;
+  --gx-on-surface: #e2e6ee;
+  --gx-on-surface-variant: #a6b0c2;
+  --gx-primary: #569aff;
+  --gx-on-primary: #00214d;
+  --gx-primary-container: #1a3358;
+  --gx-on-primary-container: #d3e4ff;
+  --gx-tertiary: #ffb74d;
+  --gx-error: #ff6b5e;
+  --gx-error-container: #4d120e;
+  --gx-on-error-container: #ffdad6;
+  --gx-eclipse: #ffb74d;
+  --gx-blood-moon: #c4532f;
+  --gx-moon-lit: #e9e4d6;
+  --gx-btn: var(--gx-primary);
+  --gx-on-btn: var(--gx-on-primary);
+}
+
+:root[data-theme='light'] {
+  color-scheme: light;
+  --gx-bg: #f7f9fc;
+  --gx-surface: #ffffff;
+  --gx-surface-container: #eff3f8;
+  --gx-surface-high: #e6ecf4;
+  --gx-outline: #d5dde8;
+  --gx-outline-variant: #e2e8f0;
+  --gx-on-surface: #161c26;
+  --gx-on-surface-variant: #4f5b6d;
+  --gx-primary: #2558a8;
+  --gx-on-primary: #ffffff;
+  --gx-primary-container: #dce7fa;
+  --gx-on-primary-container: #0f2a55;
+  --gx-tertiary: #b26a00;
+  --gx-error: #ba1a1a;
+  --gx-error-container: #ffe4e0;
+  --gx-on-error-container: #5c0f0a;
+  --gx-eclipse: #b26a00;
+  --gx-blood-moon: #a63e1c;
+  --gx-moon-lit: #dcd6c4;
+  --gx-btn: var(--gx-primary);
+  --gx-on-btn: var(--gx-on-primary);
+}
+
+:root[data-theme='red'] {
+  color-scheme: dark;
+  --gx-bg: #0a0101;
+  --gx-surface: #140303;
+  --gx-surface-container: #1d0505;
+  --gx-surface-high: #280707;
+  --gx-outline: #3d0c0c;
+  --gx-outline-variant: #2a0707;
+  --gx-on-surface: #d95050;
+  --gx-on-surface-variant: #a33e3e;
+  --gx-primary: #d03030;
+  --gx-on-primary: #1a0000;
+  --gx-primary-container: #4a0c0c;
+  --gx-on-primary-container: #e05050;
+  --gx-tertiary: #c04040;
+  --gx-error: #e84040;
+  --gx-error-container: #330808;
+  --gx-on-error-container: #dd5555;
+  --gx-eclipse: #d03030;
+  --gx-blood-moon: #6a1010;
+  --gx-moon-lit: #d04a4a;
+  /* 实心按钮用暗红底，避免大片亮红 */
+  --gx-btn: var(--gx-primary-container);
+  --gx-on-btn: var(--gx-on-primary-container);
+}
+
+@theme inline {
+  --color-bg: var(--gx-bg);
+  --color-surface: var(--gx-surface);
+  --color-surface-2: var(--gx-surface-container);
+  --color-surface-3: var(--gx-surface-high);
+  --color-outline: var(--gx-outline);
+  --color-outline-variant: var(--gx-outline-variant);
+  --color-fg: var(--gx-on-surface);
+  --color-muted: var(--gx-on-surface-variant);
+  --color-primary: var(--gx-primary);
+  --color-on-primary: var(--gx-on-primary);
+  --color-primary-container: var(--gx-primary-container);
+  --color-on-primary-container: var(--gx-on-primary-container);
+  --color-tertiary: var(--gx-tertiary);
+  --color-error: var(--gx-error);
+  --color-error-container: var(--gx-error-container);
+  --color-on-error-container: var(--gx-on-error-container);
+  --color-eclipse: var(--gx-eclipse);
+  --color-blood: var(--gx-blood-moon);
+  --color-moon: var(--gx-moon-lit);
+  --color-btn: var(--gx-btn);
+  --color-on-btn: var(--gx-on-btn);
+  --font-sans: 'Inter', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans SC', system-ui, sans-serif;
+}
+
+html {
+  background: var(--gx-bg);
+  color: var(--gx-on-surface);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--gx-bg);
+  font-family: var(--font-sans);
+}
+
+::selection {
+  background: var(--gx-primary-container);
+  color: var(--gx-on-primary-container);
+}
+
+:focus-visible {
+  outline: 2px solid var(--gx-primary);
+  outline-offset: 2px;
+}
+
+/* 组件样式用 @utility 定义，才能互相 @apply（Tailwind 4） */
+@utility card {
+  @apply rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-filled {
+  @apply btn bg-btn text-on-btn hover:brightness-110;
+}
+
+@utility btn-tonal {
+  @apply btn bg-primary-container text-on-primary-container hover:brightness-110;
+}
+
+@utility btn-outline {
+  @apply btn border border-outline text-fg hover:bg-surface-2;
+}
+
+@utility btn-text {
+  @apply btn px-3 text-primary hover:bg-surface-2;
+}
+
+@utility field {
+  @apply w-full rounded-xl border border-outline bg-surface-2 px-3 py-2 text-fg tabular-nums outline-none focus:border-primary;
+}
+
+@utility chip {
+  @apply inline-flex items-center rounded-full border border-outline px-3 py-1 text-sm text-muted transition hover:bg-surface-2;
+}
+
+@utility chip-on {
+  @apply border-primary bg-primary-container text-on-primary-container;
+}
+
+@utility label {
+  @apply text-xs text-muted;
+}
+
+@utility num {
+  font-variant-numeric: tabular-nums;
+}
