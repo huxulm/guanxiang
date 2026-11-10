@@ -82,7 +82,7 @@ cargo run -q -p guanxiang-cli -- scene ephem-track `
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
   tools/manim/scenes/solar_eclipse_scene.py SolarEclipseScene -q h --gpu
 
-# 9:16 移动端竖屏短视频 HD 模式（--portrait 或 --aspect 9:16，输出 1080×1920 60fps）
+# 9:16 移动端竖屏短视频 HD 模式（--portrait 或 --aspect 9:16，输出 1080×1920 60fps，默认启用 --compact 紧凑充满）
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
   tools/manim/scenes/solar_eclipse_scene.py SolarEclipseScene -q h --portrait --gpu
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
@@ -91,6 +91,11 @@ cargo run -q -p guanxiang-cli -- scene ephem-track `
   tools/manim/scenes/solar_eclipse_scene.py ChinaAnnularSolarScene -q h --portrait --gpu
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
   tools/manim/scenes/solar_eclipse_scene.py UrumqiNearestSolarScene -q h --portrait --gpu
+
+# 内容块间距控制：默认紧凑充满（--compact），如需保留宽松留白与间距可传 --loose
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py SolarEclipseScene -q h --portrait --loose --gpu
+
 
 ```
 

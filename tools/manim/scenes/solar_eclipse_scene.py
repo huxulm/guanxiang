@@ -403,6 +403,7 @@ class SolarEclipseBaseScene(Scene):
     city_short: str = "卢克索"
     json_filename: str = "solar_2027_08_02.json"
     aspect_ratio_mode: str = "16:9"
+    compact_layout: bool = True
 
     def ensure_scene_data(self) -> dict:
         data_path = MANIM_DIR / "data" / self.json_filename
@@ -589,75 +590,147 @@ class SolarEclipseBaseScene(Scene):
             or getattr(self, "aspect_ratio_mode", None) == "9:16"
             or (hasattr(config, "pixel_width") and config.pixel_width < config.pixel_height)
         )
+        is_compact = getattr(self, "compact_layout", True)
+        if "GUANXIANG_COMPACT" in os.environ:
+            is_compact = os.environ["GUANXIANG_COMPACT"].lower() in ("1", "true", "yes", "on")
+
         if is_portrait:
             self.camera.frame_width = 8.0
             self.camera.frame_height = 8.0 * (16.0 / 9.0)  # 14.2222
 
-            # 9:16 移动端竖屏布局 (自上而下: Header -> 站心特写/HUD -> 贝塞尔基本面正射投影 -> 时序演化曲线)
-            header_w = 7.40
-            header_h = 0.94
-            header_center = np.array([0.0, 6.45, 0.0])
+            if is_compact:
+                # 9:16 移动端竖屏收紧充满布局（默认：间距 0.06，外边距 0.12，各视窗大幅扩容）
+                header_w = 7.76
+                header_h = 0.88
+                header_center = np.array([0.0, 6.58, 0.0])
 
-            # 面板 1：站心日面特写视窗 (天顶向上) + 遥测 HUD (上区)
-            top_panel_w = 7.40
-            top_panel_h = 3.50
-            top_panel_center = np.array([0.0, 4.05, 0.0])
-            zoom_sun_center = np.array([-1.90, 3.75, 0.0])
-            zoom_fov_radius = 1.15
-            zoom_sun_radius = 0.58
-            hud_label_x = 0.05
-            hud_value_x = 1.35
-            hud_row_ys = [4.38, 4.00, 3.62, 3.24, 2.86]
-            stage_text_y = 4.88
+                # 面板 1：站心日面特写视窗 (天顶向上) + 遥测 HUD (上区)
+                top_panel_w = 7.76
+                top_panel_h = 3.66
+                top_panel_center = np.array([0.0, 4.25, 0.0])
+                zoom_sun_center = np.array([-2.05, 3.96, 0.0])
+                zoom_fov_radius = 1.25
+                zoom_sun_radius = 0.63
+                hud_label_x = 0.08
+                hud_value_x = 1.45
+                hud_row_ys = [4.58, 4.20, 3.82, 3.44, 3.06]
+                stage_text_y = 5.08
 
-            # 面板 2：贝塞尔基本面正射投影主视窗 (中区)
-            main_panel_w = 7.40
-            main_panel_h = 5.50
-            main_panel_center = np.array([0.0, -0.65, 0.0])
-            plane_origin = np.array([0.0, -0.80, 0.0])
-            earth_r_scale = 2.05
+                # 面板 2：贝塞尔基本面正射投影主视窗 (中区，地球放大至 R=2.22，大陆轮廓更饱满)
+                main_panel_w = 7.76
+                main_panel_h = 5.86
+                main_panel_center = np.array([0.0, -0.57, 0.0])
+                plane_origin = np.array([0.0, -0.72, 0.0])
+                earth_r_scale = 2.22
 
-            # 面板 3：时序演化曲线 (下区)
-            bot_panel_w = 7.40
-            bot_panel_h = 3.20
-            bot_panel_center = np.array([0.0, -5.20, 0.0])
-            chart_left = -2.85
-            chart_right = 2.85
-            chart_bottom = -6.40
-            chart_top = -4.30
+                # 面板 3：时序演化曲线 (下区)
+                bot_panel_w = 7.76
+                bot_panel_h = 3.46
+                bot_panel_center = np.array([0.0, -5.29, 0.0])
+                chart_left = -3.05
+                chart_right = 3.05
+                chart_bottom = -6.52
+                chart_top = -4.32
+            else:
+                # 9:16 移动端竖屏宽松留白布局（保留明显间距与边距）
+                header_w = 7.40
+                header_h = 0.94
+                header_center = np.array([0.0, 6.45, 0.0])
+
+                # 面板 1：站心日面特写视窗 (天顶向上) + 遥测 HUD (上区)
+                top_panel_w = 7.40
+                top_panel_h = 3.50
+                top_panel_center = np.array([0.0, 4.05, 0.0])
+                zoom_sun_center = np.array([-1.90, 3.75, 0.0])
+                zoom_fov_radius = 1.15
+                zoom_sun_radius = 0.58
+                hud_label_x = 0.05
+                hud_value_x = 1.35
+                hud_row_ys = [4.38, 4.00, 3.62, 3.24, 2.86]
+                stage_text_y = 4.88
+
+                # 面板 2：贝塞尔基本面正射投影主视窗 (中区)
+                main_panel_w = 7.40
+                main_panel_h = 5.50
+                main_panel_center = np.array([0.0, -0.65, 0.0])
+                plane_origin = np.array([0.0, -0.80, 0.0])
+                earth_r_scale = 2.05
+
+                # 面板 3：时序演化曲线 (下区)
+                bot_panel_w = 7.40
+                bot_panel_h = 3.20
+                bot_panel_center = np.array([0.0, -5.20, 0.0])
+                chart_left = -2.85
+                chart_right = 2.85
+                chart_bottom = -6.40
+                chart_top = -4.30
         else:
-            # 16:9 宽屏科研仪表板布局
-            header_w = 13.60
-            header_h = 0.72
-            header_center = np.array([0.0, 3.48, 0.0])
+            if is_compact:
+                # 16:9 宽屏科研仪表板收紧充满布局（默认：间距 0.08，视窗与地球更大）
+                header_w = 13.98
+                header_h = 0.68
+                header_center = np.array([0.0, 3.56, 0.0])
 
-            # 面板 1：站心日面特写视窗 (右上)
-            top_panel_w = 5.65
-            top_panel_h = 3.18
-            top_panel_center = np.array([3.95, 1.33, 0.0])
-            zoom_sun_center = np.array([2.28, 1.00, 0.0])
-            zoom_fov_radius = 0.98
-            zoom_sun_radius = 0.50
-            hud_label_x = 3.52
-            hud_value_x = 4.60
-            hud_row_ys = [1.56, 1.20, 0.84, 0.48, 0.12]
-            stage_text_y = 1.94
+                # 面板 1：站心日面特写视窗 (右上)
+                top_panel_w = 5.88
+                top_panel_h = 3.40
+                top_panel_center = np.array([4.05, 1.44, 0.0])
+                zoom_sun_center = np.array([2.35, 1.08, 0.0])
+                zoom_fov_radius = 1.05
+                zoom_sun_radius = 0.54
+                hud_label_x = 3.65
+                hud_value_x = 4.75
+                hud_row_ys = [1.68, 1.32, 0.96, 0.60, 0.24]
+                stage_text_y = 2.08
 
-            # 面板 2：贝塞尔基本面正射投影主视窗 (左侧大窗)
-            main_panel_w = 7.70
-            main_panel_h = 6.76
-            main_panel_center = np.array([-2.95, -0.42, 0.0])
-            plane_origin = np.array([-2.95, -0.58, 0.0])
-            earth_r_scale = 2.40
+                # 面板 2：贝塞尔基本面正射投影主视窗 (左侧大窗，地球放大至 R=2.52)
+                main_panel_w = 8.02
+                main_panel_h = 7.04
+                main_panel_center = np.array([-2.98, -0.38, 0.0])
+                plane_origin = np.array([-2.98, -0.55, 0.0])
+                earth_r_scale = 2.52
 
-            # 面板 3：时序演化曲线 (右下)
-            bot_panel_w = 5.65
-            bot_panel_h = 3.36
-            bot_panel_center = np.array([3.95, -2.12, 0.0])
-            chart_left = 1.72
-            chart_right = 6.22
-            chart_bottom = -3.34
-            chart_top = -1.16
+                # 面板 3：时序演化曲线 (右下)
+                bot_panel_w = 5.88
+                bot_panel_h = 3.56
+                bot_panel_center = np.array([4.05, -2.12, 0.0])
+                chart_left = 1.78
+                chart_right = 6.42
+                chart_bottom = -3.45
+                chart_top = -1.14
+            else:
+                # 16:9 宽屏科研仪表板宽松留白布局
+                header_w = 13.60
+                header_h = 0.72
+                header_center = np.array([0.0, 3.48, 0.0])
+
+                # 面板 1：站心日面特写视窗 (右上)
+                top_panel_w = 5.65
+                top_panel_h = 3.18
+                top_panel_center = np.array([3.95, 1.33, 0.0])
+                zoom_sun_center = np.array([2.28, 1.00, 0.0])
+                zoom_fov_radius = 0.98
+                zoom_sun_radius = 0.50
+                hud_label_x = 3.52
+                hud_value_x = 4.60
+                hud_row_ys = [1.56, 1.20, 0.84, 0.48, 0.12]
+                stage_text_y = 1.94
+
+                # 面板 2：贝塞尔基本面正射投影主视窗 (左侧大窗)
+                main_panel_w = 7.70
+                main_panel_h = 6.76
+                main_panel_center = np.array([-2.95, -0.42, 0.0])
+                plane_origin = np.array([-2.95, -0.58, 0.0])
+                earth_r_scale = 2.40
+
+                # 面板 3：时序演化曲线 (右下)
+                bot_panel_w = 5.65
+                bot_panel_h = 3.36
+                bot_panel_center = np.array([3.95, -2.12, 0.0])
+                chart_left = 1.72
+                chart_right = 6.22
+                chart_bottom = -3.34
+                chart_top = -1.16
 
         # =====================================================================
         # 1. 顶部科研遥测标题栏 (Header Bar - 直角边框)

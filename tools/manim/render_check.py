@@ -187,6 +187,20 @@ def main() -> None:
         help="快捷开关：等同于 --aspect 9:16 (移动端竖屏短视频 HD 模式)",
     )
     parser.add_argument(
+        "--compact",
+        dest="compact",
+        action="store_true",
+        default=True,
+        help="收紧内容块间距，让各视窗更饱满充满画幅（默认开启）",
+    )
+    parser.add_argument(
+        "--loose",
+        "--with-gap",
+        dest="compact",
+        action="store_false",
+        help="关闭收紧，保留各内容块较宽松的间距与留白",
+    )
+    parser.add_argument(
         "--gpu",
         action="store_true",
         help="开启 GPU 硬件视频编码 (h264_nvenc/qsv/amf) 与多编码器并发加速",
@@ -262,6 +276,7 @@ def main() -> None:
     env["PYTHONPATH"] = str(MANIM_DIR) + os.pathsep + env.get("PYTHONPATH", "")
     if is_portrait:
         env["GUANXIANG_ASPECT"] = "9:16"
+    env["GUANXIANG_COMPACT"] = "1" if args.compact else "0"
     print("running:", " ".join(cmd))
     t0 = time.perf_counter()
     subprocess.run(cmd, check=True, cwd=str(ROOT), env=env)
