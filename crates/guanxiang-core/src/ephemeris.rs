@@ -52,6 +52,18 @@ impl AniseEphemeris {
         Ok(Self { almanac })
     }
 
+    /// 从内存加载 SPK，直接接管 `bytes` 的内存，不再复制一份。
+    ///
+    /// 星历有几十 MB，浏览器（wasm）里内存紧张时用这个，比 [`Self::from_bytes`] 少一次复制。
+    pub fn from_vec(bytes: Vec<u8>) -> Result<Self> {
+        // Vec → Bytes → BytesMut：缓冲区只有一个持有者，两步都不复制。
+        let buf = bytes::BytesMut::from(bytes::Bytes::from(bytes));
+        let almanac = Almanac::default()
+            .load_from_bytes(buf)
+            .map_err(|e| Error::EphemerisLoad(e.to_string()))?;
+        Ok(Self { almanac })
+    }
+
     /// 某个天体的星历覆盖范围（TDB）。
     pub fn coverage(&self, body: Body) -> Result<(Tdb, Tdb)> {
         let (start, end) =

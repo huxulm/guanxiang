@@ -2,7 +2,7 @@
 
 跨平台（Windows、Linux、Android）天文事件搜索工具。核心用 Rust 编写，界面用 Flutter。
 
-最后更新：2026-11-05
+最后更新：2026-11-10
 
 ## 1. 目标
 
@@ -334,6 +334,19 @@ guanxiang/
 - 分享图始终用深空主题，与应用当前主题无关。Android、Windows 调起系统分享（`share_plus`），Windows、Linux 可以另存为 PNG（`file_selector`）；Linux 的 share_plus 不支持分享文件。
 
 **v0.1.0（2026-11-06）**：只发布 Android（arm64-v8a、x86_64 两个 APK），附在 GitLab Release `v0.1.0`，文件存放在项目的 Generic Package Registry（`guanxiang/0.1.0/`）。已在 Android 15（16 KB 页）模拟器上验证；真机尚未测试。
+
+### Web 应用（规划中）
+
+目标：把 guanxiang-core 编成 WebAssembly，做浏览器版（`app.guanx.huxulm.dev`），首版做日月食的搜索、详情和可交互动画（替代 Manim 的离线视频流程）。前端用 TS + Vite + Svelte 5 + Tailwind 4，3D 地球用 three.js，wasm 跑在 Web Worker 里。分阶段：P0 技术验证 → P1 新建 `guanxiang-view`（从 CLI `scene` 和桥接层抽出纯计算）和完整的 wasm 接口 → P2 `webapp/` 骨架 → P3 动画与视频导出 → P4 CI 和部署。
+
+**P0 技术验证记录（2026-11-10）：**
+
+- `guanxiang-core` 不改代码就能 `cargo check --target wasm32-unknown-unknown`：anise 关掉默认 feature 后，memmap2 在 wasm 上只编进 stub（只要不调 `from_path`）；hifitime 自带 `web-time`。
+- 星历加载：浏览器里没有文件系统，字节由 JS 传入。core 新增 `AniseEphemeris::from_vec`，用 `Vec → Bytes → BytesMut` 接管内存，比 `from_bytes` 少复制一份（22 MB）。
+- `crates/guanxiang-wasm`：wasm-bindgen 封装 `Engine`（构造时传入星历字节）和 `lunarEclipses(from, to)`（返回 JSON 字符串）。计算部分是普通 Rust 函数，本机 `cargo test` 直接测。
+- 体积：`wasm-pack build --release`（含 wasm-opt）后 508 KB，gzip 226 KB。星历 `de440s_1900_2100.bsp` 22 MB，gzip 后还有 20.8 MB，是首次加载的主要开销。
+- 速度（Node 24，V8，与浏览器相近）：模块初始化 3.5 ms，加载星历 19 ms，搜索 1 年月食 25 ms，10 年（2025–2034，23 次）66 ms。本机 release 加载加 10 年搜索共约 0.06 s，同一量级。加载星历后进程内存约增加 43 MB。
+- 与本机 Rust 结果逐项比对（同一份裁剪星历，2025–2034 共 23 次月食）：类型、条数全部一致；接触时刻差 ≤ 1.2×10⁻⁷ s（TT 秒数的末位舍入）；γ、食分差 ≤ 7×10⁻¹⁰；食甚时刻差 ≤ 8.6 ms。食甚由求极小值得到，极小值附近函数平坦，wasm 与本机数学库（sin、asin 等）末位舍入不同，迭代就停在略有不同的位置；这一差别远小于与 NASA 的对照基准（≤ 2.3 s）。
 
 ## 6. 验证方法
 

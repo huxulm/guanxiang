@@ -1,0 +1,20 @@
+[package]
+name = "guanxiang-wasm"
+description = "观象 WebAssembly 接口：在浏览器里调用 guanxiang-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+license.workspace = true
+repository.workspace = true
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+guanxiang-core.workspace = true
+serde_json.workspace = true
+wasm-bindgen.workspace = true
+
+[lints]
+workspace = true
