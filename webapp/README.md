@@ -34,7 +34,7 @@ npm run build    # svelte-check（警告也算失败）+ 红光主题检查 + vi
 - 颜色只用 `src/app.css` 里的变量（Tailwind 里是 `bg-surface`、`text-muted`、`text-eclipse` 这类名字）；红光主题的每个颜色都要 R 分量最大（`npm run check` 会检查）。
 - 日食相关页面必须显示 ISO 12312-2 安全提示（`SafetyNotice`）。
 - Comlink 回调不能返回响应式对象：返回值会被传回 Worker，`$state` 代理不能结构化克隆。
-- 线上星历地址用环境变量 `VITE_EPHEM_URL` 指定（R2，需要 CORS）；没设时用 `/ephem/`，只有开发和 `vite preview` 能用。
+- 星历地址：`npm run dev` 用开发服务器的 `/ephem/`（本地文件）；生产构建和 `vite preview` 用 `.env.production` 里的 `VITE_EPHEM_URL`（R2，需要 CORS）。
 
 ## 部署
 
