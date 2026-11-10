@@ -2,7 +2,7 @@
   import EphemerisStatus from '../components/EphemerisStatus.svelte';
   import ObserverBar from '../components/ObserverBar.svelte';
   import SafetyNotice from '../components/SafetyNotice.svelte';
-  import SolarDiagram from '../components/SolarDiagram.svelte';
+  import SolarAnimation from '../components/anim/SolarAnimation.svelte';
   import Stat from '../components/Stat.svelte';
   import {
     fmtCoord,
@@ -142,10 +142,8 @@
       {/if}
     </section>
 
-    <section class="card space-y-3">
-      <h2 class="font-semibold">{t('diagramTitle')}</h2>
-      <SolarDiagram scene={s} />
-      <p class="text-xs text-muted">{t('animationSoon')}</p>
-    </section>
+    {#key s}
+      <SolarAnimation scene={s} {date} observer={pageObserver().observer} />
+    {/key}
   {/if}
 </div>

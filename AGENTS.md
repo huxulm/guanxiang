@@ -47,7 +47,7 @@ npm ci && npm run build                 # tsc 类型检查 + vite 构建
 | 界面（`app/lib/`） | `flutter analyze`、`flutter test`；**截图**看三套主题（浅色、深空、红光）和窄屏、宽屏；新文案中英文都要有 |
 | 平台相关（权限、通知、定位、高德地图、后台任务） | 在 Android 模拟器上跑 `flutter test integration_test/app_test.dart`，看 logcat |
 | 构建、依赖、打包（Gradle、installer.iss、`tools/package_*`） | 手动运行 release.yml 并勾选试运行（见“发版”第 2 步） |
-| Web 应用（`webapp/`、`crates/guanxiang-view`、`crates/guanxiang-wasm`） | `npm run wasm && npm run build`（含 svelte-check 和红光主题检查）；`npm run dev` 后用浏览器截三套主题、390 和 1280 宽度、中英文，控制台没有报错 |
+| Web 应用（`webapp/`、`crates/guanxiang-view`、`crates/guanxiang-wasm`） | `npm run wasm && npm run build`（含 svelte-check 和红光主题检查）；改了动画几何（`src/lib/anim/bessel.ts`）跑 `npm run test:geometry`；`npm run dev` 后用浏览器截三套主题、390 和 1280 宽度、中英文，控制台没有报错 |
 | 官网（`website/`） | `npm run build`；本地预览后用浏览器截窄屏和宽屏 |
 
 推送后用 `gh run list -R huxulm/guanxiang -L 3`、`gh run watch <id> -R huxulm/guanxiang --exit-status` 确认 GitHub CI 通过（含 Linux）；官网改动再用 `curl -s https://guanx.huxulm.dev/ | grep …` 确认线上已更新。

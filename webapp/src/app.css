@@ -26,6 +26,8 @@
   --gx-eclipse: #ffb74d;
   --gx-blood-moon: #c4532f;
   --gx-moon-lit: #e9e4d6;
+  --gx-sky: #05070c;
+  --gx-sky-moon: #020305;
   --gx-btn: var(--gx-primary);
   --gx-on-btn: var(--gx-on-primary);
 }
@@ -51,6 +53,8 @@
   --gx-eclipse: #b26a00;
   --gx-blood-moon: #a63e1c;
   --gx-moon-lit: #dcd6c4;
+  --gx-sky: #1b2332;
+  --gx-sky-moon: #0b0e14;
   --gx-btn: var(--gx-primary);
   --gx-on-btn: var(--gx-on-primary);
 }
@@ -76,6 +80,8 @@
   --gx-eclipse: #d03030;
   --gx-blood-moon: #6a1010;
   --gx-moon-lit: #d04a4a;
+  --gx-sky: #0a0101;
+  --gx-sky-moon: #050000;
   /* 实心按钮用暗红底，避免大片亮红 */
   --gx-btn: var(--gx-primary-container);
   --gx-on-btn: var(--gx-on-primary-container);

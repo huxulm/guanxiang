@@ -206,4 +206,6 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run wasm
       - run: npm run data
+      # 前端的基本面↔地面换算与 Rust 逐帧对照
+      - run: npm run test:geometry
       - run: npm run build

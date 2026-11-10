@@ -1,6 +1,6 @@
 <script lang="ts">
   import EphemerisStatus from '../components/EphemerisStatus.svelte';
-  import LunarDiagram from '../components/LunarDiagram.svelte';
+  import LunarAnimation from '../components/anim/LunarAnimation.svelte';
   import ObserverBar from '../components/ObserverBar.svelte';
   import Stat from '../components/Stat.svelte';
   import { fmtDate, fmtDuration, fmtNum, fmtTime, lunarKindName, parseUtc, zoneLabel } from '../lib/format';
@@ -132,10 +132,8 @@
       </div>
     </section>
 
-    <section class="card space-y-3">
-      <h2 class="font-semibold">{t('diagramTitle')}</h2>
-      <LunarDiagram scene={s} />
-      <p class="text-xs text-muted">{t('animationSoon')}</p>
-    </section>
+    {#key s}
+      <LunarAnimation scene={s} {date} observer={pageObserver().observer} />
+    {/key}
   {/if}
 </div>

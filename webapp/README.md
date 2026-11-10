@@ -13,6 +13,7 @@ npm run wasm     # wasm-pack 编译 crates/guanxiang-wasm → src/wasm/pkg/（�
 npm run data     # 预算近 20 年的日月食 → public/data/eclipses.json（需要 data/ 或 app/assets/ 下的 de440s_1900_2100.bsp）
 npm run dev      # http://localhost:5173 ，/ephem/ 下由开发服务器提供本地星历
 npm run build    # svelte-check（警告也算失败）+ 红光主题检查 + vite build
+npm run test:geometry  # 前端基本面↔地面换算与 Rust 逐帧对照（需要先 npm run wasm 和裁剪星历）
 ```
 
 改了 Rust 端（`crates/guanxiang-view`、`crates/guanxiang-wasm`）要重新 `npm run wasm`；JSON 字段变了要同步 `src/lib/types.ts`。
@@ -21,13 +22,15 @@ npm run build    # svelte-check（警告也算失败）+ 红光主题检查 + vi
 
 | 路径 | 内容 |
 |---|---|
+| `src/lib/anim/` | 动画：时间轴（`Timeline`）、逐帧求值（`frameState`）、基本面↔地面换算（`bessel.ts`）、陆地轮廓按需加载 |
+| `src/components/anim/` | 月食（地影总览、月面特写）、日食（从太阳看地球、观测地的日面、世界地图）、曲线和时间轴控件 |
 | `src/lib/engine/` | Worker（加载 wasm、星历，执行计算）、星历下载与缓存（SHA-256 校验，Cache Storage）、主线程的引擎状态 |
 | `src/lib/i18n/` | 文案：App 的 ARB（`virtual:arb`，由 `vite.config.ts` 读取 `app/lib/l10n/*.arb`）+ Web 专用文案 `web-strings.ts`（中英文键由类型保证一致） |
 | `src/lib/settings.svelte.ts` | 主题、语言、时区、观测地（只存 localStorage） |
 | `src/lib/router.svelte.ts` | 路由：`/`、`/lunar/YYYY-MM-DD`、`/solar/YYYY-MM-DD`，详情页可带 `?lat=&lon=&h=` |
 | `src/pages/`、`src/components/` | 页面和组件 |
 | `src/app.css` | 三套主题的色值（与 `app/lib/src/theme.dart` 一致）；界面里不写死颜色 |
-| `scripts/` | wasm 构建、首页数据生成、红光主题检查 |
+| `scripts/` | wasm 构建、首页数据生成、红光主题检查、前端几何与 Rust 逐帧对照（`npm run test:geometry`） |
 
 ## 约定
 

@@ -9,7 +9,8 @@
     "dev": "vite",
     "check": "svelte-check --tsconfig ./tsconfig.json --fail-on-warnings && node scripts/check-theme.mjs",
     "build": "npm run check && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:geometry": "node scripts/check-geometry.ts"
   },
   "dependencies": {
     "comlink": "4.4.2"
