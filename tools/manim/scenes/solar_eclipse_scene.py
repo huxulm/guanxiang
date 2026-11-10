@@ -13,6 +13,7 @@ from __future__ import annotations
 import datetime as dt
 import json
 import math
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -132,11 +133,222 @@ def circle_intersection_region(
     return poly
 
 
+_LAND_RINGS_RAD_CACHE: list[np.ndarray] | None = None
+
+
+def load_land_rings_rad() -> list[np.ndarray]:
+    """加载 app/assets/geo/land_110m.json 陆地多边形（弧度 [lon_rad, lat_rad]），过滤亚像素碎岛与冗余密集点。"""
+    global _LAND_RINGS_RAD_CACHE
+    if _LAND_RINGS_RAD_CACHE is not None:
+        return _LAND_RINGS_RAD_CACHE
+    land_path = ROOT / "app" / "assets" / "geo" / "land_110m.json"
+    raw = json.loads(land_path.read_text(encoding="utf-8"))
+    scale = float(raw["scale"])
+    rings: list[np.ndarray] = []
+    for r in raw["rings"]:
+        deg_arr = np.array(r, dtype=float).reshape(-1, 2) / scale
+        if len(deg_arr) >= 3 and np.allclose(deg_arr[0], deg_arr[-1]):
+            deg_arr = deg_arr[:-1]
+        if len(deg_arr) < 4:
+            continue
+        x, y = deg_arr[:, 0], deg_arr[:, 1]
+        area_sq_deg = 0.5 * abs(float(np.dot(x, np.roll(y, -1)) - np.dot(np.roll(x, -1), y)))
+        if area_sq_deg < 1.5:
+            continue
+        kept = [deg_arr[0]]
+        for pt in deg_arr[1:]:
+            if math.hypot(float(pt[0] - kept[-1][0]), float(pt[1] - kept[-1][1])) >= 0.9:
+                kept.append(pt)
+        if len(kept) >= 4:
+            rings.append(np.radians(np.array(kept, dtype=float)))
+    _LAND_RINGS_RAD_CACHE = rings
+    return rings
+
+
+def build_surface_eclipse_band_rad(central_line: list[dict]) -> np.ndarray | None:
+    """按中心线 (lat_deg, lon_deg, width_km) 构建地表全/环食带多边形（与客户端 world_map.dart 的 pathBand 一致）。"""
+    # 过滤掉首尾地平线附近因投影倾角趋近 0° 导致食带宽数值发散的端点
+    valid_cl = [
+        p
+        for p in central_line
+        if float(p.get("sun_alt_deg", 10.0)) >= 5.5
+        and float(p.get("width_km", 100.0)) <= 650.0
+    ]
+    if len(valid_cl) > 90:
+        step = max(1, len(valid_cl) // 80)
+        sampled = valid_cl[::step]
+        if sampled[-1] is not valid_cl[-1]:
+            sampled.append(valid_cl[-1])
+        valid_cl = sampled
+    n = len(valid_cl)
+    if n < 2:
+        return None
+    km_per_deg = 111.2
+    left_pts: list[tuple[float, float]] = []
+    right_pts: list[tuple[float, float]] = []
+    for i in range(n):
+        a = valid_cl[0 if i == 0 else i - 1]
+        b = valid_cl[n - 1 if i == n - 1 else i + 1]
+        c = valid_cl[i]
+        lat = float(c["lat_deg"])
+        lon = float(c["lon_deg"])
+        w_km = float(c.get("width_km", 100.0))
+        k = math.cos(math.radians(lat))
+        dlon = float(b["lon_deg"]) - float(a["lon_deg"])
+        dlon -= 360.0 * round(dlon / 360.0)
+        dlat = float(b["lat_deg"]) - float(a["lat_deg"])
+        east_km = dlon * k * km_per_deg
+        north_km = dlat * km_per_deg
+        seg_len = math.hypot(east_km, north_km)
+        if seg_len <= 1e-6:
+            continue
+        ux = -north_km / seg_len
+        uy = east_km / seg_len
+        half_w = 0.5 * max(w_km, 25.0)
+        off_lat = uy * half_w / km_per_deg
+        off_lon = ux * half_w / (km_per_deg * max(k, 0.05))
+        left_pts.append((math.radians(lon + off_lon), math.radians(lat + off_lat)))
+        right_pts.append((math.radians(lon - off_lon), math.radians(lat - off_lat)))
+    if len(left_pts) < 2:
+        return None
+    ring = left_pts + list(reversed(right_pts))
+    return np.array(ring, dtype=float)
+
+
+def project_ring_to_orthographic(
+    ring_rad: np.ndarray,
+    d_rad: float,
+    sub_lon_rad: float,
+    plane_origin: np.ndarray,
+    earth_r_scale: float,
+) -> tuple[np.ndarray | None, list[np.ndarray]]:
+    """将球面多边形正射投影到向阳半球 (ζ >= 0)，沿地平边缘圆弧闭合被裁切部分。"""
+    lons = ring_rad[:, 0]
+    lats = ring_rad[:, 1]
+    h_ang = lons - sub_lon_rad
+    cl = np.cos(lats)
+    sl = np.sin(lats)
+    cd = math.cos(d_rad)
+    sd = math.sin(d_rad)
+    xi = cl * np.sin(h_ang)
+    eta = sl * cd - cl * sd * np.cos(h_ang)
+    zeta = sl * sd + cl * cd * np.cos(h_ang)
+
+    if np.all(zeta <= 0.0):
+        return None, []
+
+    if np.all(zeta >= 0.0):
+        sx = plane_origin[0] + xi * earth_r_scale
+        sy = plane_origin[1] + eta * earth_r_scale
+        pts = np.column_stack([sx, sy, np.zeros_like(sx)])
+        closed = np.vstack([pts, pts[0:1]])
+        return closed, [closed]
+
+    neg_idx = int(np.argmin(zeta))
+    xi = np.roll(xi, -neg_idx)
+    eta = np.roll(eta, -neg_idx)
+    zeta = np.roll(zeta, -neg_idx)
+    n_pts = len(zeta)
+    vis = zeta >= 0.0
+    starts = np.where(vis & ~np.roll(vis, 1))[0]
+    ends = np.where(vis & ~np.roll(vis, -1))[0]
+    if len(starts) == 0:
+        return None, []
+
+    coast_segments: list[np.ndarray] = []
+    run_unit_segs: list[np.ndarray] = []
+    t_ins: list[float] = []
+    t_outs: list[float] = []
+
+    for s_idx, e_idx in zip(starts, ends, strict=True):
+        prev_idx = (s_idx - 1) % n_pts
+        a_in = float(-zeta[prev_idx] / (zeta[s_idx] - zeta[prev_idx]))
+        xi_in = float(xi[prev_idx] + a_in * (xi[s_idx] - xi[prev_idx]))
+        eta_in = float(eta[prev_idx] + a_in * (eta[s_idx] - eta[prev_idx]))
+        r_in = max(math.hypot(xi_in, eta_in), 1e-6)
+        xi_in, eta_in = xi_in / r_in, eta_in / r_in
+
+        nxt_idx = (e_idx + 1) % n_pts
+        a_out = float(zeta[e_idx] / (zeta[e_idx] - zeta[nxt_idx]))
+        xi_out = float(xi[e_idx] + a_out * (xi[nxt_idx] - xi[e_idx]))
+        eta_out = float(eta[e_idx] + a_out * (eta[nxt_idx] - eta[e_idx]))
+        r_out = max(math.hypot(xi_out, eta_out), 1e-6)
+        xi_out, eta_out = xi_out / r_out, eta_out / r_out
+
+        if s_idx <= e_idx:
+            mid_xi = xi[s_idx : e_idx + 1]
+            mid_eta = eta[s_idx : e_idx + 1]
+        else:
+            mid_xi = np.concatenate([xi[s_idx:], xi[: e_idx + 1]])
+            mid_eta = np.concatenate([eta[s_idx:], eta[: e_idx + 1]])
+
+        ux = np.concatenate([[xi_in], mid_xi, [xi_out]])
+        uy = np.concatenate([[eta_in], mid_eta, [eta_out]])
+        unit_seg = np.column_stack([ux, uy])
+        run_unit_segs.append(unit_seg)
+        t_ins.append(math.atan2(eta_in, xi_in))
+        t_outs.append(math.atan2(eta_out, xi_out))
+
+        sx = plane_origin[0] + ux * earth_r_scale
+        sy = plane_origin[1] + uy * earth_r_scale
+        coast_segments.append(np.column_stack([sx, sy, np.zeros_like(sx)]))
+
+    # 将可见海岸段与地平圆弧段拼接为闭合填充多边形
+    fill_unit_parts: list[np.ndarray] = []
+    num_runs = len(run_unit_segs)
+    for k in range(num_runs):
+        fill_unit_parts.append(run_unit_segs[k])
+        th0 = t_outs[k]
+        th1 = t_ins[(k + 1) % num_runs]
+        dth = (th1 - th0 + math.pi) % (2.0 * math.pi) - math.pi
+        n_arc = max(2, int(abs(dth) / math.radians(4.0)) + 1)
+        ths = np.linspace(th0, th0 + dth, n_arc)[1:-1]
+        if len(ths) > 0:
+            arc_xy = np.column_stack([np.cos(ths), np.sin(ths)])
+            fill_unit_parts.append(arc_xy)
+
+    full_unit = np.vstack(fill_unit_parts)
+    fx = plane_origin[0] + full_unit[:, 0] * earth_r_scale
+    fy = plane_origin[1] + full_unit[:, 1] * earth_r_scale
+    fill_pts = np.column_stack([fx, fy, np.zeros_like(fx)])
+    fill_closed = np.vstack([fill_pts, fill_pts[0:1]])
+    return fill_closed, coast_segments
+
+
+def polylines_to_vmobject(
+    polylines: list[np.ndarray],
+    *,
+    fill_color: str | ManimColor = "#000000",
+    fill_opacity: float = 0.0,
+    stroke_color: str | ManimColor = "#FFFFFF",
+    stroke_width: float = 1.0,
+    stroke_opacity: float = 1.0,
+) -> VMobject:
+    """将多条折线或闭合多边形批量打包进单个 VMobject（恒定单节点，消除逐个创建的开销）。"""
+    valid = [p for p in polylines if len(p) >= 2]
+    if not valid:
+        dummy = Circle(radius=1e-4)
+        dummy.set_fill(opacity=0.0).set_stroke(width=0.0)
+        return dummy
+    starts = np.vstack([p[:-1] for p in valid])
+    ends = np.vstack([p[1:] for p in valid])
+    bezier = np.empty((len(starts) * 4, 3), dtype=float)
+    bezier[0::4] = starts
+    bezier[1::4] = starts * (2.0 / 3.0) + ends * (1.0 / 3.0)
+    bezier[2::4] = starts * (1.0 / 3.0) + ends * (2.0 / 3.0)
+    bezier[3::4] = ends
+    vmob = VMobject()
+    vmob.set_points(bezier)
+    vmob.set_fill(fill_color, opacity=fill_opacity)
+    vmob.set_stroke(stroke_color, width=stroke_width, opacity=stroke_opacity)
+    return vmob
+
+
 class MonospaceGlyphPool:
-    """预渲染等宽 ASCII 字形池，消除 always_redraw 逐帧调用 Pango/SVG 磁盘读写的 CPU 开销。"""
+    """预渲染等宽 ASCII 字形池，打包为单节点 VMobject 消除逐帧 Pango 读写与子对象树变动。"""
 
     def __init__(self, font: str = FONT_MONO, font_size: int = 13) -> None:
-        self._glyphs: dict[str, VMobject] = {}
+        self._glyph_pts: dict[str, np.ndarray] = {}
         ref = Text("0", font=font, font_size=font_size, color=TEXT_PRIMARY)
         self.advance_w = float(ref.width) * 1.08
         self.ref_h = float(ref.height)
@@ -145,7 +357,11 @@ class MonospaceGlyphPool:
         for ch in charset:
             g = Text(ch, font=font, font_size=font_size, color=TEXT_PRIMARY)
             g.move_to(ORIGIN)
-            self._glyphs[ch] = g
+            pts_list = [
+                m.points for m in g.family_members_with_points() if len(m.points) > 0
+            ]
+            if pts_list:
+                self._glyph_pts[ch] = np.vstack(pts_list).copy()
 
     def render_line(
         self,
@@ -153,27 +369,29 @@ class MonospaceGlyphPool:
         anchor_left: np.ndarray,
         color: str | ManimColor,
         fixed_len: int = 14,
-    ) -> VGroup:
-        group = VGroup()
+    ) -> VMobject:
         padded = text.ljust(fixed_len)[:fixed_len]
+        parts: list[np.ndarray] = []
         for idx, ch in enumerate(padded):
+            base_pts = self._glyph_pts.get(ch)
+            if ch == " " or base_pts is None:
+                continue
             x_pos = float(anchor_left[0]) + (idx + 0.5) * self.advance_w
             y_pos = float(anchor_left[1])
-            proto = self._glyphs.get(ch)
-            if ch == " " or proto is None:
-                dummy = Circle(radius=1e-4).move_to(np.array([x_pos, y_pos, 0.0]))
-                dummy.set_fill(opacity=0.0).set_stroke(width=0.0)
-                group.add(dummy)
-                continue
-            g = proto.copy()
-            g.set_color(color)
             if ch == ".":
                 y_pos -= self.ref_h * 0.30
             elif ch in ("'", "°"):
                 y_pos += self.ref_h * 0.26
-            g.move_to(np.array([x_pos, y_pos, 0.0]))
-            group.add(g)
-        return group
+            parts.append(base_pts + np.array([x_pos, y_pos, 0.0]))
+        vmob = VMobject()
+        if parts:
+            vmob.set_points(np.vstack(parts))
+            vmob.set_fill(color, opacity=1.0).set_stroke(width=0.0)
+        else:
+            dummy = Circle(radius=1e-4).move_to(anchor_left)
+            vmob.set_points(np.array(dummy.points))
+            vmob.set_fill(opacity=0.0).set_stroke(width=0.0)
+        return vmob
 
 
 class SolarEclipseBaseScene(Scene):
@@ -184,6 +402,7 @@ class SolarEclipseBaseScene(Scene):
     observer_label: str = "卢克索观测视算 (25.7°N, 32.6°E)"
     city_short: str = "卢克索"
     json_filename: str = "solar_2027_08_02.json"
+    aspect_ratio_mode: str = "16:9"
 
     def ensure_scene_data(self) -> dict:
         data_path = MANIM_DIR / "data" / self.json_filename
@@ -365,29 +584,92 @@ class SolarEclipseBaseScene(Scene):
                 "stage": stage,
             }
 
+        is_portrait = (
+            os.environ.get("GUANXIANG_ASPECT") == "9:16"
+            or getattr(self, "aspect_ratio_mode", None) == "9:16"
+            or (hasattr(config, "pixel_width") and config.pixel_width < config.pixel_height)
+        )
+        if is_portrait:
+            self.camera.frame_width = 8.0
+            self.camera.frame_height = 8.0 * (16.0 / 9.0)  # 14.2222
+
+            # 9:16 移动端竖屏布局 (自上而下: Header -> 站心特写/HUD -> 贝塞尔基本面正射投影 -> 时序演化曲线)
+            header_w = 7.40
+            header_h = 0.94
+            header_center = np.array([0.0, 6.45, 0.0])
+
+            # 面板 1：站心日面特写视窗 (天顶向上) + 遥测 HUD (上区)
+            top_panel_w = 7.40
+            top_panel_h = 3.50
+            top_panel_center = np.array([0.0, 4.05, 0.0])
+            zoom_sun_center = np.array([-1.90, 3.75, 0.0])
+            zoom_fov_radius = 1.15
+            zoom_sun_radius = 0.58
+            hud_label_x = 0.05
+            hud_value_x = 1.35
+            hud_row_ys = [4.38, 4.00, 3.62, 3.24, 2.86]
+            stage_text_y = 4.88
+
+            # 面板 2：贝塞尔基本面正射投影主视窗 (中区)
+            main_panel_w = 7.40
+            main_panel_h = 5.50
+            main_panel_center = np.array([0.0, -0.65, 0.0])
+            plane_origin = np.array([0.0, -0.80, 0.0])
+            earth_r_scale = 2.05
+
+            # 面板 3：时序演化曲线 (下区)
+            bot_panel_w = 7.40
+            bot_panel_h = 3.20
+            bot_panel_center = np.array([0.0, -5.20, 0.0])
+            chart_left = -2.85
+            chart_right = 2.85
+            chart_bottom = -6.40
+            chart_top = -4.30
+        else:
+            # 16:9 宽屏科研仪表板布局
+            header_w = 13.60
+            header_h = 0.72
+            header_center = np.array([0.0, 3.48, 0.0])
+
+            # 面板 1：站心日面特写视窗 (右上)
+            top_panel_w = 5.65
+            top_panel_h = 3.18
+            top_panel_center = np.array([3.95, 1.33, 0.0])
+            zoom_sun_center = np.array([2.28, 1.00, 0.0])
+            zoom_fov_radius = 0.98
+            zoom_sun_radius = 0.50
+            hud_label_x = 3.52
+            hud_value_x = 4.60
+            hud_row_ys = [1.56, 1.20, 0.84, 0.48, 0.12]
+            stage_text_y = 1.94
+
+            # 面板 2：贝塞尔基本面正射投影主视窗 (左侧大窗)
+            main_panel_w = 7.70
+            main_panel_h = 6.76
+            main_panel_center = np.array([-2.95, -0.42, 0.0])
+            plane_origin = np.array([-2.95, -0.58, 0.0])
+            earth_r_scale = 2.40
+
+            # 面板 3：时序演化曲线 (右下)
+            bot_panel_w = 5.65
+            bot_panel_h = 3.36
+            bot_panel_center = np.array([3.95, -2.12, 0.0])
+            chart_left = 1.72
+            chart_right = 6.22
+            chart_bottom = -3.34
+            chart_top = -1.16
+
         # =====================================================================
         # 1. 顶部科研遥测标题栏 (Header Bar - 直角边框)
         # =====================================================================
         header_bg = Rectangle(
-            width=13.60,
-            height=0.72,
+            width=header_w,
+            height=header_h,
             fill_color=SURFACE_CARD,
             fill_opacity=0.96,
             stroke_color=OUTLINE_COLOR,
             stroke_width=1.4,
-        ).move_to(np.array([0.0, 3.48, 0.0]))
-
-        title_text = Text(
-            f"{cst_date_str} {global_kind_zh} · {self.observer_label}",
-            font=FONT_SANS,
-            font_size=17,
-            color=TEXT_PRIMARY,
-            weight="BOLD",
-        )
-        title_text.move_to(
-            np.array([header_bg.get_left()[0] + 0.24, header_bg.get_center()[1], 0.0]),
-            aligned_edge=LEFT,
-        )
+        ).move_to(header_center)
 
         dur_part = ""
         if central_dur_s is not None and central_dur_s > 0:
@@ -395,32 +677,60 @@ class SolarEclipseBaseScene(Scene):
             ds = int(round(central_dur_s)) % 60
             dur_part = f" · 持续 {dm}m{ds:02d}s"
 
-        subtitle_text = Text(
-            f"本地{local_kind_zh} · 食分 {local_mag:.3f} · 遮掩 {local_max_obsc * 100:.1f}%{dur_part} · "
-            f"沙罗 {saros['series']} ({saros['member']}/{saros['count']})",
-            font=FONT_SANS,
-            font_size=12,
-            color=TEXT_MUTED,
-        )
-        subtitle_text.move_to(
-            np.array([header_bg.get_right()[0] - 0.24, header_bg.get_center()[1], 0.0]),
-            aligned_edge=RIGHT,
-        )
+        if is_portrait:
+            title_text = Text(
+                f"{cst_date_str} {global_kind_zh} · {self.observer_label}",
+                font=FONT_SANS,
+                font_size=13.5,
+                color=TEXT_PRIMARY,
+                weight="BOLD",
+            ).move_to(np.array([0.0, header_bg.get_center()[1] + 0.17, 0.0]))
+
+            subtitle_text = Text(
+                f"本地{local_kind_zh} · 食分 {local_mag:.3f} · 遮掩 {local_max_obsc * 100:.1f}%{dur_part} · "
+                f"沙罗 {saros['series']} ({saros['member']}/{saros['count']})",
+                font=FONT_SANS,
+                font_size=9.5,
+                color=TEXT_MUTED,
+            ).move_to(np.array([0.0, header_bg.get_center()[1] - 0.17, 0.0]))
+        else:
+            title_text = Text(
+                f"{cst_date_str} {global_kind_zh} · {self.observer_label}",
+                font=FONT_SANS,
+                font_size=17,
+                color=TEXT_PRIMARY,
+                weight="BOLD",
+            )
+            title_text.move_to(
+                np.array([header_bg.get_left()[0] + 0.24, header_bg.get_center()[1], 0.0]),
+                aligned_edge=LEFT,
+            )
+
+            subtitle_text = Text(
+                f"本地{local_kind_zh} · 食分 {local_mag:.3f} · 遮掩 {local_max_obsc * 100:.1f}%{dur_part} · "
+                f"沙罗 {saros['series']} ({saros['member']}/{saros['count']})",
+                font=FONT_SANS,
+                font_size=12,
+                color=TEXT_MUTED,
+            )
+            subtitle_text.move_to(
+                np.array([header_bg.get_right()[0] - 0.24, header_bg.get_center()[1], 0.0]),
+                aligned_edge=RIGHT,
+            )
 
         header_group = VGroup(header_bg, title_text, subtitle_text)
 
         # =====================================================================
-        # 2. 左侧主视窗：贝塞尔基本面与地影扫掠视图 (向阳半球 · 北上东右)
+        # 2. 贝塞尔基本面与地影扫掠视图 (向阳半球 · 北上东右)
         # =====================================================================
-        left_panel_center = np.array([-2.95, -0.42, 0.0])
         left_panel = Rectangle(
-            width=7.70,
-            height=6.76,
+            width=main_panel_w,
+            height=main_panel_h,
             fill_color=SURFACE_CARD,
             fill_opacity=0.90,
             stroke_color=OUTLINE_COLOR,
             stroke_width=1.4,
-        ).move_to(left_panel_center)
+        ).move_to(main_panel_center)
 
         left_header_y = left_panel.get_top()[1] - 0.26
         left_divider_y = left_panel.get_top()[1] - 0.52
@@ -433,52 +743,70 @@ class SolarEclipseBaseScene(Scene):
         )
 
         left_panel_title = Text(
-            "贝塞尔基本面正射投影 (向阳半球 · 北上东右)",
+            "贝塞尔基本面正射投影 (向阳半球 · 北上东右)" if not is_portrait else "贝塞尔基本面正射投影 (向阳半球)",
             font=FONT_SANS,
-            font_size=13,
+            font_size=13 if not is_portrait else 11.5,
             color=ACCENT_BLUE,
             weight="BOLD",
         )
         left_panel_title.move_to(
-            np.array([left_panel.get_left()[0] + 0.22, left_header_y, 0.0]),
+            np.array([left_panel.get_left()[0] + 0.20, left_header_y, 0.0]),
             aligned_edge=LEFT,
         )
 
-        # 图例说明（左上视窗顶栏右对齐）
+        # 图例说明（顶栏右对齐）
+        band_label_zh = "地表全食带" if l2_earth <= 0 else "地表环食带"
+        band_col = ACCENT_RED if l2_earth <= 0 else ACCENT_GOLD
         bessel_legend = VGroup(
-            Dot(radius=0.042, color=ACCENT_GOLD),
+            Rectangle(
+                width=0.18,
+                height=0.09,
+                fill_color=band_col,
+                fill_opacity=0.65,
+                stroke_color=band_col,
+                stroke_width=1.0,
+            ),
+            Text(band_label_zh, font=FONT_SANS, font_size=10 if not is_portrait else 8.5, color=TEXT_MUTED),
+            Dot(radius=0.040 if not is_portrait else 0.035, color=ACCENT_GOLD),
             Text(
-                f"月影轴 (γ={data['gamma']:+.3f})",
+                f"月影轴 (γ={data['gamma']:+.3f})" if not is_portrait else f"月影 (γ={data['gamma']:+.2f})",
                 font=FONT_SANS,
-                font_size=10,
+                font_size=10 if not is_portrait else 8.5,
                 color=TEXT_MUTED,
             ),
-            Dot(radius=0.042, color=ACCENT_TEAL),
+            Dot(radius=0.040 if not is_portrait else 0.035, color=ACCENT_TEAL),
             Text(
-                f"{self.city_short}测站轨迹",
+                f"{self.city_short}自转轨迹" if not is_portrait else f"{self.city_short}轨迹",
                 font=FONT_SANS,
-                font_size=10,
+                font_size=10 if not is_portrait else 8.5,
                 color=TEXT_MUTED,
             ),
-        ).arrange(RIGHT, buff=0.08)
+        ).arrange(RIGHT, buff=0.07 if not is_portrait else 0.05)
         bessel_legend.move_to(
-            np.array([left_panel.get_right()[0] - 0.22, left_header_y, 0.0]),
+            np.array([left_panel.get_right()[0] - 0.20, left_header_y, 0.0]),
             aligned_edge=RIGHT,
         )
-
-        plane_origin = np.array([-2.95, -0.68, 0.0])
-        earth_r_scale = 1.80  # 1 地球赤道半径对应的屏幕单位
 
         def bessel_to_point(x_er: float, y_er: float) -> np.ndarray:
             return plane_origin + np.array(
                 [x_er * earth_r_scale, y_er * earth_r_scale, 0.0]
             )
 
-        # 地球向阳半球圆盘与经纬网格
+        land_rings_rad = load_land_rings_rad()
+        surface_band_rad = build_surface_eclipse_band_rad(data.get("central_line", []))
+
+        # 地球向阳半球海洋底盘与外缘地平圈
         earth_disk = Circle(
             radius=earth_r_scale,
-            fill_color="#101B2E",
-            fill_opacity=0.92,
+            fill_color="#0B1524",
+            fill_opacity=0.96,
+            stroke_color=ACCENT_BLUE,
+            stroke_width=1.6,
+        ).move_to(plane_origin)
+
+        earth_limb_ring = Circle(
+            radius=earth_r_scale,
+            fill_opacity=0.0,
             stroke_color=ACCENT_BLUE,
             stroke_width=1.8,
         ).move_to(plane_origin)
@@ -554,16 +882,16 @@ class SolarEclipseBaseScene(Scene):
         # 方向标签（从太阳方向看地球：北上、南下、西左、东右）
         dir_labels = VGroup(
             Text("西 W", font=FONT_SANS, font_size=11, color=TEXT_MUTED).move_to(
-                plane_origin + LEFT * (earth_r_scale + 0.36)
+                plane_origin + LEFT * (earth_r_scale + 0.32)
             ),
             Text("东 E", font=FONT_SANS, font_size=11, color=TEXT_MUTED).move_to(
-                plane_origin + RIGHT * (earth_r_scale + 0.36)
+                plane_origin + RIGHT * (earth_r_scale + 0.32)
             ),
             Text("北 N", font=FONT_SANS, font_size=11, color=TEXT_MUTED).move_to(
-                plane_origin + UP * (earth_r_scale + 0.24)
+                plane_origin + UP * (earth_r_scale + 0.22)
             ),
             Text("南 S", font=FONT_SANS, font_size=11, color=TEXT_MUTED).move_to(
-                plane_origin + DOWN * (earth_r_scale + 0.24)
+                plane_origin + DOWN * (earth_r_scale + 0.22)
             ),
         )
 
@@ -579,12 +907,19 @@ class SolarEclipseBaseScene(Scene):
             num_dashes=24,
         )
 
-        # 月影中心轴轨迹线（严格裁剪在基本面视场内）
-        shadow_track_pts = [
-            bessel_to_point(p["x"], p["y"])
-            for p in bessel_track
-            if abs(p["x"]) <= 1.65 and abs(p["y"]) <= 1.28
-        ]
+        # 月影中心轴轨迹线（严格裁剪在左侧视窗安全区域内）
+        shadow_track_pts = []
+        for p in bessel_track:
+            pt = bessel_to_point(p["x"], p["y"])
+            if (
+                left_panel.get_left()[0] + 0.28
+                <= pt[0]
+                <= left_panel.get_right()[0] - 0.28
+                and left_panel.get_bottom()[1] + 0.40
+                <= pt[1]
+                <= left_divider_y - 0.16
+            ):
+                shadow_track_pts.append(pt)
         shadow_track_line = VMobject(
             stroke_color=ACCENT_GOLD, stroke_width=2.0, stroke_opacity=0.80
         )
@@ -616,26 +951,21 @@ class SolarEclipseBaseScene(Scene):
             left_panel_title,
             bessel_legend,
             earth_disk,
-            graticule_group,
             dir_labels,
-            obs_rot_path,
-            shadow_track_line,
-            g_dot,
             coord_note,
         )
 
         # =====================================================================
-        # 3. 右上视窗：站心日面特写与月影遮掩模拟 (天顶向上) + 遥测 HUD
+        # 3. 站心日面特写与月影遮掩模拟 (天顶向上) + 遥测 HUD
         # =====================================================================
-        right_top_center = np.array([3.95, 1.33, 0.0])
         right_top_panel = Rectangle(
-            width=5.65,
-            height=3.18,
+            width=top_panel_w,
+            height=top_panel_h,
             fill_color=SURFACE_CARD,
             fill_opacity=0.90,
             stroke_color=OUTLINE_COLOR,
             stroke_width=1.4,
-        ).move_to(right_top_center)
+        ).move_to(top_panel_center)
 
         rt_header_y = right_top_panel.get_top()[1] - 0.24
         rt_divider_y = right_top_panel.get_top()[1] - 0.48
@@ -650,18 +980,15 @@ class SolarEclipseBaseScene(Scene):
         right_top_title = Text(
             f"{self.city_short}站心日面遮掩特写 (天顶向上 ↑)",
             font=FONT_SANS,
-            font_size=13,
+            font_size=13 if not is_portrait else 11.5,
             color=ACCENT_GOLD,
             weight="BOLD",
         )
         right_top_title.move_to(
-            np.array([right_top_panel.get_left()[0] + 0.22, rt_header_y, 0.0]),
+            np.array([right_top_panel.get_left()[0] + 0.20, rt_header_y, 0.0]),
             aligned_edge=LEFT,
         )
 
-        zoom_sun_center = np.array([2.28, 1.00, 0.0])
-        zoom_fov_radius = 0.98
-        zoom_sun_radius = 0.50
         mean_sun_r_deg = float(np.mean(f_sun_r_arr))
         zoom_deg_scale = zoom_sun_radius / mean_sun_r_deg
 
@@ -685,9 +1012,6 @@ class SolarEclipseBaseScene(Scene):
             weight="BOLD",
         )
 
-        hud_label_x = 3.52
-        hud_value_x = 4.60
-        hud_row_ys = [1.56, 1.20, 0.84, 0.48, 0.12]
         hud_static_labels = VGroup()
         for row_y, zh_label in zip(
             hud_row_ys,
@@ -697,14 +1021,14 @@ class SolarEclipseBaseScene(Scene):
             lbl = Text(
                 zh_label,
                 font=FONT_SANS,
-                font_size=12,
+                font_size=12 if not is_portrait else 11,
                 color=TEXT_MUTED,
             )
             lbl.move_to(np.array([hud_label_x, row_y, 0.0]), aligned_edge=LEFT)
             hud_static_labels.add(lbl)
 
-        glyph_pool = MonospaceGlyphPool(font=FONT_MONO, font_size=12)
-        stage_text_cache: dict[tuple[str, str], Text] = {}
+        glyph_pool = MonospaceGlyphPool(font=FONT_MONO, font_size=12 if not is_portrait else 11)
+        stage_text_cache: dict[tuple[str, str], VMobject] = {}
 
         def get_cached_stage_text(stage_str: str, color_hex: str) -> VMobject:
             key = (stage_str, color_hex)
@@ -712,26 +1036,33 @@ class SolarEclipseBaseScene(Scene):
                 t_mob = Text(
                     stage_str,
                     font=FONT_SANS,
-                    font_size=13,
+                    font_size=13 if not is_portrait else 12,
                     color=color_hex,
                     weight="BOLD",
                 )
-                t_mob.move_to(np.array([hud_label_x, 1.94, 0.0]), aligned_edge=LEFT)
-                stage_text_cache[key] = t_mob
+                t_mob.move_to(np.array([hud_label_x, stage_text_y, 0.0]), aligned_edge=LEFT)
+                pts_list = [
+                    m.points
+                    for m in t_mob.family_members_with_points()
+                    if len(m.points) > 0
+                ]
+                single = VMobject()
+                single.set_points(np.vstack(pts_list))
+                single.set_fill(color_hex, opacity=1.0).set_stroke(width=0.0)
+                stage_text_cache[key] = single
             return stage_text_cache[key].copy()
 
         # =====================================================================
         # 4. 右下视窗：日面遮掩面积与太阳仰角时序曲线
         # =====================================================================
-        right_bot_center = np.array([3.95, -2.12, 0.0])
         right_bot_panel = Rectangle(
-            width=5.65,
-            height=3.36,
+            width=bot_panel_w,
+            height=bot_panel_h,
             fill_color=SURFACE_CARD,
             fill_opacity=0.90,
             stroke_color=OUTLINE_COLOR,
             stroke_width=1.4,
-        ).move_to(right_bot_center)
+        ).move_to(bot_panel_center)
 
         rb_header_y = right_bot_panel.get_top()[1] - 0.24
         rb_divider_y = right_bot_panel.get_top()[1] - 0.48
@@ -746,7 +1077,7 @@ class SolarEclipseBaseScene(Scene):
         right_bot_title = Text(
             f"日面遮掩率与{self.city_short}太阳仰角演化",
             font=FONT_SANS,
-            font_size=13,
+            font_size=12 if is_portrait else 13,
             color=ACCENT_RED,
             weight="BOLD",
         )
@@ -755,10 +1086,6 @@ class SolarEclipseBaseScene(Scene):
             aligned_edge=LEFT,
         )
 
-        chart_left = 1.72
-        chart_right = 6.22
-        chart_bottom = -3.34
-        chart_top = -1.16
         t_min = float(f_t_arr[0])
         t_max = float(f_t_arr[-1])
         alt_min_bound = (
@@ -946,19 +1273,53 @@ class SolarEclipseBaseScene(Scene):
             alt_deg = float(st["alt_deg"])
             q_rad = float(st["q_rad"])
 
-            # --- A. 左侧贝塞尔基本面动态月影与自转测站 ---
+            # --- A. 左侧贝塞尔基本面动态大陆轮廓、地表食带、月影与自转测站 ---
+            sub_lon_rad = math.radians(sub_lon0_deg - t_cur * (360.0 / 86400.0))
+            fill_polys: list[np.ndarray] = []
+            for r_rad in land_rings_rad:
+                fp, _ = project_ring_to_orthographic(
+                    r_rad, d_rad, sub_lon_rad, plane_origin, earth_r_scale
+                )
+                if fp is not None:
+                    fill_polys.append(fp)
+
+            land_fill_vmob = polylines_to_vmobject(
+                fill_polys,
+                fill_color="#1A2E47",
+                fill_opacity=0.90,
+                stroke_color="#3E6C9E",
+                stroke_width=0.9,
+                stroke_opacity=0.85,
+            )
+
+            band_polys: list[np.ndarray] = []
+            if surface_band_rad is not None:
+                bfp, _ = project_ring_to_orthographic(
+                    surface_band_rad, d_rad, sub_lon_rad, plane_origin, earth_r_scale
+                )
+                if bfp is not None:
+                    band_polys.append(bfp)
+            surface_band_vmob = polylines_to_vmobject(
+                band_polys,
+                fill_color=band_col,
+                fill_opacity=0.42,
+                stroke_color=band_col,
+                stroke_width=1.1,
+                stroke_opacity=0.88,
+            )
+
             shadow_pt = bessel_to_point(bx, by)
             pen_r_plan = l1_earth * earth_r_scale
             umb_r_plan = max(abs(l2_earth) * earth_r_scale, 0.048)
 
-            # 半影与地球圆盘的交集高亮 + 裁剪在视窗内的半影外轮廓
+            # 半影与地球圆盘的交集高亮 + 半影外轮廓
             pen_earth_inter = circle_intersection_region(
                 plane_origin,
                 earth_r_scale,
                 shadow_pt,
                 pen_r_plan,
                 fill_color=PENUMBRA_FILL,
-                fill_opacity=0.58,
+                fill_opacity=0.50,
             )
             pen_circle_outline = Circle(
                 radius=pen_r_plan,
@@ -992,8 +1353,15 @@ class SolarEclipseBaseScene(Scene):
             )
             obs_tag = obs_tag_proto.copy().move_to(obs_pt + DOWN * 0.16)
             plan_group = VGroup(
+                land_fill_vmob,
+                graticule_group.copy(),
+                surface_band_vmob,
+                earth_limb_ring.copy(),
                 pen_earth_inter,
                 pen_circle_outline,
+                shadow_track_line.copy(),
+                g_dot.copy(),
+                obs_rot_path.copy(),
                 umb_spot,
                 obs_ring,
                 obs_dot,
@@ -1142,7 +1510,16 @@ class SolarEclipseBaseScene(Scene):
                 alt_dot,
             )
 
-        dynamic_overlay = always_redraw(build_dynamic_overlay)
+        dynamic_overlay = build_dynamic_overlay()
+
+        def _update_dynamic_overlay(mob: VGroup) -> None:
+            target = build_dynamic_overlay()
+            for sm1, sm2 in zip(mob.get_family(), target.get_family(), strict=True):
+                if isinstance(sm1, VMobject) and isinstance(sm2, VMobject):
+                    sm1.points = np.array(sm2.points)
+                    sm1.interpolate_color(sm1, sm2, 1.0)
+
+        dynamic_overlay.add_updater(_update_dynamic_overlay)
 
         # =====================================================================
         # 6. 动画编排 (Timeline Choreography)
@@ -1257,3 +1634,33 @@ class UrumqiNearestSolarScene(SolarEclipseBaseScene):
     observer_label = "乌鲁木齐观测视算 (43.8°N, 87.6°E)"
     city_short = "乌市"
     json_filename = "urumqi_solar_2030_06_01.json"
+
+
+# =============================================================================
+# 9:16 移动端竖屏短视频 HD 模式专有场景定义
+# =============================================================================
+
+
+class SolarEclipsePortraitScene(SolarEclipseScene):
+    """2027-08-02 卢克索世纪日全食（9:16 移动端竖屏 HD 模式）。"""
+
+    aspect_ratio_mode = "9:16"
+
+
+class BeijingTotalSolarPortraitScene(BeijingTotalSolarScene):
+    """2035-09-02 北京日全食（9:16 移动端竖屏 HD 模式）。"""
+
+    aspect_ratio_mode = "9:16"
+
+
+class ChinaAnnularSolarPortraitScene(ChinaAnnularSolarScene):
+    """2030-06-01 黑龙江同江日环食（9:16 移动端竖屏 HD 模式）。"""
+
+    aspect_ratio_mode = "9:16"
+
+
+class UrumqiNearestSolarPortraitScene(UrumqiNearestSolarScene):
+    """2030-06-01 乌鲁木齐日偏食（9:16 移动端竖屏 HD 模式）。"""
+
+    aspect_ratio_mode = "9:16"
+

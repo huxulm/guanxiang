@@ -7,5 +7,6 @@
 .playwright-mcp/
 /tools/manim/.venv/
 /tools/manim/media/
+/media/
 /tools/manim/data/*.json
 __pycache__/

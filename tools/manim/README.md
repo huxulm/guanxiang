@@ -80,7 +80,18 @@ cargo run -q -p guanxiang-cli -- scene ephem-track `
 
 # 正式成片输出（-q h 1080p60 或 -q k 2160p60）
 .\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
-  tools/manim/scenes/lunar_eclipse_scene.py LunarEclipseScene -q h --gpu
+  tools/manim/scenes/solar_eclipse_scene.py SolarEclipseScene -q h --gpu
+
+# 9:16 移动端竖屏短视频 HD 模式（--portrait 或 --aspect 9:16，输出 1080×1920 60fps）
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py SolarEclipseScene -q h --portrait --gpu
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py BeijingTotalSolarScene -q h --portrait --gpu
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py ChinaAnnularSolarScene -q h --portrait --gpu
+.\tools\manim\.venv\Scripts\python.exe tools/manim/render_check.py `
+  tools/manim/scenes/solar_eclipse_scene.py UrumqiNearestSolarScene -q h --portrait --gpu
+
 ```
 
 渲染完成后，终端会输出：

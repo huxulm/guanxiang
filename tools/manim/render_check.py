@@ -112,7 +112,12 @@ def build_contact_sheet(
         img = Image.open(frame_file).convert("RGB")
         frames.append((ts, img))
 
-    tile_w, tile_h = 640, 360
+    # 根据首帧长宽比自适应单帧缩略图比例（横屏 16:9 或 竖屏 9:16）
+    first_w, first_h = frames[0][1].size
+    if first_h > first_w:  # 9:16 竖屏模式
+        tile_w, tile_h = 270, 480
+    else:  # 16:9 横屏模式
+        tile_w, tile_h = 640, 360
     bar_h = 28
     pad = 10
     sheet_w = cols * tile_w + (cols + 1) * pad
@@ -171,6 +176,17 @@ def main() -> None:
         help="渲染清晰度：l(480p15), m(720p30), h(1080p60), k(2160p60)",
     )
     parser.add_argument(
+        "--aspect",
+        choices=["16:9", "9:16"],
+        default="16:9",
+        help="视频宽高比模式：16:9 (默认横屏大屏模式) 或 9:16 (移动端竖屏短视频 HD 模式)",
+    )
+    parser.add_argument(
+        "--portrait",
+        action="store_true",
+        help="快捷开关：等同于 --aspect 9:16 (移动端竖屏短视频 HD 模式)",
+    )
+    parser.add_argument(
         "--gpu",
         action="store_true",
         help="开启 GPU 硬件视频编码 (h264_nvenc/qsv/amf) 与多编码器并发加速",
@@ -188,6 +204,8 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    is_portrait = args.portrait or args.aspect == "9:16" or "Portrait" in args.scene
+
     python_exe = str(VENV_PYTHON) if VENV_PYTHON.exists() else sys.executable
     script_path = args.script.resolve()
 
@@ -196,12 +214,27 @@ def main() -> None:
         "-m",
         "manim",
         "render",
-        f"-q{args.quality}",
-        "--renderer",
-        args.renderer,
-        "--media_dir",
-        str(MEDIA_DIR),
     ]
+    if not is_portrait:
+        cmd.append(f"-q{args.quality}")
+    else:
+        portrait_res_fps = {
+            "l": ("480,854", "15"),
+            "m": ("720,1280", "30"),
+            "h": ("1080,1920", "60"),
+            "k": ("2160,3840", "60"),
+        }
+        res_str, fps_str = portrait_res_fps[args.quality]
+        cmd.extend(["-r", res_str, "--fps", fps_str])
+
+    cmd.extend(
+        [
+            "--renderer",
+            args.renderer,
+            "--media_dir",
+            str(MEDIA_DIR),
+        ]
+    )
     if args.renderer == "opengl":
         cmd.append("--write_to_movie")
     if args.disable_caching:
@@ -227,6 +260,8 @@ def main() -> None:
 
     env = os.environ.copy()
     env["PYTHONPATH"] = str(MANIM_DIR) + os.pathsep + env.get("PYTHONPATH", "")
+    if is_portrait:
+        env["GUANXIANG_ASPECT"] = "9:16"
     print("running:", " ".join(cmd))
     t0 = time.perf_counter()
     subprocess.run(cmd, check=True, cwd=str(ROOT), env=env)
@@ -238,11 +273,31 @@ def main() -> None:
         "h": "1080p60",
         "k": "2160p60",
     }[args.quality]
-    video_path = (
-        MEDIA_DIR / "videos" / script_path.stem / qual_dir / f"{args.scene}.mp4"
-    )
-    if not video_path.exists():
-        raise FileNotFoundError(f"找不到输出视频：{video_path}")
+    portrait_qual_dir = {
+        "l": "854p15",
+        "m": "1280p30",
+        "h": "1920p60",
+        "k": "3840p60",
+    }[args.quality]
+
+    candidate_paths = [
+        MEDIA_DIR / "videos" / script_path.stem / portrait_qual_dir / f"{args.scene}.mp4"
+        if is_portrait
+        else None,
+        MEDIA_DIR / "videos" / script_path.stem / qual_dir / f"{args.scene}.mp4",
+    ]
+    video_path = next((p for p in candidate_paths if p and p.exists()), None)
+    if not video_path:
+        # 兜底：搜索最近修改的对应视频
+        found = sorted(
+            (MEDIA_DIR / "videos" / script_path.stem).glob(f"**/{args.scene}.mp4"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if found:
+            video_path = found[0]
+        else:
+            raise FileNotFoundError(f"找不到输出视频：{args.scene}.mp4")
 
     sheet_path = video_path.with_name(f"{args.scene}_contact_sheet.png")
     build_contact_sheet(video_path, sheet_path, use_gpu=args.gpu)
