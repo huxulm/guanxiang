@@ -49,3 +49,84 @@ export function wrapLon(lon: number): number {
   const x = (((lon + 180) % 360) + 360) % 360 - 180;
   return x === -180 ? 180 : x;
 }
+
+/**
+ * 基本面上以 (cx, cy) 为圆心、半径 r（< 1）的阴影圆与地球日照盘面交集边界的地面点环。
+ * 圆周落在地球外的弧段沿地球边缘（ζ = 0 晨昏圈）闭合；完全不接触地球时返回空数组。
+ */
+export function footprintPolygon(
+  cx: number,
+  cy: number,
+  r: number,
+  dDeg: number,
+  muDeg: number,
+  n = 240,
+  m = 60,
+): { lat: number; lon: number }[] {
+  const ry = earthRy(dDeg);
+  const scale = 1 - 1e-12;
+  const ptAt = (a: number) => {
+    const x = cx + r * Math.cos(a);
+    const y = cy + r * Math.sin(a);
+    const eta1 = y / ry;
+    return { x, y, eta1, u: x * x + eta1 * eta1 };
+  };
+
+  const samples = Array.from({ length: n }, (_, i) => ptAt((i / n) * 2 * Math.PI));
+  const inside = samples.map((s) => s.u <= 1);
+  const ring: [number, number][] = [];
+
+  if (inside.every(Boolean)) {
+    for (const s of samples) ring.push([s.x * scale, s.y * scale]);
+  } else if (!inside.some(Boolean)) {
+    return [];
+  } else {
+    let start = 0;
+    for (let i = 0; i < n; i++) {
+      if (inside[i] && !inside[(i + n - 1) % n]) {
+        start = i;
+        break;
+      }
+    }
+    let end = start;
+    while (inside[(end + 1) % n]) end = (end + 1) % n;
+
+    const bisect = (aOut: number, aIn: number) => {
+      let lo = aOut;
+      let hi = aIn;
+      for (let k = 0; k < 16; k++) {
+        const mid = 0.5 * (lo + hi);
+        if (ptAt(mid).u <= 1) hi = mid;
+        else lo = mid;
+      }
+      return ptAt(hi);
+    };
+
+    const step = (2 * Math.PI) / n;
+    const pIn = bisect(start * step - step, start * step);
+    const pOut = bisect(end * step + step, end * step);
+
+    ring.push([pIn.x * scale, pIn.y * scale]);
+    for (let i = start; ; i = (i + 1) % n) {
+      ring.push([samples[i].x * scale, samples[i].y * scale]);
+      if (i === end) break;
+    }
+    ring.push([pOut.x * scale, pOut.y * scale]);
+
+    const betaOut = Math.atan2(pOut.eta1, pOut.x);
+    const betaIn = Math.atan2(pIn.eta1, pIn.x);
+    const dBeta = Math.atan2(Math.sin(betaIn - betaOut), Math.cos(betaIn - betaOut));
+    for (let j = 1; j < m; j++) {
+      const beta = betaOut + (j / m) * dBeta;
+      ring.push([Math.cos(beta) * scale, ry * Math.sin(beta) * scale]);
+    }
+  }
+
+  const out: { lat: number; lon: number }[] = [];
+  for (const [x, y] of ring) {
+    const g = planeToGround(x, y, dDeg, muDeg);
+    if (g) out.push(g);
+  }
+  return out;
+}
+

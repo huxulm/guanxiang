@@ -5,7 +5,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { groundToPlane, planeToGround, wrapLon } from '../src/lib/anim/bessel.ts';
+import { footprintPolygon, groundToPlane, planeToGround, wrapLon } from '../src/lib/anim/bessel.ts';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const root = path.resolve(here, '../..');
@@ -45,6 +45,22 @@ for (const date of dates) {
     const p = groundToPlane(s.shadow_center.lat_deg, s.shadow_center.lon_deg, b.d_deg, b.mu_deg);
     if (p.zeta <= 0) throw new Error(`${date} t=${t}：影轴地面点投影到了背面`);
     worstPlane = Math.max(worstPlane, Math.hypot(p.xi - b.x, p.eta - b.y));
+
+    const ring = footprintPolygon(b.x, b.y, b.l1, b.d_deg, b.mu_deg);
+    if (ring.length < 3) throw new Error(`${date} t=${t}：有影轴地面点但半影多边形为空`);
+    const ulon = [ring[0].lon];
+    for (let i = 1; i <= ring.length; i++) {
+      ulon.push(ulon[i - 1] + wrapLon(ring[i % ring.length].lon - ulon[i - 1]));
+    }
+    const winding = Math.round((ulon[ring.length] - ulon[0]) / 360);
+    const np = groundToPlane(90, 0, b.d_deg, b.mu_deg);
+    const sp = groundToPlane(-90, 0, b.d_deg, b.mu_deg);
+    const poleIn =
+      (np.zeta > 0 && Math.hypot(np.xi - b.x, np.eta - b.y) < b.l1) ||
+      (sp.zeta > 0 && Math.hypot(sp.xi - b.x, sp.eta - b.y) < b.l1);
+    if ((winding !== 0) !== poleIn) {
+      throw new Error(`${date} t=${t}：半影环绕极点数 ${winding} 与极点包含 ${poleIn} 不一致`);
+    }
     frames++;
   }
 }

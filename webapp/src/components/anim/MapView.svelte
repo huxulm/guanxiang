@@ -1,7 +1,7 @@
 <script lang="ts">
-  // 等距圆柱世界地图：此刻半影落在地面的边界、影轴地面点、中心线、晨昏线（夜晚加暗）、日下点、观测地。
-  // 半影边界：基本面上半径 l1 的圆，逐点沿影轴投到地面（planeToGround），落在地球外的点断开。
-  import { planeToGround } from '../../lib/anim/bessel';
+  // 等距圆柱世界地图：此刻半影落在地面的阴影区域与边界、影轴地面点、中心线、晨昏线（夜晚加暗）、日下点、观测地。
+  // 半影边界：基本面上半径 l1 的圆，逐点沿影轴投到地面（planeToGround），落在地球外的点断开；填充区沿晨昏圈闭合。
+  import { footprintPolygon, planeToGround, wrapLon } from '../../lib/anim/bessel';
   import type { Rings } from '../../lib/anim/land';
   import { t } from '../../lib/i18n';
   import type { Observer, SolarScene, SolarState } from '../../lib/types';
@@ -54,6 +54,44 @@
   }
   const penumbra = $derived(footprint(s.bessel.l1, 240));
 
+  /** 半影落在地面上的闭合阴影区域（跨 ±180° 经线平移展开，覆盖极点时向极点闭合） */
+  const penumbraArea = $derived.by(() => {
+    const b = s.bessel;
+    const gpts = footprintPolygon(b.x, b.y, b.l1, b.d_deg, b.mu_deg);
+    const M = gpts.length;
+    if (M < 3) return '';
+    const ulon = [gpts[0].lon];
+    for (let i = 1; i <= M; i++) {
+      ulon.push(ulon[i - 1] + wrapLon(gpts[i % M].lon - ulon[i - 1]));
+    }
+    const winding = Math.round((ulon[M] - ulon[0]) / 360);
+    if (winding === 0) {
+      const minLon = Math.min(...ulon);
+      const maxLon = Math.max(...ulon);
+      let d = '';
+      for (const shift of [-360, 0, 360]) {
+        if (maxLon + shift <= -180 || minLon + shift >= 180) continue;
+        for (let i = 0; i < M; i++) {
+          d += `${i === 0 ? 'M' : 'L'}${(ulon[i] + shift).toFixed(2)},${(-gpts[i].lat).toFixed(2)}`;
+        }
+        d += 'Z';
+      }
+      return d;
+    }
+    const shifts = winding > 0 ? [-360, 0, 360] : [360, 0, -360];
+    const poleY = gpts[0].lat >= 0 ? -90 : 90;
+    const startLon = ulon[0] + shifts[0];
+    const endLon = ulon[M] + shifts[2];
+    let d = '';
+    for (let si = 0; si < shifts.length; si++) {
+      const shift = shifts[si];
+      for (let i = 0; i < M; i++) {
+        d += `${si === 0 && i === 0 ? 'M' : 'L'}${(ulon[i] + shift).toFixed(2)},${(-gpts[i].lat).toFixed(2)}`;
+      }
+    }
+    return d + `L${endLon.toFixed(2)},${(-gpts[0].lat).toFixed(2)}L${endLon.toFixed(2)},${poleY}L${startLon.toFixed(2)},${poleY}Z`;
+  });
+
   /** 夜晚区域：晨昏线（太阳中心高度 0°）到背阳的极点 */
   const night = $derived.by(() => {
     const dec = (s.sub_solar.lat_deg * Math.PI) / 180;
@@ -73,6 +111,7 @@
   <rect x="-180" y="-90" width="360" height="180" fill="var(--gx-surface-container)" />
   <path d={landPath} fill="var(--gx-surface-high)" stroke="var(--gx-outline)" stroke-width="0.35" />
   <path d={night} fill="var(--gx-sky)" fill-opacity="0.35" />
+  <path d={penumbraArea} fill="color-mix(in srgb, var(--gx-sky) 75%, var(--gx-eclipse))" fill-opacity="0.35" />
   <path d={centralLine} fill="none" stroke="var(--gx-eclipse)" stroke-width="1.1" />
   <path d={penumbra} fill="none" stroke="var(--gx-eclipse)" stroke-width="0.9" stroke-dasharray="3 2" />
   {#if s.shadow_center}

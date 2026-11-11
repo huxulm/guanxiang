@@ -5,6 +5,7 @@
 *.dll
 *.pdb
 .playwright-mcp/
+/.claude/
 /tools/manim/.venv/
 /tools/manim/media/
 /media/
