@@ -10,9 +10,11 @@
   import { Timeline, defaultSpeed } from '../../lib/anim/timeline.svelte';
   import { frameState } from '../../lib/anim/frames.svelte';
   import { loadLand, type Rings } from '../../lib/anim/land';
+  import { calcAzimuth, fmtAzimuth } from '../../lib/azimuth';
   import { getEngine } from '../../lib/engine/engine.svelte';
   import { fmtNum, parseUtc, solarKindName } from '../../lib/format';
   import { t } from '../../lib/i18n';
+  import { settings } from '../../lib/settings.svelte';
   import type { Observer, SolarScene, SolarState } from '../../lib/types';
 
   let {
@@ -134,16 +136,23 @@
         <PlaneView {scene} {s} {land} {observer} />
       </figure>
       {#if s.local && local}
+        {@const az = obs ? calcAzimuth(obs.lat, obs.lon, s.sub_solar.lat_deg, s.sub_solar.lon_deg) : null}
         <figure class={['space-y-1', mobileTab !== 'sun' && mobileTab !== 'all' && 'max-sm:hidden']}>
           <figcaption class="label">{t('viewSun')}</figcaption>
           <SunDiskView v={s.local} total={local.kind === 'total'} />
-          <dl class="num grid grid-cols-3 gap-2 pt-1 text-sm">
+          <dl class="num grid grid-cols-2 gap-2 pt-1 text-sm sm:grid-cols-4">
             <div><dt class="label">{t('magnitude')}</dt><dd>{fmtNum(magnitude(s.local), 3)}</dd></div>
             <div><dt class="label">{t('obscuration')}</dt><dd>{fmtNum(s.local.obscuration * 100, 1)}%</dd></div>
             <div>
               <dt class="label">{t('sunAlt')}</dt>
               <dd class={s.local.sun_alt_deg <= 0 ? 'text-muted' : ''}>{fmtNum(s.local.sun_alt_deg, 1)}°</dd>
             </div>
+            {#if az}
+              <div>
+                <dt class="label">{t('sunAzimuth')}</dt>
+                <dd>{fmtAzimuth(az, settings.lang)}</dd>
+              </div>
+            {/if}
           </dl>
         </figure>
       {/if}
