@@ -50,6 +50,7 @@
 
   let land = $state<Rings | null>(null);
   let mapFocused = $state(false);
+  let mobileTab = $state<'sun' | 'plane' | 'map' | 'all'>(local ? 'sun' : 'map');
   $effect(() => {
     loadLand().then((r) => (land = r));
   });
@@ -97,13 +98,43 @@
 
   {#if frame.current}
     {@const s = frame.current}
+    <!-- 移动端视角分段切换（桌面端 sm: 默认全部平铺并排） -->
+    <div class="flex items-center gap-1.5 sm:hidden" role="tablist" aria-label={t('animTitle')}>
+      {#if s.local && local}
+        <button
+          class={['chip !py-1 !px-2.5 text-xs', mobileTab === 'sun' && 'chip-on']}
+          onclick={() => (mobileTab = 'sun')}
+        >
+          {t('viewModeSun')}
+        </button>
+      {/if}
+      <button
+        class={['chip !py-1 !px-2.5 text-xs', mobileTab === 'plane' && 'chip-on']}
+        onclick={() => (mobileTab = 'plane')}
+      >
+        {t('viewModePlane')}
+      </button>
+      <button
+        class={['chip !py-1 !px-2.5 text-xs', mobileTab === 'map' && 'chip-on']}
+        onclick={() => (mobileTab = 'map')}
+      >
+        {t('viewModeMap')}
+      </button>
+      <button
+        class={['chip !py-1 !px-2.5 text-xs', mobileTab === 'all' && 'chip-on']}
+        onclick={() => (mobileTab = 'all')}
+      >
+        {t('viewModeAll')}
+      </button>
+    </div>
+
     <div class={['grid gap-4', s.local && local && 'sm:grid-cols-2']}>
-      <figure class="space-y-1">
+      <figure class={['space-y-1', mobileTab !== 'plane' && mobileTab !== 'all' && 'max-sm:hidden']}>
         <figcaption class="label">{t('viewPlane')}</figcaption>
         <PlaneView {scene} {s} {land} {observer} />
       </figure>
       {#if s.local && local}
-        <figure class="space-y-1">
+        <figure class={['space-y-1', mobileTab !== 'sun' && mobileTab !== 'all' && 'max-sm:hidden']}>
           <figcaption class="label">{t('viewSun')}</figcaption>
           <SunDiskView v={s.local} total={local.kind === 'total'} />
           <dl class="num grid grid-cols-3 gap-2 pt-1 text-sm">
@@ -117,7 +148,7 @@
         </figure>
       {/if}
     </div>
-    <figure class="space-y-1">
+    <figure class={['space-y-1', mobileTab !== 'map' && mobileTab !== 'all' && 'max-sm:hidden']}>
       <figcaption class="flex items-center justify-between">
         <span class="label">{t('viewMap')}</span>
         <div class="flex gap-1" role="group" aria-label={t('viewMap')}>

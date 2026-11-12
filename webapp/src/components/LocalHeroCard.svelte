@@ -14,9 +14,10 @@
     lunarScene?: LunarScene | null;
     visText?: string | null;
     onSetObserver: () => void;
+    onShare?: () => void;
   };
 
-  let { type, observer, date = '', solarLocal, lunarScene, visText, onSetObserver }: Props = $props();
+  let { type, observer, date = '', solarLocal, lunarScene, visText, onSetObserver, onShare }: Props = $props();
 
   function scrollToAnim(): void {
     const el = document.getElementById('anim-section');
@@ -94,6 +95,11 @@
           <button class="btn-text -my-1 text-xs text-primary" onclick={exportCalendar} title={t('addToCalendar')}>
             📅 {t('addToCalendar')}
           </button>
+          {#if onShare}
+            <button class="btn-text -my-1 text-xs text-primary" onclick={onShare} title={t('sharePoster')}>
+              🖼️ {t('sharePoster')}
+            </button>
+          {/if}
           <button class="btn-text -my-1 text-xs text-primary" onclick={scrollToAnim}>
             {t('jumpToAnim')} ↓
           </button>
@@ -165,6 +171,11 @@
         {#if !isHidden}
           <button class="btn-text -my-1 text-xs text-primary" onclick={exportCalendar} title={t('addToCalendar')}>
             📅 {t('addToCalendar')}
+          </button>
+        {/if}
+        {#if onShare}
+          <button class="btn-text -my-1 text-xs text-primary" onclick={onShare} title={t('sharePoster')}>
+            🖼️ {t('sharePoster')}
           </button>
         {/if}
         <button class="btn-text -my-1 text-xs text-primary" onclick={scrollToAnim}>

@@ -3,6 +3,7 @@
   import LocalHeroCard from '../components/LocalHeroCard.svelte';
   import LunarAnimation from '../components/anim/LunarAnimation.svelte';
   import ObserverBar from '../components/ObserverBar.svelte';
+  import SharePosterDialog from '../components/SharePosterDialog.svelte';
   import Stat from '../components/Stat.svelte';
   import { fmtDate, fmtDuration, fmtNum, fmtTime, lunarKindName, parseUtc, zoneLabel } from '../lib/format';
   import { t } from '../lib/i18n';
@@ -14,6 +15,7 @@
 
   let { date }: { date: string } = $props();
   let observerBar: ObserverBar;
+  let shareDialog: SharePosterDialog;
 
   const loader = sceneLoader<LunarScene>((e, obs, step) => e.lunarScene(date, obs, step));
   const res = $derived(loader.current);
@@ -56,12 +58,17 @@
   {#if res.status === 'ok'}
     {@const s = res.scene}
     {@const g = parseUtc(s.greatest_utc)}
-    <header class="space-y-1">
-      <h1 class="text-2xl font-semibold">{lunarKindName(s.kind)}</h1>
-      <p class="num text-muted">
-        {fmtDate(g)} · {t('phaseG')} {fmtTime(g)} ({zoneLabel(g)})
-        {#if s.saros}· {t('lunarSaros', { saros: `${s.saros.series} · ${s.saros.member}/${s.saros.count}` })}{/if}
-      </p>
+    <header class="flex flex-wrap items-baseline justify-between gap-2">
+      <div class="space-y-1">
+        <h1 class="text-2xl font-semibold">{lunarKindName(s.kind)}</h1>
+        <p class="num text-muted">
+          {fmtDate(g)} · {t('phaseG')} {fmtTime(g)} ({zoneLabel(g)})
+          {#if s.saros}· {t('lunarSaros', { saros: `${s.saros.series} · ${s.saros.member}/${s.saros.count}` })}{/if}
+        </p>
+      </div>
+      <button class="chip !py-1 text-xs text-primary" onclick={() => shareDialog.open()} title={t('sharePoster')}>
+        🖼️ {t('sharePoster')}
+      </button>
     </header>
   {:else}
     <h1 class="text-2xl font-semibold">{t('kindLunarEclipse')} · <span class="num">{date}</span></h1>
@@ -95,6 +102,7 @@
       lunarScene={s}
       visText={vis ? t(VIS_KEY[vis]) : null}
       onSetObserver={() => observerBar?.open()}
+      onShare={() => shareDialog.open()}
     />
 
     <div class="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
@@ -154,4 +162,13 @@
       </div>
     </div>
   {/if}
+
+  <SharePosterDialog
+    bind:this={shareDialog}
+    type="lunar"
+    {date}
+    lunarScene={res.status === 'ok' ? res.scene : null}
+    observer={pageObserver().observer}
+    visText={res.status === 'ok' && pageObserver().observer && visibility(res.scene) ? t(VIS_KEY[visibility(res.scene)!]) : null}
+  />
 </div>

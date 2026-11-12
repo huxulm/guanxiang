@@ -3,6 +3,7 @@
   import LocalHeroCard from '../components/LocalHeroCard.svelte';
   import ObserverBar from '../components/ObserverBar.svelte';
   import SafetyNotice from '../components/SafetyNotice.svelte';
+  import SharePosterDialog from '../components/SharePosterDialog.svelte';
   import SolarAnimation from '../components/anim/SolarAnimation.svelte';
   import Stat from '../components/Stat.svelte';
   import {
@@ -23,6 +24,7 @@
 
   let { date }: { date: string } = $props();
   let observerBar: ObserverBar;
+  let shareDialog: SharePosterDialog;
 
   const loader = sceneLoader<SolarScene>((e, obs, step) => e.solarScene(date, obs, step));
   const res = $derived(loader.current);
@@ -51,12 +53,17 @@
   {#if res.status === 'ok'}
     {@const s = res.scene}
     {@const g = parseUtc(s.greatest_utc)}
-    <header class="space-y-1">
-      <h1 class="text-2xl font-semibold">{solarKindName(s.kind)}</h1>
-      <p class="num text-muted">
-        {fmtDate(g)} · {t('phaseG')} {fmtTime(g)} ({zoneLabel(g)})
-        {#if s.saros}· {t('lunarSaros', { saros: `${s.saros.series} · ${s.saros.member}/${s.saros.count}` })}{/if}
-      </p>
+    <header class="flex flex-wrap items-baseline justify-between gap-2">
+      <div class="space-y-1">
+        <h1 class="text-2xl font-semibold">{solarKindName(s.kind)}</h1>
+        <p class="num text-muted">
+          {fmtDate(g)} · {t('phaseG')} {fmtTime(g)} ({zoneLabel(g)})
+          {#if s.saros}· {t('lunarSaros', { saros: `${s.saros.series} · ${s.saros.member}/${s.saros.count}` })}{/if}
+        </p>
+      </div>
+      <button class="chip !py-1 text-xs text-primary" onclick={() => shareDialog.open()} title={t('sharePoster')}>
+        🖼️ {t('sharePoster')}
+      </button>
     </header>
   {:else}
     <h1 class="text-2xl font-semibold">{t('kindSolarEclipse')} · <span class="num">{date}</span></h1>
@@ -89,6 +96,7 @@
       solarLocal={s.local}
       visText={vis ? t(VIS_KEY[vis]) : null}
       onSetObserver={() => observerBar?.open()}
+      onShare={() => shareDialog.open()}
     />
 
     <div class="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
@@ -147,4 +155,14 @@
       </div>
     </div>
   {/if}
+
+  <SharePosterDialog
+    bind:this={shareDialog}
+    type="solar"
+    {date}
+    solarScene={res.status === 'ok' ? res.scene : null}
+    solarLocal={res.status === 'ok' ? res.scene.local : null}
+    observer={pageObserver().observer}
+    visText={res.status === 'ok' && res.scene.local && visibility(res.scene.local) ? t(VIS_KEY[visibility(res.scene.local)!]) : null}
+  />
 </div>
