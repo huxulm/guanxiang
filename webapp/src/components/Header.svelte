@@ -14,7 +14,7 @@
 </script>
 
 <header class="sticky top-0 z-20 border-b border-outline-variant bg-bg/90 backdrop-blur">
-  <div class="mx-auto flex h-14 max-w-[960px] items-center gap-3 px-4">
+  <div class="mx-auto flex h-14 max-w-[960px] lg:max-w-[1360px] items-center gap-3 px-4 transition-[max-width]">
     <a href="/" use:link class="flex items-baseline gap-2 text-fg no-underline">
       <span class="text-lg font-semibold tracking-wide">{settings.lang === 'zh' ? '观象' : 'Guanxiang'}</span>
       <span class="text-xs text-muted">{t('brandSub')}</span>

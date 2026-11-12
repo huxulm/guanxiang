@@ -41,8 +41,20 @@
     {/if}
   </span>
   <span class="min-w-0 flex-1">
-    <span class="flex flex-wrap items-baseline gap-x-2">
+    <span class="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
       <span class={['font-medium', strong ? 'text-fg' : 'text-fg/85']}>{title}</span>
+      {#if strong}
+        <span
+          class={[
+            'rounded-full px-2 py-0.2 text-[10px] font-medium tracking-wide',
+            item.type === 'lunar'
+              ? 'bg-blood/20 text-moon border border-blood/30'
+              : 'bg-eclipse/20 text-eclipse border border-eclipse/30',
+          ]}
+        >
+          {item.e.kind === 'total' ? t('localTotal') : item.e.kind === 'annular' ? t('localAnnular') : t('solarHybrid')}
+        </span>
+      {/if}
       <span class="num text-sm text-muted">{fmtDate(when)} {fmtTime(when, false)}</span>
     </span>
     <span class="num mt-0.5 flex flex-wrap gap-x-3 text-xs text-muted">

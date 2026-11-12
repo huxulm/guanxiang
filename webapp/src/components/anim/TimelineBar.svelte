@@ -35,7 +35,43 @@
   }
 
   const visibleMarks = $derived(marks.filter((m) => m.t >= tl.min && m.t <= tl.max));
+
+  function onKeyDown(e: KeyboardEvent) {
+    const tag = (e.target as HTMLElement)?.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+    if (e.code === 'Space') {
+      e.preventDefault();
+      tl.toggle();
+    } else if (e.code === 'ArrowLeft') {
+      e.preventDefault();
+      tl.pause();
+      const step = e.shiftKey ? 60 : 10;
+      tl.seek(Math.max(tl.min, tl.t - step));
+    } else if (e.code === 'ArrowRight') {
+      e.preventDefault();
+      tl.pause();
+      const step = e.shiftKey ? 60 : 10;
+      tl.seek(Math.min(tl.max, tl.t + step));
+    } else if (e.key === '[' || e.key === 'BracketLeft') {
+      e.preventDefault();
+      const prevMarks = visibleMarks.filter((m) => m.t < tl.t - 0.5);
+      if (prevMarks.length) {
+        tl.pause();
+        tl.seek(prevMarks[prevMarks.length - 1].t);
+      }
+    } else if (e.key === ']' || e.key === 'BracketRight') {
+      e.preventDefault();
+      const nextMarks = visibleMarks.filter((m) => m.t > tl.t + 0.5);
+      if (nextMarks.length) {
+        tl.pause();
+        tl.seek(nextMarks[0].t);
+      }
+    }
+  }
 </script>
+
+<svelte:window onkeydown={onKeyDown} />
 
 <div class="space-y-3">
   <div class="flex flex-wrap items-center gap-3">
@@ -82,7 +118,7 @@
     />
   </div>
 
-  <div class="flex flex-wrap gap-1.5">
+  <div class="flex flex-wrap items-center gap-1.5">
     {#each visibleMarks as m (m.code)}
       <button
         class={['chip num !py-0.5 text-xs', Math.abs(tl.t - m.t) < 1 && 'chip-on']}
@@ -95,5 +131,8 @@
         <span class="ml-1 opacity-70">{fmtTime(new Date(base.getTime() + m.t * 1000), false)}</span>
       </button>
     {/each}
+    <span class="ml-auto hidden text-[11px] text-muted sm:inline-block cursor-help" title={t('keyHint')}>
+      ⌨ {t('keyHintShort')}
+    </span>
   </div>
 </div>

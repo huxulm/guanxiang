@@ -1,5 +1,6 @@
 <script lang="ts">
   import EphemerisStatus from '../components/EphemerisStatus.svelte';
+  import LocalHeroCard from '../components/LocalHeroCard.svelte';
   import LunarAnimation from '../components/anim/LunarAnimation.svelte';
   import ObserverBar from '../components/ObserverBar.svelte';
   import Stat from '../components/Stat.svelte';
@@ -12,6 +13,7 @@
   import { classify } from '../lib/visibility';
 
   let { date }: { date: string } = $props();
+  let observerBar: ObserverBar;
 
   const loader = sceneLoader<LunarScene>((e, obs, step) => e.lunarScene(date, obs, step));
   const res = $derived(loader.current);
@@ -65,7 +67,7 @@
     <h1 class="text-2xl font-semibold">{t('kindLunarEclipse')} · <span class="num">{date}</span></h1>
   {/if}
 
-  <ObserverBar override={fromLink} />
+  <ObserverBar bind:this={observerBar} override={fromLink} />
   <EphemerisStatus autoStart />
 
   {#if res.status === 'computing'}
@@ -80,60 +82,75 @@
     </p>
   {:else if res.status === 'ok'}
     {@const s = res.scene}
-    {@const vis = s.observer ? visibility(s) : null}
+    {@const obs = pageObserver().observer}
+    {@const vis = obs ? visibility(s) : null}
     {@const total = span(s, 'U2', 'U3')}
     {@const umbral = span(s, 'U1', 'U4')}
     {@const penumbral = span(s, 'P1', 'P4')}
 
-    <section class="card space-y-4">
-      <h2 class="font-semibold">{t('globalTitle')}</h2>
-      <dl class="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4">
-        {#if s.kind !== 'penumbral'}<Stat label={t('umbralMag')} value={fmtNum(s.umbral_magnitude, 4)} />{/if}
-        <Stat label={t('penumbralMag')} value={fmtNum(s.penumbral_magnitude, 4)} />
-        <Stat label={t('gamma')} value={fmtNum(s.gamma, 4)} />
-        {#if total !== null}<Stat label={t('lunarDurationTotal', { duration: '' }).trim()} value={fmtDuration(total)} />{/if}
-        {#if umbral !== null}<Stat label={t('lunarDurationUmbral', { duration: '' }).trim()} value={fmtDuration(umbral)} />{/if}
-        {#if penumbral !== null}<Stat label={t('lunarDurationPenumbral', { duration: '' }).trim()} value={fmtDuration(penumbral)} />{/if}
-      </dl>
-    </section>
+    <LocalHeroCard
+      type="lunar"
+      observer={obs}
+      lunarScene={s}
+      visText={vis ? t(VIS_KEY[vis]) : null}
+      onSetObserver={() => observerBar?.open()}
+    />
 
-    <section class="card space-y-3">
-      <h2 class="font-semibold">{t('lunarTimesTitle')}</h2>
-      {#if vis}
-        <p class={['text-sm', vis === 'hidden' ? 'text-error' : 'text-primary']}>{t(VIS_KEY[vis])}</p>
-      {:else if !s.observer}
-        <p class="text-sm text-muted">{t('lunarNeedsLocation')}</p>
-      {/if}
-      <div class="overflow-x-auto">
-        <table class="num w-full text-sm">
-          <thead class="text-left text-xs text-muted">
-            <tr>
-              <th class="py-1.5 pr-3 font-normal">{t('lunarColPhase')}</th>
-              <th class="py-1.5 pr-3 font-normal">{t('lunarColTime', { zone: zoneLabel(parseUtc(s.greatest_utc)) })}</th>
-              {#if s.observer}<th class="py-1.5 text-right font-normal">{t('lunarColAlt')}</th>{/if}
-            </tr>
-          </thead>
-          <tbody>
-            {#each s.contacts as c (c.code)}
-              {@const below = c.altitude_deg !== null && c.altitude_deg <= 0}
-              <tr class={['border-t border-outline-variant', c.code === 'G' && 'font-medium', below && 'text-muted']}>
-                <td class="py-1.5 pr-3">{t(`phase${c.code}`)} <span class="text-xs text-muted">{c.code}</span></td>
-                <td class="py-1.5 pr-3">{fmtTime(parseUtc(c.utc))}</td>
-                {#if s.observer}
-                  <td class="py-1.5 text-right">
-                    {c.altitude_deg === null ? '—' : `${fmtNum(c.altitude_deg, 1)}°`}
-                    {#if below}<span class="ml-1 text-xs">{t('belowHorizon')}</span>{/if}
-                  </td>
-                {/if}
-              </tr>
-            {/each}
-          </tbody>
-        </table>
+    <div class="lg:grid lg:grid-cols-12 lg:items-start lg:gap-6">
+      <div id="anim-section" class="space-y-4 lg:col-span-7 xl:col-span-8 lg:sticky lg:top-18">
+        {#key s}
+          <LunarAnimation scene={s} {date} observer={obs} />
+        {/key}
       </div>
-    </section>
 
-    {#key s}
-      <LunarAnimation scene={s} {date} observer={pageObserver().observer} />
-    {/key}
+      <div class="mt-4 space-y-4 lg:mt-0 lg:col-span-5 xl:col-span-4">
+        <section class="card space-y-3">
+          <h2 class="font-semibold">{t('lunarTimesTitle')}</h2>
+          {#if vis}
+            <p class={['text-sm', vis === 'hidden' ? 'text-error' : 'text-primary']}>{t(VIS_KEY[vis])}</p>
+          {:else if !s.observer}
+            <p class="text-sm text-muted">{t('lunarNeedsLocation')}</p>
+          {/if}
+          <div class="overflow-x-auto">
+            <table class="num w-full text-sm">
+              <thead class="text-left text-xs text-muted">
+                <tr>
+                  <th class="py-1.5 pr-3 font-normal">{t('lunarColPhase')}</th>
+                  <th class="py-1.5 pr-3 font-normal">{t('lunarColTime', { zone: zoneLabel(parseUtc(s.greatest_utc)) })}</th>
+                  {#if s.observer}<th class="py-1.5 text-right font-normal">{t('lunarColAlt')}</th>{/if}
+                </tr>
+              </thead>
+              <tbody>
+                {#each s.contacts as c (c.code)}
+                  {@const below = c.altitude_deg !== null && c.altitude_deg <= 0}
+                  <tr class={['border-t border-outline-variant', c.code === 'G' && 'font-medium', below && 'text-muted']}>
+                    <td class="py-1.5 pr-3">{t(`phase${c.code}`)} <span class="text-xs text-muted">{c.code}</span></td>
+                    <td class="py-1.5 pr-3">{fmtTime(parseUtc(c.utc))}</td>
+                    {#if s.observer}
+                      <td class="py-1.5 text-right">
+                        {c.altitude_deg === null ? '—' : `${fmtNum(c.altitude_deg, 1)}°`}
+                        {#if below}<span class="ml-1 text-xs">{t('belowHorizon')}</span>{/if}
+                      </td>
+                    {/if}
+                  </tr>
+                {/each}
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="card space-y-3">
+          <h2 class="font-semibold">{t('globalTitle')}</h2>
+          <dl class="grid grid-cols-2 gap-x-4 gap-y-3">
+            {#if s.kind !== 'penumbral'}<Stat label={t('umbralMag')} value={fmtNum(s.umbral_magnitude, 4)} />{/if}
+            <Stat label={t('penumbralMag')} value={fmtNum(s.penumbral_magnitude, 4)} />
+            <Stat label={t('gamma')} value={fmtNum(s.gamma, 4)} />
+            {#if total !== null}<Stat label={t('lunarDurationTotal', { duration: '' }).trim()} value={fmtDuration(total)} />{/if}
+            {#if umbral !== null}<Stat label={t('lunarDurationUmbral', { duration: '' }).trim()} value={fmtDuration(umbral)} />{/if}
+            {#if penumbral !== null}<Stat label={t('lunarDurationPenumbral', { duration: '' }).trim()} value={fmtDuration(penumbral)} />{/if}
+          </dl>
+        </section>
+      </div>
+    </div>
   {/if}
 </div>

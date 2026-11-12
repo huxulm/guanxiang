@@ -21,7 +21,7 @@
 </script>
 
 <Header />
-<main class="mx-auto w-full max-w-[960px] px-4 pb-10">
+<main class="mx-auto w-full max-w-[960px] lg:max-w-[1360px] px-4 pb-10 transition-[max-width]">
   {#if route.page === 'home'}
     <Home />
   {:else if route.page === 'lunar'}

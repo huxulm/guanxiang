@@ -9,6 +9,10 @@
   let { override = null }: { override?: Observer | null } = $props();
   let dlg: ObserverDialog;
 
+  export function open(): void {
+    dlg.open();
+  }
+
   const obs = $derived(override ?? settings.observer);
 </script>
 

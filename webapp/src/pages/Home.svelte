@@ -156,6 +156,21 @@
     {:else}
       <button class="btn-filled" onclick={search}>{t('search')}</button>
     {/if}
+    <div class="flex w-full flex-wrap items-center gap-1.5 pt-1 text-xs">
+      <span class="text-muted">{t('quickYears')}：</span>
+      {#each [2026, 2027, 2028, 2030, 2034, 2035] as y}
+        <button
+          class={['chip num !py-0.5 !px-2 text-xs', fromYear === y && toYear === y && 'chip-on']}
+          onclick={() => {
+            fromYear = y;
+            toYear = y;
+            search();
+          }}
+        >
+          {y}
+        </button>
+      {/each}
+    </div>
     {#if rangeError}<p class="w-full text-sm text-error">{rangeError}</p>{/if}
   </div>
 
