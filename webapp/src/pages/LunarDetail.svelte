@@ -91,6 +91,7 @@
     <LocalHeroCard
       type="lunar"
       observer={obs}
+      {date}
       lunarScene={s}
       visText={vis ? t(VIS_KEY[vis]) : null}
       onSetObserver={() => observerBar?.open()}

@@ -36,6 +36,61 @@
 
   const visibleMarks = $derived(marks.filter((m) => m.t >= tl.min && m.t <= tl.max));
 
+  type PhaseSegment = { left: string; width: string; color: string; opacity: number };
+
+  const phaseSegments = $derived.by((): PhaseSegment[] => {
+    const segs: PhaseSegment[] = [];
+    const findT = (code: string) => marks.find((m) => m.code === code)?.t;
+    const clampT = (t: number) => Math.max(tl.min, Math.min(tl.max, t));
+    const makeSeg = (tA: number, tB: number, color: string, opacity: number): PhaseSegment | null => {
+      const a = clampT(Math.min(tA, tB));
+      const b = clampT(Math.max(tA, tB));
+      if (b <= a || span <= 0) return null;
+      return {
+        left: `${((a - tl.min) / span) * 100}%`,
+        width: `${((b - a) / span) * 100}%`,
+        color,
+        opacity,
+      };
+    };
+
+    // Solar
+    const c1 = findT('C1');
+    const c2 = findT('C2');
+    const c3 = findT('C3');
+    const c4 = findT('C4');
+    if (c1 !== undefined && c4 !== undefined) {
+      const sPart = makeSeg(c1, c4, 'var(--gx-eclipse)', 0.3);
+      if (sPart) segs.push(sPart);
+      if (c2 !== undefined && c3 !== undefined) {
+        const sTot = makeSeg(c2, c3, 'var(--gx-eclipse)', 0.9);
+        if (sTot) segs.push(sTot);
+      }
+    }
+
+    // Lunar
+    const p1 = findT('P1');
+    const u1 = findT('U1');
+    const u2 = findT('U2');
+    const u3 = findT('U3');
+    const u4 = findT('U4');
+    const p4 = findT('P4');
+    if (p1 !== undefined && p4 !== undefined) {
+      const sPenum = makeSeg(p1, p4, 'var(--gx-on-surface-variant)', 0.25);
+      if (sPenum) segs.push(sPenum);
+    }
+    if (u1 !== undefined && u4 !== undefined) {
+      const sUmb = makeSeg(u1, u4, 'var(--gx-blood-moon)', 0.5);
+      if (sUmb) segs.push(sUmb);
+      if (u2 !== undefined && u3 !== undefined) {
+        const sTot = makeSeg(u2, u3, 'var(--gx-blood-moon)', 0.95);
+        if (sTot) segs.push(sTot);
+      }
+    }
+
+    return segs;
+  });
+
   function onKeyDown(e: KeyboardEvent) {
     const tag = (e.target as HTMLElement)?.tagName;
     if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
@@ -98,10 +153,30 @@
     </div>
   </div>
 
-  <div class="relative pt-3">
-    {#each visibleMarks as m (m.code)}
-      <span class="absolute top-0 h-2.5 w-px bg-outline" style:left={pos(m.t)} aria-hidden="true"></span>
-    {/each}
+  <div class="space-y-1 pt-2">
+    <!-- 彩色阶段条与接触刻度 -->
+    <div class="relative h-2 w-full">
+      {#if phaseSegments.length > 0}
+        <div class="absolute inset-x-0 top-0.5 h-1.5 overflow-hidden rounded-full bg-surface-3">
+          {#each phaseSegments as seg}
+            <div
+              class="absolute top-0 bottom-0"
+              style:left={seg.left}
+              style:width={seg.width}
+              style:background-color={seg.color}
+              style:opacity={seg.opacity}
+            ></div>
+          {/each}
+        </div>
+      {/if}
+      {#each visibleMarks as m (m.code)}
+        <span
+          class="absolute -top-1 h-3.5 w-px -translate-x-1/2 bg-outline"
+          style:left={pos(m.t)}
+          aria-hidden="true"
+        ></span>
+      {/each}
+    </div>
     <input
       type="range"
       class="w-full accent-primary"

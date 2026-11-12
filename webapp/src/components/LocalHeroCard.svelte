@@ -1,23 +1,36 @@
 <script lang="ts">
   // 本地观测结论胶囊卡片：直观解答“我在的地方能看到什么、几点看、往哪看”。
+  import { downloadIcs, generateLunarIcs, generateSolarIcs } from '../lib/calendar';
   import { fmtDuration, fmtNum, fmtTime, parseUtc, zoneLabel } from '../lib/format';
   import { t } from '../lib/i18n';
+  import { settings } from '../lib/settings.svelte';
   import type { LunarScene, Observer, SolarLocal } from '../lib/types';
 
   type Props = {
     type: 'solar' | 'lunar';
     observer: Observer | null;
+    date?: string;
     solarLocal?: SolarLocal | null;
     lunarScene?: LunarScene | null;
     visText?: string | null;
     onSetObserver: () => void;
   };
 
-  let { type, observer, solarLocal, lunarScene, visText, onSetObserver }: Props = $props();
+  let { type, observer, date = '', solarLocal, lunarScene, visText, onSetObserver }: Props = $props();
 
   function scrollToAnim(): void {
     const el = document.getElementById('anim-section');
     el?.scrollIntoView({ behavior: 'smooth' });
+  }
+
+  function exportCalendar(): void {
+    if (type === 'solar' && solarLocal) {
+      const ics = generateSolarIcs(date, solarLocal, observer, settings.lang);
+      downloadIcs(`eclipse_${date}`, ics);
+    } else if (type === 'lunar' && lunarScene) {
+      const ics = generateLunarIcs(date, lunarScene, observer, settings.lang);
+      downloadIcs(`eclipse_${date}`, ics);
+    }
   }
 </script>
 
@@ -77,9 +90,14 @@
             <span class="text-xs font-medium text-primary">{visText}</span>
           {/if}
         </div>
-        <button class="btn-text -my-1 text-xs text-primary" onclick={scrollToAnim}>
-          {t('jumpToAnim')} ↓
-        </button>
+        <div class="flex items-center gap-1.5">
+          <button class="btn-text -my-1 text-xs text-primary" onclick={exportCalendar} title={t('addToCalendar')}>
+            📅 {t('addToCalendar')}
+          </button>
+          <button class="btn-text -my-1 text-xs text-primary" onclick={scrollToAnim}>
+            {t('jumpToAnim')} ↓
+          </button>
+        </div>
       </div>
 
       <div class="grid grid-cols-2 gap-3 pt-1 sm:grid-cols-4">
@@ -143,9 +161,16 @@
           <span class="text-xs font-medium text-primary">{visText}</span>
         {/if}
       </div>
-      <button class="btn-text -my-1 text-xs text-primary" onclick={scrollToAnim}>
-        {t('jumpToAnim')} ↓
-      </button>
+      <div class="flex items-center gap-1.5">
+        {#if !isHidden}
+          <button class="btn-text -my-1 text-xs text-primary" onclick={exportCalendar} title={t('addToCalendar')}>
+            📅 {t('addToCalendar')}
+          </button>
+        {/if}
+        <button class="btn-text -my-1 text-xs text-primary" onclick={scrollToAnim}>
+          {t('jumpToAnim')} ↓
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-2 gap-3 pt-1 sm:grid-cols-4">

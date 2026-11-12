@@ -85,6 +85,7 @@
     <LocalHeroCard
       type="solar"
       observer={obs}
+      {date}
       solarLocal={s.local}
       visText={vis ? t(VIS_KEY[vis]) : null}
       onSetObserver={() => observerBar?.open()}

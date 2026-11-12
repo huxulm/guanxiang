@@ -49,6 +49,7 @@
   );
 
   let land = $state<Rings | null>(null);
+  let mapFocused = $state(false);
   $effect(() => {
     loadLand().then((r) => (land = r));
   });
@@ -117,8 +118,24 @@
       {/if}
     </div>
     <figure class="space-y-1">
-      <figcaption class="label">{t('viewMap')}</figcaption>
-      <MapView {scene} {s} {land} {observer} />
+      <figcaption class="flex items-center justify-between">
+        <span class="label">{t('viewMap')}</span>
+        <div class="flex gap-1" role="group" aria-label={t('viewMap')}>
+          <button
+            class={['chip !py-0.5 !px-2 text-xs', !mapFocused && 'chip-on']}
+            onclick={() => (mapFocused = false)}
+          >
+            {t('mapGlobal')}
+          </button>
+          <button
+            class={['chip !py-0.5 !px-2 text-xs', mapFocused && 'chip-on']}
+            onclick={() => (mapFocused = true)}
+          >
+            {t('mapFocus')}
+          </button>
+        </div>
+      </figcaption>
+      <MapView {scene} {s} {land} {observer} focused={mapFocused} />
     </figure>
   {:else if frame.error}
     <p class="text-sm text-error">{t('computeFailed', { error: frame.error })}</p>

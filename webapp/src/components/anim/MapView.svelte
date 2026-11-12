@@ -6,7 +6,30 @@
   import { t } from '../../lib/i18n';
   import type { Observer, SolarScene, SolarState } from '../../lib/types';
 
-  let { scene, s, land, observer }: { scene: SolarScene; s: SolarState; land: Rings | null; observer: Observer | null } = $props();
+  let {
+    scene,
+    s,
+    land,
+    observer,
+    focused = false,
+  }: {
+    scene: SolarScene;
+    s: SolarState;
+    land: Rings | null;
+    observer: Observer | null;
+    focused?: boolean;
+  } = $props();
+
+  const viewBox = $derived.by(() => {
+    if (!focused) return '-180 -90 360 180';
+    const cLon = s.shadow_center?.lon_deg ?? observer?.lon ?? s.sub_solar.lon_deg ?? 0;
+    const cLat = s.shadow_center?.lat_deg ?? observer?.lat ?? s.sub_solar.lat_deg ?? 0;
+    const w = 90;
+    const h = 45;
+    const minX = Math.max(-180, Math.min(180 - w, cLon - w / 2));
+    const minY = Math.max(-90, Math.min(90 - h, -cLat - h / 2));
+    return `${minX.toFixed(2)} ${minY.toFixed(2)} ${w} ${h}`;
+  });
 
   // 屏幕坐标：x = 经度，y = −纬度（viewBox −180…180 × −90…90）
   type P = [number, number];
@@ -107,19 +130,19 @@
   });
 </script>
 
-<svg viewBox="-180 -90 360 180" class="block w-full rounded-xl" role="img" aria-label={t('viewMap')}>
+<svg {viewBox} class="block w-full rounded-xl transition-all duration-300" role="img" aria-label={t('viewMap')}>
   <rect x="-180" y="-90" width="360" height="180" fill="var(--gx-surface-container)" />
-  <path d={landPath} fill="var(--gx-surface-high)" stroke="var(--gx-outline)" stroke-width="0.35" />
+  <path d={landPath} fill="var(--gx-surface-high)" stroke="var(--gx-outline)" stroke-width={focused ? '0.2' : '0.35'} />
   <path d={night} fill="var(--gx-sky)" fill-opacity="0.35" />
   <path d={penumbraArea} fill="color-mix(in srgb, var(--gx-sky) 75%, var(--gx-eclipse))" fill-opacity="0.35" />
-  <path d={centralLine} fill="none" stroke="var(--gx-eclipse)" stroke-width="1.1" />
-  <path d={penumbra} fill="none" stroke="var(--gx-eclipse)" stroke-width="0.9" stroke-dasharray="3 2" />
+  <path d={centralLine} fill="none" stroke="var(--gx-eclipse)" stroke-width={focused ? '0.6' : '1.1'} />
+  <path d={penumbra} fill="none" stroke="var(--gx-eclipse)" stroke-width={focused ? '0.5' : '0.9'} stroke-dasharray={focused ? '1.5 1' : '3 2'} />
   {#if s.shadow_center}
-    <circle cx={s.shadow_center.lon_deg} cy={-s.shadow_center.lat_deg} r="2.2" fill="var(--gx-sky-moon)" stroke="var(--gx-eclipse)" stroke-width="0.8" />
+    <circle cx={s.shadow_center.lon_deg} cy={-s.shadow_center.lat_deg} r={focused ? '1.2' : '2.2'} fill="var(--gx-sky-moon)" stroke="var(--gx-eclipse)" stroke-width={focused ? '0.5' : '0.8'} />
   {/if}
-  <text x={s.sub_solar.lon_deg} y={-s.sub_solar.lat_deg} font-size="8" text-anchor="middle" dominant-baseline="central" fill="var(--gx-tertiary)">☀</text>
+  <text x={s.sub_solar.lon_deg} y={-s.sub_solar.lat_deg} font-size={focused ? '4' : '8'} text-anchor="middle" dominant-baseline="central" fill="var(--gx-tertiary)">☀</text>
   {#if observer}
-    <circle cx={observer.lon} cy={-observer.lat} r="2.4" fill="none" stroke="var(--gx-primary)" stroke-width="1" />
-    <circle cx={observer.lon} cy={-observer.lat} r="0.8" fill="var(--gx-primary)" />
+    <circle cx={observer.lon} cy={-observer.lat} r={focused ? '1.4' : '2.4'} fill="none" stroke="var(--gx-primary)" stroke-width={focused ? '0.6' : '1'} />
+    <circle cx={observer.lon} cy={-observer.lat} r={focused ? '0.5' : '0.8'} fill="var(--gx-primary)" />
   {/if}
 </svg>
