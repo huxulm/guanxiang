@@ -370,3 +370,8 @@ jobs:
     needs: mirror
     uses: ./.github/workflows/website.yml
     secrets: inherit
+
+  webapp:
+    needs: mirror
+    uses: ./.github/workflows/webapp.yml
+    secrets: inherit

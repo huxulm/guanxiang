@@ -7,6 +7,8 @@
   import SunDiskView from './SunDiskView.svelte';
   import TimeChart from './TimeChart.svelte';
   import TimelineBar from './TimelineBar.svelte';
+  import VerticalPresentationDialog from './VerticalPresentationDialog.svelte';
+  import VideoExportDialog from './VideoExportDialog.svelte';
   import { Timeline, defaultSpeed } from '../../lib/anim/timeline.svelte';
   import { frameState } from '../../lib/anim/frames.svelte';
   import { loadLand, type Rings } from '../../lib/anim/land';
@@ -53,6 +55,8 @@
   let land = $state<Rings | null>(null);
   let mapFocused = $state(false);
   let mobileTab = $state<'sun' | 'plane' | 'map' | 'all'>(local ? 'sun' : 'map');
+  let exportDialog = $state<VideoExportDialog | null>(null);
+  let verticalDialog = $state<VerticalPresentationDialog | null>(null);
   $effect(() => {
     loadLand().then((r) => (land = r));
   });
@@ -91,6 +95,12 @@
       <button class={['chip', range === 'local' && 'chip-on']} onclick={() => setRange('local')}>{t('rangeLocal')}</button>
       <button class={['chip', range === 'global' && 'chip-on']} onclick={() => setRange('global')}>{t('rangeGlobal')}</button>
     {/if}
+    <button class="chip !py-1 text-xs text-primary" onclick={() => verticalDialog?.open()} title={t('verticalMode')}>
+      📱 {t('verticalMode')}
+    </button>
+    <button class="chip !py-1 text-xs text-primary" onclick={() => exportDialog?.open()} title={t('exportVideo')}>
+      📹 {t('exportVideo')}
+    </button>
   </div>
   <TimelineBar {tl} {marks} {base} {phase} utc={frame.current?.utc} />
 
@@ -220,4 +230,26 @@
   <p class="text-xs leading-relaxed text-muted">{t('planeCaption')}</p>
   <p class="text-xs leading-relaxed text-muted">{t('mapCaption')}</p>
   {#if local}<p class="text-xs leading-relaxed text-muted">{t('solarSimCaption')}</p>{/if}
+
+  <VideoExportDialog
+    bind:this={exportDialog}
+    {scene}
+    {date}
+    {land}
+    {observer}
+  />
+
+  {#if frame.current}
+    <VerticalPresentationDialog
+      bind:this={verticalDialog}
+      {scene}
+      {date}
+      s={frame.current}
+      {tl}
+      {land}
+      {observer}
+      {phase}
+      onExportVideo={() => exportDialog?.open()}
+    />
+  {/if}
 </section>

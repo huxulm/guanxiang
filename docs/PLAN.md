@@ -381,7 +381,7 @@ guanxiang/
 - 存储桶原来没有 CORS 配置，新设一条：只允许 `https://app.guanx.huxulm.dev` 和 `http://localhost:4173` 以 GET、HEAD 读取，暴露 `Content-Length`、`ETag`；其他来源拿不到 CORS 头。
 - `webapp/.env.production` 写入线上星历地址；`vite preview` 本地验证生产包能跨域下载并校验星历。
 - `npx wrangler deploy` 发布到 https://app.guanx.huxulm.dev （Workers 静态资源，单页应用回退）。线上核对：各路由 200，wasm 为 `application/wasm`，2027-08-02 卢克索的接触时刻与本地一致，控制台没有错误。
-- 还没做：GitHub Actions 自动部署（目前手动发布）、发版流程里同步更新 webapp。
+- GitHub Actions 自动部署已接入（`.github/workflows/webapp.yml`），推送到 main 或发版（release.yml）时自动构建发布至 Cloudflare Workers。
 
 **P3 交互动画记录（2026-11-10）：**
 
@@ -396,7 +396,7 @@ guanxiang/
 - 陆地轮廓（与 App 共用 `land_110m.json`）单独打包，只在日食页加载（gzip 19 KB）；主包 gzip 57 KB。
 - 截图核对：浅色、深空、红光，390 和 1280 宽度；2025-09-07 月食（北京）食甚和偏食阶段，2027-08-02 日食（卢克索）全食，2026-08-12 日食（马德里，日落前的偏食）。
 - 已发布到 https://app.guanx.huxulm.dev （2026-11-10，手动 `wrangler deploy`）。线上核对：卢克索食甚时显示日冕、食分 1.035，播放时“从太阳看地球”视图每秒更新约 60 次，陆地轮廓按需加载，月食页正常，控制台没有错误。
-- 还没做：视频导出（WebCodecs）和 9:16 竖屏演示模式；太阳很低时，日面特写的视野（约 ±0.7°）要到最后几分钟才能看到地平线。
+- 视频导出与 9:16 竖屏演示模式已完成（`VideoExportDialog` + `VerticalPresentationDialog`，纯前端 Canvas + MediaRecorder 录制 1080p 视频并提供沉浸式全屏观测）；太阳很低时，日面特写的视野（约 ±0.7°）要到最后几分钟才能看到地平线。
 
 ## 6. 验证方法
 

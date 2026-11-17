@@ -1,0 +1,65 @@
+# Web 应用部署：构建 webapp/ 并用 wrangler 发布到 Cloudflare Workers（https://app.guanx.huxulm.dev）。
+# 触发：main 上 webapp/ 或相关 Rust crates 有改动、手动运行，或 release.yml 发布后调用。
+name: Web App
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - webapp/**
+      - crates/guanxiang-core/**
+      - crates/guanxiang-view/**
+      - crates/guanxiang-wasm/**
+      - .github/workflows/webapp.yml
+  workflow_dispatch:
+  workflow_call:
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: "0"
+  RUST_TOOLCHAIN: "1.97"
+  TRIMMED_SHA256: 1b7ff150cbc00d364f584ad65dad651129fde4ab2e7aa23f9551dc9b9674afaa
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: webapp-deploy
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: main
+      - name: 安装 Rust 工具链
+        run: |
+          rustup toolchain install "$RUST_TOOLCHAIN" --profile minimal -t wasm32-unknown-unknown
+          rustup default "$RUST_TOOLCHAIN"
+      - uses: Swatinem/rust-cache@v2
+      - name: 安装 wasm-pack
+        run: cargo install wasm-pack --locked --version 0.14.0
+      - name: 下载裁剪星历
+        run: |
+          mkdir -p data
+          curl -fsSL --retry 3 -o data/de440s_1900_2100.bsp https://s2.huxulm.dev/guanxiang/ephem/de440s_1900_2100-1b7ff150.bsp
+          echo "$TRIMMED_SHA256  data/de440s_1900_2100.bsp" | sha256sum -c
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+      - name: 构建 Web 应用
+        working-directory: webapp
+        run: |
+          npm ci --no-audit --no-fund
+          npm run wasm
+          npm run data
+          npm run test:geometry
+          npm run build
+      - name: wrangler deploy
+        working-directory: webapp
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: npx wrangler deploy
